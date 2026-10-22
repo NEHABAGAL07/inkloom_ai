@@ -28,3 +28,11 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             yield session
         finally:
             await session.close()
+
+
+async def init_models() -> None:
+    """Create all registered database tables (safe, creates if not existing)."""
+    from app.database.base import Base
+    import app.models  # noqa: F401
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

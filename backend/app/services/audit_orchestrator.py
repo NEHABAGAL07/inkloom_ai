@@ -30,6 +30,7 @@ class AuditOrchestrator:
         filename: Optional[str] = None,
         mime_type: Optional[str] = None,
         custom_rules: Optional[List[Dict[str, Any]]] = None,
+        verified_facts: Optional[List[Dict[str, Any]]] = None,
     ) -> AuditResultSchema:
         """
         Execute full audit cycle on text or file.
@@ -63,6 +64,7 @@ class AuditOrchestrator:
             text=text_to_audit,
             content_id=content_id,
             custom_rules=custom_rules,
+            verified_facts=verified_facts,
             extractors_used=extractors_used,
         )
 

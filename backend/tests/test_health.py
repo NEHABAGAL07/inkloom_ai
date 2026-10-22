@@ -16,6 +16,16 @@ async def test_root_health():
 
 
 @pytest.mark.asyncio
+async def test_root_index():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "online"
+        assert data["documentation"] == "/docs"
+
+
+@pytest.mark.asyncio
 async def test_api_v1_health():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.get("/api/v1/health")
