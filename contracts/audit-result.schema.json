@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inkloom.ai/schemas/audit-result.schema.json",
+  "title": "InkloomAuditResult",
+  "description": "Standardized, versioned audit result schema for Inkloom AI brand governance checks across backend, frontend, AI audit engine, and media QA modules.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "audit_id",
+    "content_id",
+    "overall_status",
+    "summary",
+    "findings",
+    "created_at",
+    "engine_metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of the audit contract schema",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "default": "1.0.0"
+    },
+    "audit_id": {
+      "type": "string",
+      "description": "Unique identifier for this specific audit run",
+      "format": "uuid"
+    },
+    "content_id": {
+      "type": "string",
+      "description": "Identifier of the content submission or revision being audited",
+      "format": "uuid"
+    },
+    "overall_status": {
+      "type": "string",
+      "description": "Aggregated governance compliance status of the audited content",
+      "enum": ["passed", "failed", "warning", "needs_human_review"]
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable executive summary of audit findings",
+      "minLength": 1
+    },
+    "findings": {
+      "type": "array",
+      "description": "Detailed list of brand governance findings detected during the audit",
+      "items": {
+        "$ref": "#/$defs/Finding"
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the audit was generated"
+    },
+    "engine_metadata": {
+      "$ref": "#/$defs/EngineMetadata"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Finding": {
+      "type": "object",
+      "required": [
+        "id",
+        "category",
+        "severity",
+        "title",
+        "message",
+        "confidence",
+        "status",
+        "requires_human_review"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this finding"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "tone_and_voice",
+            "terminology",
+            "claim_verification",
+            "visual_compliance",
+            "accessibility",
+            "prohibited_content",
+            "legal_compliance"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low", "info"]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short descriptive title of the finding"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Detailed explanation of why this violates brand guidelines"
+        },
+        "evidence": {
+          "type": ["string", "null"],
+          "description": "Actual excerpt, color value, or metric extracted from the submitted content. Null if missing/unavailable."
+        },
+        "source_reference": {
+          "type": ["string", "null"],
+          "description": "Authoritative guideline rule ID, style guide section, or approved asset reference. Null if missing or unavailable. Never fabricate citations."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Algorithmic confidence in this finding (0.0 to 1.0). Kept separate from severity."
+        },
+        "suggested_correction": {
+          "type": ["string", "null"],
+          "description": "Actionable suggested replacement preserving creator intent, or null if manual review is required."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["flagged", "accepted", "dismissed", "escalated"]
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        },
+        "requires_human_review": {
+          "type": "boolean",
+          "description": "Indicates whether human confirmation is required before this issue can be resolved"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Location": {
+      "type": ["object", "null"],
+      "description": "Specific coordinate, text range, or page where finding occurs",
+      "properties": {
+        "start_offset": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "end_offset": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "line": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "page": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "timestamp_seconds": {
+          "type": ["number", "null"],
+          "minimum": 0.0
+        },
+        "selector": {
+          "type": ["string", "null"]
+        },
+        "bounding_box": {
+          "type": ["object", "null"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "width": { "type": "number" },
+            "height": { "type": "number" }
+          },
+          "required": ["x", "y", "width", "height"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "EngineMetadata": {
+      "type": "object",
+      "required": ["engine_version", "execution_time_ms", "rules_checked_count"],
+      "properties": {
+        "engine_version": {
+          "type": "string",
+          "description": "Version of the AI audit engine and ruleset"
+        },
+        "execution_time_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rules_checked_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ai_model_used": {
+          "type": ["string", "null"],
+          "description": "Identifier of the LLM or vision model if invoked, or null if deterministic rules only"
+        },
+        "extractors_used": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of media extractors invoked (e.g. text_extractor, pdf_parser, ocr_processor)"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

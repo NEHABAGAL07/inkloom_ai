@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0.0",
+  "audit_id": "7f8b9a10-2c3d-4e5f-8a9b-0c1d2e3f4a5b",
+  "content_id": "9a8b7c6d-5e4f-3a2b-1c0d-e9f8a7b6c5d4",
+  "overall_status": "warning",
+  "summary": "Content exhibits multiple brand compliance concerns: 1 unverified promotional claim, 1 casing violation of proprietary brand terminology, and 1 informal tone construct. Final publication approval requires human review.",
+  "findings": [
+    {
+      "id": "fnd-001",
+      "category": "terminology",
+      "severity": "medium",
+      "title": "Brand Name Capitalization Inconsistency",
+      "message": "Product name 'inkloom' is written in lowercase without proper camel-case styling specified in brand identity guidelines.",
+      "evidence": "Try inkloom today for best-in-class workflows.",
+      "source_reference": "Brand Identity Guidelines v2.4, Section 3.1: Naming & Trademarks",
+      "confidence": 0.99,
+      "suggested_correction": "Try Inkloom AI today for best-in-class workflows.",
+      "status": "flagged",
+      "location": {
+        "start_offset": 4,
+        "end_offset": 11,
+        "line": 1,
+        "page": 1,
+        "timestamp_seconds": null,
+        "selector": null,
+        "bounding_box": null
+      },
+      "requires_human_review": false
+    },
+    {
+      "id": "fnd-002",
+      "category": "claim_verification",
+      "severity": "high",
+      "title": "Unsubstantiated Performance Claim",
+      "message": "Superlative claim '100% error-free guarantee' lacks verifiable empirical proof in the corporate claim registry and exposes marketing to regulatory challenge.",
+      "evidence": "Our system delivers a 100% error-free guarantee across all media.",
+      "source_reference": null,
+      "confidence": 0.94,
+      "suggested_correction": "Our system delivers rigorous, multi-stage compliance verification across all media.",
+      "status": "flagged",
+      "location": {
+        "start_offset": 23,
+        "end_offset": 48,
+        "line": 3,
+        "page": 1,
+        "timestamp_seconds": null,
+        "selector": null,
+        "bounding_box": null
+      },
+      "requires_human_review": true
+    },
+    {
+      "id": "fnd-003",
+      "category": "tone_and_voice",
+      "severity": "low",
+      "title": "Colloquial Phrasing in Enterprise Copy",
+      "message": "Use of colloquial filler 'super pumped' deviates from our professional and authoritative enterprise brand voice standard.",
+      "evidence": "We are super pumped to announce this capability.",
+      "source_reference": "Editorial Voice & Tone Standard v1.2, Principle 2: Authoritative yet Accessible",
+      "confidence": 0.88,
+      "suggested_correction": "We are proud to announce this capability.",
+      "status": "flagged",
+      "location": {
+        "start_offset": 7,
+        "end_offset": 19,
+        "line": 5,
+        "page": 1,
+        "timestamp_seconds": null,
+        "selector": null,
+        "bounding_box": null
+      },
+      "requires_human_review": false
+    }
+  ],
+  "created_at": "2026-10-22T12:00:00Z",
+  "engine_metadata": {
+    "engine_version": "inkloom-audit-engine-v1.0.0",
+    "execution_time_ms": 142.5,
+    "rules_checked_count": 48,
+    "ai_model_used": null,
+    "extractors_used": [
+      "plain_text_extractor"
+    ]
+  }
+}
