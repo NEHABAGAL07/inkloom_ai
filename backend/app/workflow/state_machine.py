@@ -1,113 +1,132 @@
-"""Inkloom AI - Centralized Brand Governance Workflow State Machine.
-
-States:
-- draft: Initial draft authoring.
-- submitted: Submitted by creator for automated governance audit.
-- auditing: Automated media extraction and AI rule checks actively running.
-- changes_requested: Violations detected or human reviewer requested revisions.
-- resubmitted: Revisions submitted by author after addressing findings.
-- pending_approval: All automated checks passed or reviewer review needed; awaiting human sign-off.
-- approved: Formally approved by authorized human reviewer for publication.
-- rejected: Formally rejected by reviewer.
 """
+Centralized Brand Governance Workflow State Machine
 
-from typing import Set, Dict, Optional
-from app.schemas.common import WorkflowStateEnum, ReviewActionEnum
+Governs submission lifecycle across content creation, AI audit passes,
+revisions, and mandatory human review before publication.
+
+Crucial Rule:
+AI findings NEVER automatically grant 'approved' status.
+Only human reviewers (with designated roles) can transition content to 'approved'.
+"""
+from enum import Enum
+from typing import Dict, Set, Optional
 
 
-class WorkflowTransitionError(ValueError):
-    """Raised when an invalid state transition is attempted."""
-    pass
+class WorkflowState(str, Enum):
+    DRAFT = "draft"
+    SUBMITTED = "submitted"
+    AUDITING = "auditing"
+    CHANGES_REQUESTED = "changes_requested"
+    RESUBMITTED = "resubmitted"
+    PENDING_APPROVAL = "pending_approval"
+    APPROVED = "approved"
+    REJECTED = "rejected"
 
 
-# Central state transition matrix: Current State -> Set of Allowed Next States
-ALLOWED_TRANSITIONS: Dict[WorkflowStateEnum, Set[WorkflowStateEnum]] = {
-    WorkflowStateEnum.DRAFT: {
-        WorkflowStateEnum.SUBMITTED,
+class WorkflowTransitionError(Exception):
+    def __init__(self, current_state: str, target_state: str, reason: str = ""):
+        self.current_state = current_state
+        self.target_state = target_state
+        self.reason = reason
+        super().__init__(
+            f"Invalid workflow transition from '{current_state}' to '{target_state}'. {reason}".strip()
+        )
+
+
+# Mapping of current state -> set of permissible next states
+ALLOWED_TRANSITIONS: Dict[WorkflowState, Set[WorkflowState]] = {
+    WorkflowState.DRAFT: {
+        WorkflowState.SUBMITTED,
     },
-    WorkflowStateEnum.SUBMITTED: {
-        WorkflowStateEnum.AUDITING,
-        WorkflowStateEnum.DRAFT,  # Author retracted
+    WorkflowState.SUBMITTED: {
+        WorkflowState.AUDITING,
+        WorkflowState.DRAFT,
     },
-    WorkflowStateEnum.AUDITING: {
-        WorkflowStateEnum.CHANGES_REQUESTED,  # Audit discovered blockers
-        WorkflowStateEnum.PENDING_APPROVAL,   # Audit passed, queued for human reviewer
-        WorkflowStateEnum.SUBMITTED,          # Retry on transient engine failure
+    WorkflowState.AUDITING: {
+        # Audit engine outcomes
+        WorkflowState.PENDING_APPROVAL,   # Passed or flagged for human review
+        WorkflowState.CHANGES_REQUESTED,  # Critical flaws detected by policy
     },
-    WorkflowStateEnum.CHANGES_REQUESTED: {
-        WorkflowStateEnum.RESUBMITTED,        # Author uploaded fixes
-        WorkflowStateEnum.REJECTED,           # Reviewer closed without fix
+    WorkflowState.CHANGES_REQUESTED: {
+        WorkflowState.RESUBMITTED,
+        WorkflowState.DRAFT,
     },
-    WorkflowStateEnum.RESUBMITTED: {
-        WorkflowStateEnum.AUDITING,           # Re-audit new revision
+    WorkflowState.RESUBMITTED: {
+        WorkflowState.AUDITING,
     },
-    WorkflowStateEnum.PENDING_APPROVAL: {
-        WorkflowStateEnum.APPROVED,           # Human reviewer approval ONLY
-        WorkflowStateEnum.CHANGES_REQUESTED,  # Human reviewer asks for changes
-        WorkflowStateEnum.REJECTED,           # Human reviewer rejection
+    WorkflowState.PENDING_APPROVAL: {
+        # Human reviewer actions only
+        WorkflowState.APPROVED,
+        WorkflowState.REJECTED,
+        WorkflowState.CHANGES_REQUESTED,
     },
-    WorkflowStateEnum.APPROVED: set(),         # Terminal state (new version starts in draft)
-    WorkflowStateEnum.REJECTED: {
-        WorkflowStateEnum.DRAFT,              # Re-opened as draft
+    WorkflowState.APPROVED: {
+        # Content approved is terminal unless a new revision is explicitly initiated
+        WorkflowState.DRAFT,
+    },
+    WorkflowState.REJECTED: {
+        # Rejected content can be reopened as draft for major rework
+        WorkflowState.DRAFT,
     },
 }
 
 
-def can_transition(current_state: WorkflowStateEnum, target_state: WorkflowStateEnum) -> bool:
-    """Check if transition between states is permissible."""
-    allowed = ALLOWED_TRANSITIONS.get(current_state, set())
-    return target_state in allowed
+class WorkflowStateMachine:
+    @staticmethod
+    def can_transition(current: str, target: str) -> bool:
+        try:
+            curr_enum = WorkflowState(current.lower())
+            target_enum = WorkflowState(target.lower())
+        except ValueError:
+            return False
 
+        return target_enum in ALLOWED_TRANSITIONS.get(curr_enum, set())
 
-def validate_transition(
-    current_state: WorkflowStateEnum,
-    target_state: WorkflowStateEnum,
-    is_automated_actor: bool = False,
-) -> None:
-    """
-    Centrally validate state transition.
-    Enforces that automated AI engines CAN NEVER transition directly to 'approved'.
-    """
-    if not can_transition(current_state, target_state):
-        raise WorkflowTransitionError(
-            f"Invalid workflow transition from '{current_state.value}' to '{target_state.value}'. "
-            f"Allowed next states: {[s.value for s in ALLOWED_TRANSITIONS.get(current_state, set())]}"
-        )
+    @staticmethod
+    def validate_transition(
+        current: str,
+        target: str,
+        actor_role: Optional[str] = None,
+        is_ai_action: bool = False
+    ) -> WorkflowState:
+        """
+        Validates transition and enforces role guards.
+        Raises WorkflowTransitionError if invalid or unauthorized.
+        """
+        try:
+            curr_enum = WorkflowState(current.lower())
+        except ValueError:
+            raise WorkflowTransitionError(current, target, f"'{current}' is not a valid workflow state.")
 
-    # Invariant: AI / Automated engine can never grant final approval
-    if is_automated_actor and target_state == WorkflowStateEnum.APPROVED:
-        raise WorkflowTransitionError(
-            "Governance Violation: Automated AI systems cannot grant final publication approval. "
-            "A designated human reviewer must approve."
-        )
+        try:
+            target_enum = WorkflowState(target.lower())
+        except ValueError:
+            raise WorkflowTransitionError(current, target, f"'{target}' is not a valid workflow state.")
 
+        allowed = ALLOWED_TRANSITIONS.get(curr_enum, set())
+        if target_enum not in allowed:
+            allowed_names = [s.value for s in allowed]
+            raise WorkflowTransitionError(
+                current,
+                target,
+                f"Permissible target states from '{current}' are: {allowed_names}"
+            )
 
-def determine_next_state_from_audit(has_blocking_violations: bool) -> WorkflowStateEnum:
-    """
-    Determine the next workflow state after an automated audit completes.
-    Notice: It transitions to PENDING_APPROVAL even when clean, so a human must sign off.
-    """
-    if has_blocking_violations:
-        return WorkflowStateEnum.CHANGES_REQUESTED
-    return WorkflowStateEnum.PENDING_APPROVAL
+        # Invariant: AI engines may NEVER transition directly to APPROVED
+        if is_ai_action and target_enum == WorkflowState.APPROVED:
+            raise WorkflowTransitionError(
+                current,
+                target,
+                "Governance policy violation: AI engines cannot authorize publication. Human sign-off is mandatory."
+            )
 
+        # Invariant: Approving or rejecting requires reviewer or admin privileges
+        if target_enum in {WorkflowState.APPROVED, WorkflowState.REJECTED}:
+            if actor_role and actor_role not in {"admin", "compliance_officer", "reviewer"}:
+                raise WorkflowTransitionError(
+                    current,
+                    target,
+                    f"Role '{actor_role}' does not have authority to approve or reject submissions."
+                )
 
-def resolve_human_review_action(
-    current_state: WorkflowStateEnum,
-    action: ReviewActionEnum,
-) -> WorkflowStateEnum:
-    """Map human reviewer decision to the target workflow state."""
-    if current_state != WorkflowStateEnum.PENDING_APPROVAL:
-        raise WorkflowTransitionError(
-            f"Human review decisions can only be made when state is 'pending_approval', "
-            f"current state is '{current_state.value}'."
-        )
-
-    if action in (ReviewActionEnum.APPROVE, ReviewActionEnum.APPROVED):
-        return WorkflowStateEnum.APPROVED
-    elif action in (ReviewActionEnum.REJECT, ReviewActionEnum.REJECTED):
-        return WorkflowStateEnum.REJECTED
-    elif action in (ReviewActionEnum.REQUEST_CHANGES, ReviewActionEnum.CHANGES_REQUESTED):
-        return WorkflowStateEnum.CHANGES_REQUESTED
-    else:
-        raise WorkflowTransitionError(f"Unknown review action: {action}")
+        return target_enum

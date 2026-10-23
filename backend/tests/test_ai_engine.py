@@ -1,61 +1,48 @@
-"""Unit Tests for AI Brand Audit Engine."""
-
-import pytest
 from app.services.ai_audit.engine import AIAuditEngine
-from app.schemas.common import AuditStatusEnum, FindingCategoryEnum, FindingSeverityEnum
+from app.schemas.audit_contract import OverallAuditStatus, VerificationStatus, FindingCategory
 
 
-def test_compliant_content_passes():
-    """Verify clean, compliant content returns PASSED with zero findings."""
-    engine = AIAuditEngine()
-    compliant_text = (
-        "Welcome to the Inkloom AI Brand Governance Platform. "
-        "We are proud to announce enhanced compliance reporting for enterprise marketing teams. "
-        "Our architecture supports multi-tenant isolation and granular role-based access control."
+def test_ai_engine_compliant_text():
+    clean_text = (
+        "Inkloom AI delivers automated brand governance solutions designed to assist "
+        "enterprise compliance teams. Our verified workflows empower reviewers to inspect "
+        "content with high precision."
     )
-    result = engine.audit_text(text=compliant_text, content_id="cnt-compliant-001")
-
-    assert result.overall_status == AuditStatusEnum.PASSED
-    assert len(result.findings) == 0
-    assert "conforms to all verified brand guidelines" in result.summary
-
-
-def test_terminology_casing_violation_flagged():
-    """Verify improper capitalization of brand name triggers terminology finding."""
-    engine = AIAuditEngine()
-    violating_text = "Users love using inkloom for their daily brand audits."
-    result = engine.audit_text(text=violating_text, content_id="cnt-term-001")
-
-    term_findings = [f for f in result.findings if f.category == FindingCategoryEnum.TERMINOLOGY]
-    assert len(term_findings) == 1
-    assert "Brand Name Capitalization & Casing" in term_findings[0].title
-    assert term_findings[0].suggested_correction is not None
-    assert "Inkloom AI" in term_findings[0].suggested_correction
+    result = AIAuditEngine.run_audit(
+        content_text=clean_text,
+        content_id="sub_clean_1",
+    )
+    assert result.overall_status == OverallAuditStatus.COMPLIANT
+    assert result.summary.compliance_score >= 90.0
+    assert result.summary.total_findings == 0
 
 
-def test_unsubstantiated_claim_requires_human_review():
-    """Verify absolute superlative claims require human review and do not fabricate sources."""
-    engine = AIAuditEngine()
-    violating_text = "Our software delivers a 100% error-free guarantee for all advertising materials."
-    result = engine.audit_text(text=violating_text, content_id="cnt-claim-001")
+def test_ai_engine_detects_violations():
+    violating_text = (
+        "Get started with the powerful Inkloom Cloud Suite today before your competitors crush you. "
+        "We guarantee a 10x reduction in operational costs."
+    )
+    result = AIAuditEngine.run_audit(
+        content_text=violating_text,
+        content_id="sub_violate_1",
+    )
+    assert result.overall_status in (OverallAuditStatus.NEEDS_REVIEW, OverallAuditStatus.NON_COMPLIANT)
+    assert result.summary.total_findings >= 3
 
-    claim_findings = [f for f in result.findings if f.category == FindingCategoryEnum.CLAIM_VERIFICATION]
-    assert len(claim_findings) >= 1
-    finding = claim_findings[0]
-    assert finding.severity == FindingSeverityEnum.HIGH
-    assert finding.requires_human_review is True
-    # Crucial invariant: source_reference MUST be None when no empirical source exists!
-    assert finding.source_reference is None
+    categories = [f.category for f in result.findings]
+    assert FindingCategory.TERMINOLOGY in categories
+    assert FindingCategory.TONE_VOICE in categories
+    assert FindingCategory.CLAIM_VERIFICATION in categories
 
 
-def test_tone_and_voice_colloquialism_flagged():
-    """Verify informal slang triggers tone recommendation."""
-    engine = AIAuditEngine()
-    violating_text = "The entire executive team is super pumped about the upcoming product release."
-    result = engine.audit_text(text=violating_text, content_id="cnt-tone-001")
+def test_claim_verification_distinguishes_unverified_from_contradicted():
+    unverified_text = "We provide a 10x faster review time."
+    res_unverified = AIAuditEngine.run_audit(content_text=unverified_text, content_id="test_unv")
+    claim_finding = next(f for f in res_unverified.findings if f.category == FindingCategory.CLAIM_VERIFICATION)
+    assert claim_finding.source_reference.verification_status == VerificationStatus.UNVERIFIED
+    assert claim_finding.source_reference.source_url is None
 
-    tone_findings = [f for f in result.findings if f.category == FindingCategoryEnum.TONE_AND_VOICE]
-    assert len(tone_findings) >= 1
-    assert "super pumped" in tone_findings[0].evidence.lower()
-    assert tone_findings[0].suggested_correction is not None
-    assert "proud" in tone_findings[0].suggested_correction
+    contradicted_text = "Our platform processes infinite video in 0 seconds."
+    res_contra = AIAuditEngine.run_audit(content_text=contradicted_text, content_id="test_contra")
+    contra_finding = next(f for f in res_contra.findings if f.category == FindingCategory.CLAIM_VERIFICATION)
+    assert contra_finding.source_reference.verification_status == VerificationStatus.CONTRADICTED

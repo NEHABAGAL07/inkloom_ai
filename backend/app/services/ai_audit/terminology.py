@@ -1,160 +1,100 @@
-"""Inkloom AI - Terminology and Brand Vocabulary Checker.
-
-Enforces corporate naming standards, trademark casing, preferred vocabulary,
-and forbidden phrase lists with precise word boundaries and deduplication.
 """
+Brand Terminology and Lexicon Checker
 
+Validates content against approved terminology, trademark capitalization,
+deprecated legacy names, and prohibited buzzwords.
+"""
 import re
-from typing import List, Dict, Any, Optional, Set, Tuple
-from app.schemas.audit import FindingSchema, LocationSchema
-from app.schemas.common import FindingCategoryEnum, FindingSeverityEnum, FindingStatusEnum
-from app.services.ai_audit.guideline_retrieval import RetrievedRule
-from app.services.ai_audit.interface import LearnedPreference
+from typing import List, Dict, Any
+from app.schemas.audit_contract import (
+    Finding,
+    FindingCategory,
+    FindingSeverity,
+    FindingStatus,
+    SourceReference,
+    VerificationStatus,
+    SuggestedCorrection,
+    FindingLocation,
+)
+
+DEFAULT_TERMINOLOGY_DICTIONARY = [
+    {
+        "term": "Inkloom Cloud Suite",
+        "replacement": "Inkloom Governance Hub",
+        "severity": FindingSeverity.HIGH,
+        "title": "Deprecated Product Portfolio Name",
+        "message": "Product rebranding Q1 2026 retired 'Inkloom Cloud Suite'. Use 'Inkloom Governance Hub'.",
+        "rationale": "Ensures consistency with registered 2026 trademark and market catalog.",
+        "rule_name": "Product Naming Architecture",
+        "section": "Section 2.1: Brand Portfolio Registry",
+    },
+    {
+        "term": "inkloom",  # all lowercase without proper casing
+        "replacement": "Inkloom AI",
+        "severity": FindingSeverity.LOW,
+        "title": "Improper Brand Capitalization",
+        "message": "Brand identity mandates camel-case 'Inkloom' or full trademark 'Inkloom AI'.",
+        "rationale": "Adheres to visual identity typography standards.",
+        "rule_name": "Trademark Typographic Standards",
+        "section": "Section 2.3: Trademark Mechanics",
+    },
+    {
+        "term": "guaranteed zero errors",
+        "replacement": "engineered for high precision governance",
+        "severity": FindingSeverity.CRITICAL,
+        "title": "Prohibited Absolute Liability Term",
+        "message": "Legal policy strictly forbids warranty guarantees of 'zero errors' in AI software marketing.",
+        "rationale": "Prevents breach of commercial warranty terms and liability exposure.",
+        "rule_name": "Commercial Warranty Disclaimers",
+        "section": "Legal & Risk Addendum A-2",
+    },
+]
 
 
 class TerminologyChecker:
-    """Checks content against prohibited phrases, trademark casing, and preferred terms."""
+    @staticmethod
+    def check(text: str, custom_terms: List[Dict[str, Any]] = None) -> List[Finding]:
+        findings: List[Finding] = []
+        dictionary = list(DEFAULT_TERMINOLOGY_DICTIONARY)
+        if custom_terms:
+            dictionary.extend(custom_terms)
 
-    def check(
-        self,
-        text: str,
-        rules: List[RetrievedRule],
-        learned_preferences: Optional[List[LearnedPreference]] = None,
-    ) -> List[FindingSchema]:
-        """Execute terminology checks with boundary awareness and false-positive prevention."""
-        findings: List[FindingSchema] = []
-        term_rules = [r for r in rules if r.category == "terminology"]
-        flagged_spans: Set[Tuple[int, int]] = set()
+        counter = 1
+        for item in dictionary:
+            target_term = item["term"]
+            # Word boundary regex search
+            pattern = rf"\b{re.escape(target_term)}\b"
+            flags = 0 if target_term == "inkloom" else re.IGNORECASE
+            regex = re.compile(pattern, flags)
 
-        # Check learned preferences first if any
-        if learned_preferences:
-            for pref in learned_preferences:
-                if pref.preference_type == "custom_forbidden_term":
-                    pattern = re.compile(rf"\b{re.escape(pref.pattern)}\b", re.IGNORECASE)
-                    for match in pattern.finditer(text):
-                        start_idx = match.start()
-                        end_idx = match.end()
-                        if (start_idx, end_idx) in flagged_spans:
-                            continue
-                        flagged_spans.add((start_idx, end_idx))
-                        line_num = text[:start_idx].count("\n") + 1
-                        evidence = text[max(0, start_idx - 25):min(len(text), end_idx + 25)].strip()
-                        suggestion = (
-                            text[:start_idx] + pref.replacement + text[end_idx:]
-                            if pref.replacement
-                            else None
-                        )
-                        findings.append(
-                            FindingSchema(
-                                id=f"term-learned-{len(findings)+1}",
-                                category=FindingCategoryEnum.TERMINOLOGY,
-                                severity=FindingSeverityEnum.MEDIUM,
-                                title="Custom Prohibited Term Violation",
-                                message=f"Term '{match.group(0)}' violates confirmed organization terminology. Reason: {pref.reason}",
-                                evidence=evidence,
-                                source_reference=f"Learned Preference #{pref.preference_id}",
-                                confidence=0.96,
-                                suggested_correction=suggestion,
-                                status=FindingStatusEnum.FLAGGED,
-                                location=LocationSchema(
-                                    start_offset=start_idx,
-                                    end_offset=end_idx,
-                                    line=line_num,
-                                    page=1,
-                                ),
-                                requires_human_review=False,
-                            )
-                        )
-
-        for rule in term_rules:
-            config = rule.rule_config
-            forbidden_variants = config.get("forbidden_variants", [])
-            preferred_term = config.get("preferred_term")
-            case_sensitive = config.get("case_sensitive", False)
-
-            # Sort variants by length descending so longer compound phrases match first
-            sorted_variants = sorted(forbidden_variants, key=len, reverse=True)
-
-            for variant in sorted_variants:
-                # Compile regex with word boundaries
-                flags = 0 if case_sensitive else re.IGNORECASE
-                pattern = re.compile(rf"\b{re.escape(variant)}\b", flags)
-
-                for match in pattern.finditer(text):
-                    start_idx = match.start()
-                    end_idx = match.end()
-                    matched_str = match.group(0)
-
-                    # Sub-match / False positive protection:
-                    # If this match is already covered by a previously flagged span, skip
-                    if any(s <= start_idx and e >= end_idx for (s, e) in flagged_spans):
-                        continue
-
-                    # If the text at this location is actually the preferred term, skip!
-                    # Example: "Inkloom" inside "Inkloom AI" when preferred_term is "Inkloom AI"
-                    if preferred_term:
-                        pref_len = len(preferred_term)
-                        # Check forward
-                        candidate_forward = text[start_idx : start_idx + pref_len]
-                        if candidate_forward == preferred_term:
-                            continue
-                        # Check backward (if match started mid-phrase)
-                        pref_start = max(0, start_idx - pref_len)
-                        candidate_context = text[pref_start : end_idx + pref_len]
-                        if preferred_term in candidate_context:
-                            # Verify if the match itself was part of that preferred term
-                            pref_pos_in_context = candidate_context.find(preferred_term)
-                            abs_pref_start = pref_start + pref_pos_in_context
-                            abs_pref_end = abs_pref_start + pref_len
-                            if abs_pref_start <= start_idx and end_idx <= abs_pref_end:
-                                continue
-
-                    # If this match string already exactly equals preferred_term, skip
-                    if preferred_term and matched_str == preferred_term:
-                        continue
-
-                    # Also check if accepted brand names like "Inkloom" are allowed when preferred is "Inkloom AI"
-                    # But if the rule title is "Brand Name Capitalization & Casing", only flag improper casing
-                    if "Capitalization" in rule.title or "Casing" in rule.title:
-                        if matched_str in ("Inkloom", "Inkloom AI"):
-                            continue
-
-                    flagged_spans.add((start_idx, end_idx))
-                    line_num = text[:start_idx].count("\n") + 1
-
-                    context_start = max(0, start_idx - 30)
-                    context_end = min(len(text), end_idx + 30)
-                    evidence_snippet = text[context_start:context_end].strip()
-
-                    suggested_replacement = None
-                    if preferred_term:
-                        suggested_replacement = text[:start_idx] + preferred_term + text[end_idx:]
-
-                    severity_val = rule.severity.lower()
-                    try:
-                        severity_enum = FindingSeverityEnum(severity_val)
-                    except ValueError:
-                        severity_enum = FindingSeverityEnum.MEDIUM
-
-                    finding = FindingSchema(
-                        id=f"term-{rule.rule_id}-{len(findings)+1}",
-                        category=FindingCategoryEnum.TERMINOLOGY,
-                        severity=severity_enum,
-                        title=rule.title,
-                        message=f"Term '{matched_str}' violates terminology guidelines. {rule.description}",
-                        evidence=evidence_snippet,
-                        source_reference=rule.source_reference,
-                        confidence=0.98,
-                        suggested_correction=suggested_replacement,
-                        status=FindingStatusEnum.FLAGGED,
-                        location=LocationSchema(
-                            start_offset=start_idx,
-                            end_offset=end_idx,
-                            line=line_num,
-                            page=1,
-                        ),
-                        requires_human_review=False,
-                    )
-                    findings.append(finding)
+            for match in regex.finditer(text):
+                finding = Finding(
+                    id=f"find_term_{counter:03d}",
+                    category=FindingCategory.TERMINOLOGY,
+                    severity=item["severity"],
+                    title=item["title"],
+                    message=item["message"],
+                    evidence=match.group(0),
+                    source_reference=SourceReference(
+                        rule_name=item["rule_name"],
+                        section=item["section"],
+                        verification_status=VerificationStatus.VERIFIED,
+                        is_external=False,
+                    ),
+                    confidence=0.99,
+                    suggested_correction=SuggestedCorrection(
+                        replacement_text=item["replacement"],
+                        rationale=item["rationale"],
+                        preserves_intent=True,
+                    ),
+                    status=FindingStatus.OPEN,
+                    location=FindingLocation(
+                        start_char=match.start(),
+                        end_char=match.end(),
+                    ),
+                    requires_human_review=item["severity"] == FindingSeverity.CRITICAL,
+                )
+                findings.append(finding)
+                counter += 1
 
         return findings

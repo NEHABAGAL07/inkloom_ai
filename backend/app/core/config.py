@@ -1,29 +1,18 @@
-"""Inkloom AI - Central Application Configuration."""
-
 import os
 from typing import List, Union
 from pydantic import AnyHttpUrl, field_validator
-try:
-    from pydantic_settings import BaseSettings, SettingsConfigDict
-except ImportError:
-    # Fallback if pydantic-settings is not yet installed
-    from pydantic import BaseModel as BaseSettings  # type: ignore
-    SettingsConfigDict = None  # type: ignore
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Application settings with environment variable overrides."""
+    ENVIRONMENT: str = "development"
+    DEBUG: bool = True
+    LOG_LEVEL: str = "INFO"
 
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
-    PROJECT_NAME: str = "Inkloom AI"
-    API_V1_STR: str = "/api/v1"
-    DEBUG: bool = os.getenv("DEBUG", "true").lower() in ("true", "1", "yes")
+    APP_NAME: str = "Inkloom AI Brand Governance API"
+    API_V1_PREFIX: str = "/api/v1"
 
-    # Networking
-    BACKEND_HOST: str = os.getenv("BACKEND_HOST", "0.0.0.0")
-    BACKEND_PORT: int = int(os.getenv("BACKEND_PORT", "8000"))
-    
-    # CORS
+    # CORS configuration
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -31,24 +20,25 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
     ]
 
-    # Database
-    # Defaults to SQLite in development if PostgreSQL is not specified
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", 
-        "sqlite+aiosqlite:///./inkloom.db"
-    )
+    @field_validator("CORS_ORIGINS", mode="before")
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, list):
+            return v
+        return []
 
     # Security
-    SECRET_KEY: str = os.getenv(
-        "SECRET_KEY", 
-        "development-only-secret-key-do-not-use-in-production-inkloom-0000"
-    )
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
+    SECRET_KEY: str = "dev_secret_key_not_for_production_use_only"
     ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
-    # Uploads & Storage
-    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "./uploads")
-    MAX_UPLOAD_SIZE_BYTES: int = 25 * 1024 * 1024  # 25 MB
+    # Database
+    DATABASE_URL: str = "sqlite:///./inkloom_dev.db"
+
+    # Uploads & Media
+    UPLOAD_STORAGE_DIR: str = "./uploads"
+    MAX_UPLOAD_SIZE_MB: int = 25
     ALLOWED_MEDIA_TYPES: List[str] = [
         "text/plain",
         "application/pdf",
@@ -57,31 +47,20 @@ class Settings(BaseSettings):
         "image/jpeg",
         "image/webp",
         "video/mp4",
-        "video/quicktime",
-        "video/webm",
     ]
 
-    # AI Audit Engine Configuration
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "rule_based_fallback")
-    LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
-    LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME", "gemini-1.5-pro")
-    LLM_TIMEOUT_SECONDS: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "8.0"))
-    CLAIM_VERIFICATION_THRESHOLD: float = 0.75
-    MAX_RULES_PER_AUDIT: int = 100
-    MAX_AUDIT_TEXT_LENGTH: int = int(os.getenv("MAX_AUDIT_TEXT_LENGTH", "500000"))
+    # AI Engine
+    AI_ENGINE_MODE: str = "deterministic"
+    LLM_PROVIDER: str = "offline_rule_engine"
+    LLM_API_KEY: str = ""
+    LLM_MODEL_NAME: str = "gpt-4o-mini"
 
-    # Media Extraction Tooling
-    ENABLE_OCR: bool = os.getenv("ENABLE_OCR", "true").lower() in ("true", "1")
-    TESSERACT_CMD: str = os.getenv("TESSERACT_CMD", "tesseract")
-    FFMPEG_CMD: str = os.getenv("FFMPEG_CMD", "ffmpeg")
-
-    if SettingsConfigDict:
-        model_config = SettingsConfigDict(
-            env_file=".env",
-            env_file_encoding="utf-8",
-            extra="ignore",
-            case_sensitive=True,
-        )
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore"
+    )
 
 
 settings = Settings()

@@ -1,60 +1,58 @@
+version: "3.8"
+
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: inkloom_postgres
+  # Multi-tenant Relational Database
+  db:
+    image: postgres:15-alpine
+    container_name: inkloom_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres_dev_password
-      POSTGRES_DB: inkloom_ai
+      POSTGRES_USER: ${POSTGRES_USER:-inkloom_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-inkloom_dev_pw}
+      POSTGRES_DB: ${POSTGRES_DB:-inkloom_ai}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U inkloom_user -d inkloom_ai"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # FastAPI Backend Service
   backend:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
     container_name: inkloom_backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    volumes:
-      - ./backend:/app
-      - ./contracts:/app/contracts:ro
-      - ./uploads:/app/uploads
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-inkloom_user}:${POSTGRES_PASSWORD:-inkloom_dev_pw}@db:5432/${POSTGRES_DB:-inkloom_ai}
+      ENVIRONMENT: development
+      DEBUG: "true"
+      AI_ENGINE_MODE: deterministic
+      CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
     ports:
       - "8000:8000"
-    environment:
-      - ENVIRONMENT=development
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres_dev_password@postgres:5432/inkloom_ai
-      - SECRET_KEY=inkloom-development-only-secret-key-do-not-use-in-production
-      - CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
-      - UPLOAD_DIR=/app/uploads
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: inkloom_frontend
-    command: npm run dev
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
+      - ./backend:/workspace/backend
+      - ./contracts:/workspace/contracts
+
+  # Next.js Frontend Service
+  frontend:
+    image: node:18-alpine
+    container_name: inkloom_frontend
+    working_dir: /app
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
-      - NEXT_PUBLIC_USE_MOCK_API=false
-    depends_on:
-      - backend
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_USE_MOCK: "true"
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm install && npm run dev"
 
 volumes:
   postgres_data:

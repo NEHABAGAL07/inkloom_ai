@@ -1,42 +1,46 @@
-"""Brand Guideline Schemas."""
-
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
-from app.schemas.common import FindingSeverityEnum, FindingCategoryEnum
+from pydantic import BaseModel, ConfigDict
 
 
-class GuidelineRuleCreate(BaseModel):
-    rule_key: str
-    title: str
-    description: str
-    severity: FindingSeverityEnum = FindingSeverityEnum.MEDIUM
-    rule_config: Dict[str, Any] = Field(default_factory=dict)
-    is_active: bool = True
+class GuidelineRuleBase(BaseModel):
+    category: str
+    rule_name: str
+    section: Optional[str] = None
+    severity_default: str = "medium"
+    rule_definition: Dict[str, Any]
+    requires_human_review: bool = False
+    source_url: Optional[str] = None
 
 
-class GuidelineRuleResponse(GuidelineRuleCreate):
+class GuidelineRuleCreate(GuidelineRuleBase):
+    pass
+
+
+class GuidelineRuleResponse(GuidelineRuleBase):
     id: str
     guideline_id: str
     created_at: datetime
 
+    model_config = ConfigDict(from_attributes=True)
 
-class BrandGuidelineCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=255)
-    organization_id: Optional[str] = None
-    category: FindingCategoryEnum
-    version: str = "1.0"
+
+class BrandGuidelineBase(BaseModel):
+    name: str
     description: Optional[str] = None
-    rules: List[GuidelineRuleCreate] = Field(default_factory=list)
+    version: str = "1.0.0"
+    is_active: bool = True
 
 
-class BrandGuidelineResponse(BaseModel):
+class BrandGuidelineCreate(BrandGuidelineBase):
+    rules: Optional[List[GuidelineRuleCreate]] = None
+
+
+class BrandGuidelineResponse(BrandGuidelineBase):
     id: str
     organization_id: str
-    name: str
-    category: FindingCategoryEnum
-    version: str
-    description: Optional[str] = None
-    is_active: bool
     created_at: datetime
-    rules: List[GuidelineRuleResponse] = Field(default_factory=list)
+    updated_at: datetime
+    rules: Optional[List[GuidelineRuleResponse]] = None
+
+    model_config = ConfigDict(from_attributes=True)

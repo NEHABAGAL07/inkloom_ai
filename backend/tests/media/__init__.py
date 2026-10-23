@@ -1,1 +1,0 @@
-"""Media QA test package."""

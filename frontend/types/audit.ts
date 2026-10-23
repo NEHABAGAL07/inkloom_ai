@@ -1,32 +1,24 @@
 /**
- * Inkloom AI - Shared Audit Contract Types
- * Strictly mirrors `contracts/audit-result.schema.json`
+ * Shared Brand Governance Audit Result TypeScript Contract
+ * Conforms 1:1 to contracts/audit-result.schema.json
  */
 
-export type AuditStatus = 'passed' | 'failed' | 'warning' | 'needs_human_review';
+export type OverallAuditStatus = "compliant" | "needs_review" | "non_compliant" | "error";
 
 export type FindingCategory =
-  | 'tone_and_voice'
-  | 'terminology'
-  | 'claim_verification'
-  | 'visual_compliance'
-  | 'accessibility'
-  | 'prohibited_content'
-  | 'legal_compliance';
+  | "tone_voice"
+  | "terminology"
+  | "claim_verification"
+  | "visual_brand"
+  | "accessibility"
+  | "editorial_standards"
+  | "legal_compliance";
 
-export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+export type FindingSeverity = "critical" | "high" | "medium" | "low" | "info";
 
-export type FindingStatus = 'flagged' | 'accepted' | 'dismissed' | 'escalated';
+export type FindingStatus = "open" | "accepted" | "dismissed" | "manual_check_required";
 
-export type WorkflowState =
-  | 'draft'
-  | 'submitted'
-  | 'auditing'
-  | 'changes_requested'
-  | 'resubmitted'
-  | 'pending_approval'
-  | 'approved'
-  | 'rejected';
+export type VerificationStatus = "verified" | "unverified" | "contradicted" | "not_applicable";
 
 export interface BoundingBox {
   x: number;
@@ -36,13 +28,27 @@ export interface BoundingBox {
 }
 
 export interface FindingLocation {
-  start_offset?: number | null;
-  end_offset?: number | null;
-  line?: number | null;
-  page?: number | null;
-  timestamp_seconds?: number | null;
-  selector?: string | null;
-  bounding_box?: BoundingBox | null;
+  page_number?: number;
+  line_number?: number;
+  start_char?: number;
+  end_char?: number;
+  timestamp_seconds?: number;
+  bounding_box?: BoundingBox;
+}
+
+export interface SourceReference {
+  guideline_id?: string;
+  section?: string;
+  rule_name: string;
+  source_url?: string | null;
+  is_external?: boolean;
+  verification_status: VerificationStatus;
+}
+
+export interface SuggestedCorrection {
+  replacement_text: string;
+  rationale: string;
+  preserves_intent?: boolean;
 }
 
 export interface Finding {
@@ -51,84 +57,44 @@ export interface Finding {
   severity: FindingSeverity;
   title: string;
   message: string;
-  evidence: string | null;
-  source_reference: string | null;
-  confidence: number;
-  suggested_correction: string | null;
+  evidence?: string | null;
+  source_reference?: SourceReference | null;
+  confidence: number; // 0.0 to 1.0
+  suggested_correction?: SuggestedCorrection | null;
   status: FindingStatus;
   location?: FindingLocation | null;
   requires_human_review: boolean;
 }
 
+export interface AuditSummary {
+  compliance_score: number; // 0 to 100
+  total_findings: number;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  low_count: number;
+  info_count: number;
+  human_review_required: boolean;
+  verdict_overview?: string;
+}
+
 export interface EngineMetadata {
   engine_version: string;
   execution_time_ms: number;
-  rules_checked_count: number;
-  ai_model_used?: string | null;
-  extractors_used?: string[];
+  modules_executed: string[];
+  models_used?: string[];
+  warnings?: string[];
+  [key: string]: unknown;
 }
 
 export interface AuditResult {
   schema_version: string;
   audit_id: string;
   content_id: string;
-  overall_status: AuditStatus;
-  summary: string;
+  revision_id?: string | null;
+  overall_status: OverallAuditStatus;
+  summary: AuditSummary;
   findings: Finding[];
-  created_at: string;
+  created_at: string; // ISO 8601
   engine_metadata: EngineMetadata;
-}
-
-export interface ContentSubmission {
-  id: string;
-  organization_id: string;
-  workspace_id: string;
-  author_id: string;
-  title: string;
-  content_type: 'text' | 'document' | 'image' | 'video';
-  current_status: WorkflowState;
-  current_revision_num: number;
-  created_at: string;
-  updated_at: string;
-  raw_text?: string;
-}
-
-export interface ReviewQueueItem {
-  content_id: string;
-  title: string;
-  author_email: string;
-  workflow_status: WorkflowState;
-  findings_count: number;
-  submitted_at: string;
-  requires_action: boolean;
-}
-
-export interface ReviewDecisionPayload {
-  content_id: string;
-  revision_id: string;
-  action: 'approve' | 'reject' | 'request_changes';
-  comments: string;
-}
-
-export interface BrandGuideline {
-  id: string;
-  name: string;
-  category: FindingCategory;
-  version: string;
-  description: string;
-  is_active: boolean;
-  rules_count: number;
-}
-
-export interface AnalyticsSummary {
-  compliance_rate_pct: number;
-  total_audits_conducted: number;
-  pending_human_reviews: number;
-  approved_this_month: number;
-  top_violation_categories: Array<{
-    category: string;
-    count: number;
-    pct: number;
-  }>;
-  average_review_turnaround_hours: number;
 }

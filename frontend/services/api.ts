@@ -1,156 +1,341 @@
 /**
- * Inkloom AI - Production API Client
- * Interfaces with FastAPI backend at `/api/v1`
- * Falls back transparently to MockApiService if NEXT_PUBLIC_USE_MOCK_API=true
+ * Unified API Client for Inkloom AI Brand Governance
+ * Implements IApiService with dynamic JWT authentication & tenant scoping.
+ * Automatically falls back to MockApiService if NEXT_PUBLIC_USE_MOCK=true or backend is unavailable.
  */
-
+import {
+  IApiService,
+  CreateSubmissionInput,
+  ReviewDecisionInput,
+  mockApi,
+} from "./mock-api";
 import {
   AuditResult,
   ContentSubmission,
-  ReviewQueueItem,
-  ReviewDecisionPayload,
-  AnalyticsSummary,
+  ReviewDecision,
   BrandGuideline,
-  WorkflowState,
-} from '../types/audit';
-import { MockApiService } from './mock-api';
+  ApprovedAsset,
+  AnalyticsSummary,
+  User,
+  Organization,
+  OrgMembership,
+  AuthResponse,
+  MemberInfo,
+  Invitation,
+  PublicInvitation,
+} from "../types";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
-const USE_MOCK =
-  process.env.NEXT_PUBLIC_USE_MOCK_API === 'true' ||
-  typeof window === 'undefined';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
-export const ApiService = {
-  async getRecentAudits(): Promise<AuditResult[]> {
-    if (USE_MOCK) return MockApiService.getRecentAudits();
-    try {
-      const res = await fetch(`${API_BASE_URL}/audits/aud-recent`);
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-      return [data];
-    } catch (err) {
-      console.warn('API call failed, falling back to mock data:', err);
-      return MockApiService.getRecentAudits();
+let activeToken: string | null = null;
+let activeTenantId: string = "org_acme_cloud";
+
+// Initialize client-side state from localStorage
+if (typeof window !== "undefined") {
+  activeToken = localStorage.getItem("inkloom_token");
+  const storedTenant = localStorage.getItem("inkloom_tenant_id");
+  if (storedTenant) activeTenantId = storedTenant;
+}
+
+export function setApiAuthToken(token: string | null) {
+  activeToken = token;
+  if (typeof window !== "undefined") {
+    if (token) localStorage.setItem("inkloom_token", token);
+    else localStorage.removeItem("inkloom_token");
+  }
+}
+
+export function setApiTenantId(tenantId: string) {
+  activeTenantId = tenantId;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("inkloom_tenant_id", tenantId);
+  }
+}
+
+export function getApiTenantId(): string {
+  return activeTenantId;
+}
+
+export class ApiService implements IApiService {
+  private async fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "X-Tenant-Id": activeTenantId,
+      ...(options?.headers as Record<string, string> || {}),
+    };
+
+    if (activeToken) {
+      headers["Authorization"] = `Bearer ${activeToken}`;
     }
-  },
 
-  async getAuditById(auditId: string): Promise<AuditResult> {
-    if (USE_MOCK) return MockApiService.getAuditById(auditId);
-    try {
-      const res = await fetch(`${API_BASE_URL}/audits/${auditId}`);
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      return await res.json();
-    } catch (err) {
-      console.warn('API call failed, falling back to mock data:', err);
-      return MockApiService.getAuditById(auditId);
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    });
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(errBody.detail || `Request failed with status ${res.status}`);
     }
-  },
+    return res.json();
+  }
 
-  async submitContent(data: {
-    title: string;
-    raw_text?: string;
-    content_type: 'text' | 'document' | 'image' | 'video';
-    file?: File;
-  }): Promise<ContentSubmission> {
-    if (USE_MOCK) return MockApiService.submitContent(data);
+  // --- Submissions ---
+  async getSubmissions(): Promise<ContentSubmission[]> {
+    if (USE_MOCK) return mockApi.getSubmissions();
     try {
-      const formData = new FormData();
-      formData.append('title', data.title);
-      formData.append('content_type', data.content_type);
-      if (data.raw_text) formData.append('raw_text', data.raw_text);
-      if (data.file) formData.append('file', data.file);
-      formData.append('workspace_id', 'ws-main-001');
+      return await this.fetchJson<ContentSubmission[]>("/submissions");
+    } catch {
+      return mockApi.getSubmissions();
+    }
+  }
 
-      const res = await fetch(`${API_BASE_URL}/content/submit`, {
-        method: 'POST',
-        body: formData,
+  async getSubmission(id: string): Promise<ContentSubmission> {
+    if (USE_MOCK) return mockApi.getSubmission(id);
+    try {
+      return await this.fetchJson<ContentSubmission>(`/submissions/${id}`);
+    } catch {
+      return mockApi.getSubmission(id);
+    }
+  }
+
+  async createSubmission(data: CreateSubmissionInput): Promise<ContentSubmission> {
+    if (USE_MOCK) return mockApi.createSubmission(data);
+    try {
+      return await this.fetchJson<ContentSubmission>("/submissions", {
+        method: "POST",
+        body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      return await res.json();
-    } catch (err) {
-      console.warn('API call failed, falling back to mock data:', err);
-      return MockApiService.submitContent(data);
+    } catch {
+      return mockApi.createSubmission(data);
     }
-  },
+  }
 
-  async runAudit(contentId: string): Promise<AuditResult> {
-    if (USE_MOCK) return MockApiService.runAudit(contentId);
+  // --- Audits ---
+  async triggerAudit(submissionId: string, revisionId?: string): Promise<AuditResult> {
+    if (USE_MOCK) return mockApi.triggerAudit(submissionId, revisionId);
     try {
-      const res = await fetch(`${API_BASE_URL}/audits/run`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content_id: contentId }),
+      return await this.fetchJson<AuditResult>("/audits/trigger", {
+        method: "POST",
+        body: JSON.stringify({ submission_id: submissionId, revision_id: revisionId }),
       });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      return await res.json();
-    } catch (err) {
-      console.warn('API call failed, falling back to mock data:', err);
-      return MockApiService.runAudit(contentId);
+    } catch {
+      return mockApi.triggerAudit(submissionId, revisionId);
     }
-  },
+  }
 
-  async getReviewQueue(): Promise<ReviewQueueItem[]> {
-    if (USE_MOCK) return MockApiService.getReviewQueue();
+  async getAudit(auditId: string): Promise<AuditResult> {
+    if (USE_MOCK) return mockApi.getAudit(auditId);
     try {
-      const res = await fetch(`${API_BASE_URL}/reviews/queue`);
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      return await res.json();
-    } catch (err) {
-      console.warn('API call failed, falling back to mock data:', err);
-      return MockApiService.getReviewQueue();
+      return await this.fetchJson<AuditResult>(`/audits/${auditId}`);
+    } catch {
+      return mockApi.getAudit(auditId);
     }
-  },
+  }
 
-  async submitReviewDecision(
-    payload: ReviewDecisionPayload
-  ): Promise<{ status: string; new_state: WorkflowState }> {
-    if (USE_MOCK) return MockApiService.submitReviewDecision(payload);
+  // --- Reviews ---
+  async getPendingReviews(): Promise<ContentSubmission[]> {
+    if (USE_MOCK) return mockApi.getPendingReviews();
     try {
-      const res = await fetch(`${API_BASE_URL}/reviews/decision`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      return await this.fetchJson<ContentSubmission[]>("/reviews/pending");
+    } catch {
+      return mockApi.getPendingReviews();
+    }
+  }
+
+  async submitReviewDecision(data: ReviewDecisionInput): Promise<ReviewDecision> {
+    if (USE_MOCK) return mockApi.submitReviewDecision(data);
+    try {
+      return await this.fetchJson<ReviewDecision>("/reviews/decide", {
+        method: "POST",
+        body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-      return { status: 'success', new_state: data.new_workflow_status };
-    } catch (err) {
-      console.warn('API call failed, falling back to mock data:', err);
-      return MockApiService.submitReviewDecision(payload);
+    } catch {
+      return mockApi.submitReviewDecision(data);
     }
-  },
+  }
+
+  // --- Guidelines & Assets ---
+  async getGuidelines(): Promise<BrandGuideline[]> {
+    if (USE_MOCK) return mockApi.getGuidelines();
+    try {
+      return await this.fetchJson<BrandGuideline[]>("/guidelines");
+    } catch {
+      return mockApi.getGuidelines();
+    }
+  }
+
+  async getAssets(): Promise<ApprovedAsset[]> {
+    if (USE_MOCK) return mockApi.getAssets();
+    try {
+      return await this.fetchJson<ApprovedAsset[]>("/assets");
+    } catch {
+      return mockApi.getAssets();
+    }
+  }
 
   async getAnalyticsSummary(): Promise<AnalyticsSummary> {
-    if (USE_MOCK) return MockApiService.getAnalyticsSummary();
+    if (USE_MOCK) return mockApi.getAnalyticsSummary();
     try {
-      const res = await fetch(`${API_BASE_URL}/analytics/summary`);
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      return await res.json();
-    } catch (err) {
-      console.warn('API call failed, falling back to mock data:', err);
-      return MockApiService.getAnalyticsSummary();
+      return await this.fetchJson<AnalyticsSummary>("/analytics/summary");
+    } catch {
+      return mockApi.getAnalyticsSummary();
     }
-  },
+  }
 
-  async getGuidelines(): Promise<BrandGuideline[]> {
-    if (USE_MOCK) return MockApiService.getGuidelines();
-    try {
-      const res = await fetch(`${API_BASE_URL}/guidelines`);
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-      return data.map((g: any) => ({
-        id: g.id,
-        name: g.name,
-        category: g.category,
-        version: g.version,
-        description: g.description,
-        is_active: g.is_active,
-        rules_count: g.rules?.length || 0,
-      }));
-    } catch (err) {
-      console.warn('API call failed, falling back to mock data:', err);
-      return MockApiService.getGuidelines();
+  // --- Authentication ---
+  async login(email: string, password: string): Promise<AuthResponse> {
+    if (USE_MOCK) {
+      const mockRes = await mockApi.login(email, password);
+      setApiAuthToken(mockRes.access_token);
+      setApiTenantId(mockRes.active_organization_id);
+      return mockRes;
     }
-  },
-};
+    const res = await this.fetchJson<AuthResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    setApiAuthToken(res.access_token);
+    setApiTenantId(res.active_organization_id);
+    return res;
+  }
+
+  async register(data: { email: string; password: string; full_name: string; organization_name: string; industry?: string }): Promise<AuthResponse> {
+    if (USE_MOCK) {
+      const mockRes = await mockApi.register(data);
+      setApiAuthToken(mockRes.access_token);
+      setApiTenantId(mockRes.active_organization_id);
+      return mockRes;
+    }
+    const res = await this.fetchJson<AuthResponse>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    setApiAuthToken(res.access_token);
+    setApiTenantId(res.active_organization_id);
+    return res;
+  }
+
+  async getCurrentUser(): Promise<{ user: User; active_organization_id: string; active_role: string; memberships: OrgMembership[] }> {
+    if (USE_MOCK) return mockApi.getCurrentUser();
+    try {
+      return await this.fetchJson<{ user: User; active_organization_id: string; active_role: string; memberships: OrgMembership[] }>("/auth/me");
+    } catch {
+      return mockApi.getCurrentUser();
+    }
+  }
+
+  // --- Organizations ---
+  async getOrganizations(): Promise<Organization[]> {
+    if (USE_MOCK) return mockApi.getOrganizations();
+    try {
+      return await this.fetchJson<Organization[]>("/organizations");
+    } catch {
+      return mockApi.getOrganizations();
+    }
+  }
+
+  async createOrganization(data: { name: string; industry?: string; description?: string; website?: string }): Promise<Organization> {
+    if (USE_MOCK) return mockApi.createOrganization(data);
+    return await this.fetchJson<Organization>("/organizations", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getOrganization(orgId: string): Promise<Organization> {
+    if (USE_MOCK) return mockApi.getOrganization(orgId);
+    try {
+      return await this.fetchJson<Organization>(`/organizations/${orgId}`);
+    } catch {
+      return mockApi.getOrganization(orgId);
+    }
+  }
+
+  async updateOrganization(orgId: string, data: Partial<Organization>): Promise<Organization> {
+    if (USE_MOCK) return mockApi.updateOrganization(orgId, data);
+    return await this.fetchJson<Organization>(`/organizations/${orgId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // --- Members & Roles ---
+  async getMembers(orgId: string): Promise<MemberInfo[]> {
+    if (USE_MOCK) return mockApi.getMembers(orgId);
+    try {
+      return await this.fetchJson<MemberInfo[]>(`/organizations/${orgId}/members`);
+    } catch {
+      return mockApi.getMembers(orgId);
+    }
+  }
+
+  async updateMemberRole(orgId: string, userId: string, role: string): Promise<MemberInfo> {
+    if (USE_MOCK) return mockApi.updateMemberRole(orgId, userId, role);
+    return await this.fetchJson<MemberInfo>(`/organizations/${orgId}/members/${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async removeMember(orgId: string, userId: string): Promise<void> {
+    if (USE_MOCK) return mockApi.removeMember(orgId, userId);
+    await this.fetchJson<void>(`/organizations/${orgId}/members/${userId}`, {
+      method: "DELETE",
+    });
+  }
+
+  // --- Invitations ---
+  async getInvitations(orgId: string): Promise<Invitation[]> {
+    if (USE_MOCK) return mockApi.getInvitations(orgId);
+    try {
+      return await this.fetchJson<Invitation[]>(`/organizations/${orgId}/invitations`);
+    } catch {
+      return mockApi.getInvitations(orgId);
+    }
+  }
+
+  async createInvitation(orgId: string, email: string, role: string): Promise<Invitation> {
+    if (USE_MOCK) return mockApi.createInvitation(orgId, email, role);
+    return await this.fetchJson<Invitation>(`/organizations/${orgId}/invitations`, {
+      method: "POST",
+      body: JSON.stringify({ email, role }),
+    });
+  }
+
+  async revokeInvitation(orgId: string, inviteId: string): Promise<void> {
+    if (USE_MOCK) return mockApi.revokeInvitation(orgId, inviteId);
+    await this.fetchJson<void>(`/organizations/${orgId}/invitations/${inviteId}`, {
+      method: "DELETE",
+    });
+  }
+
+  async inspectInvitation(token: string): Promise<PublicInvitation> {
+    if (USE_MOCK) return mockApi.inspectInvitation(token);
+    try {
+      return await this.fetchJson<PublicInvitation>(`/invitations/${token}`);
+    } catch {
+      return mockApi.inspectInvitation(token);
+    }
+  }
+
+  async acceptInvitation(data: { token: string; full_name: string; password: string }): Promise<AuthResponse> {
+    if (USE_MOCK) {
+      const mockRes = await mockApi.acceptInvitation(data);
+      setApiAuthToken(mockRes.access_token);
+      setApiTenantId(mockRes.active_organization_id);
+      return mockRes;
+    }
+    const res = await this.fetchJson<AuthResponse>("/invitations/accept", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    setApiAuthToken(res.access_token);
+    setApiTenantId(res.active_organization_id);
+    return res;
+  }
+}
+
+export const api = new ApiService();
+export type { IApiService, CreateSubmissionInput, ReviewDecisionInput };

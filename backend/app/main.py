@@ -1,44 +1,25 @@
-"""Inkloom AI - Application Entry Point."""
-
-from contextlib import asynccontextmanager
-import logging
+"""
+Inkloom AI Brand Governance Backend Application Entrypoint
+"""
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
 from app.core.config import settings
 from app.api.routes import api_router
-
-# Configure secure logging
-logging.basicConfig(
-    level=logging.INFO if not settings.DEBUG else logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
-logger = logging.getLogger("inkloom_ai")
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application startup and shutdown hooks."""
-    logger.info("Initializing Inkloom AI Brand Governance Platform...")
-    logger.info(f"Environment: {settings.ENVIRONMENT} | Debug: {settings.DEBUG}")
-    logger.info(f"LLM Provider: {settings.LLM_PROVIDER}")
-    try:
-        from app.database.session import init_models
-        await init_models()
-        logger.info("Database schema initialized.")
-    except Exception as exc:
-        logger.warning(f"Database schema initialization notice: {exc}")
-    yield
-    logger.info("Inkloom AI services shutting down cleanly.")
-
+from app.api.routes.health import router as health_router
+from app.database.session import engine
+from app.database.base import Base
+# Import all models to ensure metadata registration
+import app.models
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    description="Enterprise AI-Powered Brand Governance & Compliance Platform",
-    version="1.0.0",
-    lifespan=lifespan,
+    title=settings.APP_NAME,
+    version="0.1.0",
+    description="Enterprise brand governance API powered by AI: guideline retrieval, tone analysis, claim verification, and human review workflows.",
     docs_url="/docs",
     redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 # CORS Middleware
@@ -50,45 +31,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Root index endpoint
-@app.get("/", tags=["Root"])
-async def root_index():
-    return {
-        "name": settings.PROJECT_NAME,
-        "status": "online",
-        "version": "1.0.0",
-        "documentation": "/docs",
-        "alternative_docs": "/redoc",
-        "health": "/api/health",
-        "description": "Enterprise AI-Powered Brand Governance & Compliance Platform",
-    }
+
+@app.on_event("startup")
+def on_startup():
+    """Create database tables on startup if using SQLite for zero-friction local development."""
+    if settings.DATABASE_URL.startswith("sqlite"):
+        Base.metadata.create_all(bind=engine)
+        from app.database.seed import seed_initial_data
+        seed_initial_data()
 
 
-# Root-level health endpoint
-@app.get("/health", tags=["Health"])
-async def root_health():
-    return {
-        "status": "healthy",
-        "service": "inkloom_ai_backend",
-        "version": "1.0.0",
-        "environment": settings.ENVIRONMENT,
-    }
-
-
-# Mount Versioned APIs (Supports both /api/v1 and predictable /api contract)
-app.include_router(api_router, prefix=settings.API_V1_STR)
-app.include_router(api_router, prefix="/api")
-
-
-# Safe Exception Handler
+# Exception handler for generic internal errors to avoid leaking trace details
 @app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    """Prevents leaking stack traces or confidential database details."""
-    logger.error(f"Unhandled exception on {request.method} {request.url.path}: {str(exc)}", exc_info=settings.DEBUG)
+async def global_exception_handler(request: Request, exc: Exception):
+    if settings.DEBUG:
+        # In debug mode, allow details
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": str(exc), "type": type(exc).__name__},
+        )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "error_code": "INTERNAL_SERVER_ERROR",
-            "message": "An unexpected error occurred. Please contact system administrator." if not settings.DEBUG else str(exc),
-        },
+        content={"detail": "An internal governance service error occurred. Please contact system support."},
     )
+
+
+# Mount health route at root and versioned routes under /api/v1
+app.include_router(health_router)
+app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+
+@app.get("/")
+def root():
+    return {
+        "service": settings.APP_NAME,
+        "version": "0.1.0",
+        "documentation": "/docs",
+        "api_v1": settings.API_V1_PREFIX,
+        "health": "/health",
+    }

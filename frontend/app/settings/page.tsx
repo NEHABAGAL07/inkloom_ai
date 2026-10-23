@@ -1,60 +1,73 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { ApiService } from '../../services/api';
-import { BrandGuideline } from '../../types/audit';
+import React, { useEffect, useState } from "react";
+import { api } from "@/services/api";
+import { BrandGuideline, ApprovedAsset } from "@/types";
 
 export default function SettingsPage() {
   const [guidelines, setGuidelines] = useState<BrandGuideline[]>([]);
+  const [assets, setAssets] = useState<ApprovedAsset[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadGuidelines() {
-      const data = await ApiService.getGuidelines();
-      setGuidelines(data);
+    async function loadData() {
+      try {
+        const [gList, aList] = await Promise.all([api.getGuidelines(), api.getAssets()]);
+        setGuidelines(gList);
+        setAssets(aList);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
     }
-    loadGuidelines();
+    loadData();
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="pb-4 border-b border-slate-200">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          Governance Configuration
-        </span>
-        <h1 className="text-2xl font-bold text-slate-900 mt-1">Brand Guidelines & Assets</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Configure active style guides, certified claims, official color palettes, and terminology rules.
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-black text-white tracking-tight">Brand Guidelines & Approved Assets Registry</h1>
+        <p className="text-sm text-slate-400 mt-1">
+          Configure rule definitions, benchmark registries, trademark rules, and approved media assets.
         </p>
       </div>
 
       {/* Guidelines Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-slate-900">Active Brand Guidelines</h3>
-          <button className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 shadow-xs">
+      <div className="glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h2 className="text-base font-bold text-white tracking-tight">Active Brand Guidelines</h2>
+            <p className="text-xs text-slate-400">Rules applied during automated AI audit passes</p>
+          </div>
+          <button className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">
             + New Guideline
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
           {guidelines.map((g) => (
-            <div key={g.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+            <div
+              key={g.id}
+              className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex flex-col justify-between space-y-3"
+            >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">
+                  <span className="text-[10px] font-mono text-indigo-400 font-bold bg-indigo-950/60 border border-indigo-800/40 px-2 py-0.5 rounded">
                     v{g.version}
                   </span>
-                  <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
                     Active
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-slate-900 mt-2">{g.name}</h4>
-                <p className="text-xs text-slate-500 mt-1">{g.description}</p>
+                <h3 className="text-sm font-bold text-white mt-2.5">{g.name}</h3>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">{g.description}</p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                <span>{g.rules_count} rules</span>
-                <span className="font-mono text-slate-400">{g.id}</span>
+              <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500 font-mono">
+                <span>ID: {g.id}</span>
+                <button className="text-indigo-400 hover:underline">Edit Rules</button>
               </div>
             </div>
           ))}
@@ -62,33 +75,56 @@ export default function SettingsPage() {
       </div>
 
       {/* Approved Assets Section */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
-        <h3 className="text-base font-bold text-slate-900">Registered Brand Identity Assets</h3>
-        <p className="text-xs text-slate-500">Official assets referenced during visual and claim verification audits.</p>
+      <div className="glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h2 className="text-base font-bold text-white tracking-tight">Approved Asset & Benchmark Registry</h2>
+            <p className="text-xs text-slate-400">Certified logos, corporate color palettes, and verified promotional claims</p>
+          </div>
+          <button className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3.5 py-2 rounded-xl border border-slate-700 transition">
+            + Register Asset
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-          <div className="p-4 rounded-lg border border-slate-200 bg-slate-50">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Logo Standard</span>
-            <p className="text-sm font-bold text-slate-800 mt-1">Primary Inkloom Wordmark</p>
-            <p className="text-xs text-slate-500 mt-0.5">Min clearspace: 0.25x • Min width: 120px</p>
-          </div>
+          {assets.map((a) => (
+            <div
+              key={a.id}
+              className="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex flex-col justify-between space-y-3"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
+                    {a.asset_type.replace("_", " ")}
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-bold">Certified</span>
+                </div>
+                <h3 className="text-sm font-bold text-white mt-2.5">{a.name}</h3>
+                {a.asset_type === "color_palette" && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    {Object.values(a.specifications).map((hex: any, idx) => (
+                      <div
+                        key={idx}
+                        className="w-5 h-5 rounded-md border border-white/20 shadow-sm"
+                        style={{ backgroundColor: hex }}
+                        title={hex}
+                      />
+                    ))}
+                  </div>
+                )}
+                {a.asset_type === "verified_claim" && (
+                  <p className="text-xs text-slate-300 mt-2 bg-slate-950 p-2 rounded border border-slate-800 italic">
+                    "{a.specifications.certified_statement}"
+                  </p>
+                )}
+              </div>
 
-          <div className="p-4 rounded-lg border border-slate-200 bg-slate-50">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Color Palette</span>
-            <p className="text-sm font-bold text-slate-800 mt-1">Core Enterprise Blue</p>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="w-5 h-5 rounded-full bg-[#1A365D] border border-slate-300"></span>
-              <span className="text-xs font-mono text-slate-600">#1A365D</span>
-              <span className="w-5 h-5 rounded-full bg-[#38BDF8] border border-slate-300"></span>
-              <span className="text-xs font-mono text-slate-600">#38BDF8</span>
+              <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500 font-mono">
+                <span>{a.id}</span>
+                <span className="text-slate-400 font-sans">Compliant</span>
+              </div>
             </div>
-          </div>
-
-          <div className="p-4 rounded-lg border border-slate-200 bg-slate-50">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Certified Claim Registry</span>
-            <p className="text-sm font-bold text-slate-800 mt-1">SOC2 Type II Certified</p>
-            <p className="text-xs text-slate-500 mt-0.5">Certified through Dec 2027</p>
-          </div>
+          ))}
         </div>
       </div>
     </div>

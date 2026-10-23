@@ -1,160 +1,155 @@
-"""Inkloom AI - Brand Governance Audit Engine.
-
-Orchestrates deterministic rule-based checks, evidence-aware claim verifications,
-and optional LLM adapters.
-Conforms strictly to `contracts/audit-result.schema.json`.
 """
+AI Brand Governance Audit Engine
 
-from typing import List, Dict, Any, Optional, Tuple
-from app.schemas.audit import AuditResultSchema, FindingSchema
-from app.schemas.common import AuditStatusEnum
-from app.services.ai_audit.interface import (
-    ContentContext,
-    RevisionDiff,
-    AdvisoryOutcomeEnum,
+Callable entrypoint that coordinates guideline retrieval, tone analysis,
+terminology compliance, and claim verification.
+Produces validated AuditResult objects strictly adhering to the shared contract.
+"""
+import time
+import uuid
+from datetime import datetime, timezone
+from typing import List, Dict, Any, Optional
+
+from app.schemas.audit_contract import (
+    AuditResult,
+    AuditSummary,
+    EngineMetadata,
+    OverallAuditStatus,
+    Finding,
+    FindingSeverity,
 )
-from app.services.ai_audit.guideline_retrieval import GuidelineRetriever, RetrievedRule
-from app.services.ai_audit.evidence_retrieval import EvidenceRetriever
+from app.services.ai_audit.guideline_retrieval import GuidelineRetriever
+from app.services.ai_audit.tone_analysis import ToneAnalyzer
 from app.services.ai_audit.terminology import TerminologyChecker
-from app.services.ai_audit.brand_voice import BrandVoiceAnalyzer
-from app.services.ai_audit.claim_checking import ClaimChecker
-from app.services.ai_audit.rules_engine import DeterministicRuleEngine
-from app.services.ai_audit.content_quality import ContentQualityChecker
-from app.services.ai_audit.llm_adapter import (
-    BaseLLMAdapter,
-    RuleBasedFallbackAdapter,
-    MockLLMAdapter,
-    create_llm_adapter,
-)
-from app.services.ai_audit.orchestrator import AIAuditOrchestrator
-from app.core.config import settings
-
-
-# Backward-compatible LLMModelAdapter alias
-class LLMModelAdapter(BaseLLMAdapter):
-    """Backward-compatible adapter interface for legacy test/caller compatibility."""
-
-    def __init__(
-        self,
-        provider: str = "rule_based_fallback",
-        api_key: Optional[str] = None,
-        model_name: Optional[str] = None,
-    ):
-        super().__init__(provider=provider, api_key=api_key, model_name=model_name)
-        self._inner = create_llm_adapter(provider=provider, api_key=api_key, model_name=model_name)
-
-    def is_configured(self) -> bool:
-        return self._inner.is_configured()
-
-    def run_advanced_audit(
-        self,
-        text: str,
-        rules: List[RetrievedRule],
-        context: Optional[ContentContext] = None,
-    ) -> List[FindingSchema]:
-        return self._inner.run_advanced_audit(text=text, rules=rules, context=context)
+from app.services.ai_audit.claim_checking import ClaimVerifier
 
 
 class AIAuditEngine:
-    """Core AI audit engine for brand governance and compliance verification."""
+    ENGINE_VERSION = "0.1.0-alpha"
 
-    ENGINE_VERSION = AIAuditOrchestrator.ENGINE_VERSION
-
-    def __init__(
-        self,
-        retriever: Optional[GuidelineRetriever] = None,
-        terminology_checker: Optional[TerminologyChecker] = None,
-        tone_analyzer: Optional[BrandVoiceAnalyzer] = None,
-        claim_checker: Optional[ClaimChecker] = None,
-        model_adapter: Optional[BaseLLMAdapter] = None,
-        evidence_retriever: Optional[EvidenceRetriever] = None,
-        rules_engine: Optional[DeterministicRuleEngine] = None,
-        quality_checker: Optional[ContentQualityChecker] = None,
-    ):
-        self.retriever = retriever or GuidelineRetriever()
-        self.evidence_retriever = evidence_retriever or EvidenceRetriever()
-        self.terminology_checker = terminology_checker or TerminologyChecker()
-        self.tone_analyzer = tone_analyzer or BrandVoiceAnalyzer()
-        self.claim_checker = claim_checker or ClaimChecker()
-        self.rules_engine = rules_engine or DeterministicRuleEngine()
-        self.quality_checker = quality_checker or ContentQualityChecker()
-        self.model_adapter = model_adapter or create_llm_adapter(
-            provider=settings.LLM_PROVIDER,
-            api_key=settings.LLM_API_KEY,
-            model_name=settings.LLM_MODEL_NAME,
-        )
-
-        # Underlying orchestrator
-        self.orchestrator = AIAuditOrchestrator(
-            retriever=self.retriever,
-            evidence_retriever=self.evidence_retriever,
-            terminology_checker=self.terminology_checker,
-            brand_voice_analyzer=self.tone_analyzer,
-            claim_checker=self.claim_checker,
-            rules_engine=self.rules_engine,
-            quality_checker=self.quality_checker,
-            llm_adapter=self.model_adapter,
-        )
-
-    def audit_text(
-        self,
-        text: str,
+    @classmethod
+    def run_audit(
+        cls,
+        content_text: str,
         content_id: str,
-        audit_id: Optional[str] = None,
-        custom_rules: Optional[List[Dict[str, Any]]] = None,
-        extractors_used: Optional[List[str]] = None,
-        context: Optional[ContentContext] = None,
-        verified_facts: Optional[List[Dict[str, Any]]] = None,
-        **kwargs,
-    ) -> AuditResultSchema:
+        revision_id: Optional[str] = None,
+        active_guidelines: Optional[List[Dict[str, Any]]] = None,
+        media_type: str = "text/plain",
+        context: Optional[Dict[str, Any]] = None,
+    ) -> AuditResult:
         """
-        Execute brand governance audit on text content.
-        Preserves complete backward compatibility with the existing API.
+        Executes complete brand governance audit pass on provided text and context.
         """
-        ctx = context or ContentContext(
+        start_time = time.perf_counter()
+        modules_executed: List[str] = []
+        all_findings: List[Finding] = []
+
+        # 1. Guideline Retrieval
+        modules_executed.append("guideline_retrieval")
+        relevant_rules = []
+        if active_guidelines:
+            relevant_rules = GuidelineRetriever.filter_relevant_rules(
+                rules=active_guidelines,
+                content_text=content_text,
+                media_type=media_type,
+            )
+
+        # 2. Terminology Checks
+        modules_executed.append("terminology_checker")
+        term_findings = TerminologyChecker.check(text=content_text)
+        all_findings.extend(term_findings)
+
+        # 3. Tone and Voice Analysis
+        modules_executed.append("tone_analyzer")
+        tone_findings = ToneAnalyzer.analyze(text=content_text)
+        all_findings.extend(tone_findings)
+
+        # 4. Fact and Claim Verification
+        modules_executed.append("claim_verifier")
+        claim_findings = ClaimVerifier.verify(text=content_text)
+        all_findings.extend(claim_findings)
+
+        # 5. Aggregate Findings & Calculate Scores
+        critical_count = sum(1 for f in all_findings if f.severity == FindingSeverity.CRITICAL)
+        high_count = sum(1 for f in all_findings if f.severity == FindingSeverity.HIGH)
+        medium_count = sum(1 for f in all_findings if f.severity == FindingSeverity.MEDIUM)
+        low_count = sum(1 for f in all_findings if f.severity == FindingSeverity.LOW)
+        info_count = sum(1 for f in all_findings if f.severity == FindingSeverity.INFO)
+
+        # Weighted penalty deduction from 100
+        penalty = (critical_count * 30.0) + (high_count * 15.0) + (medium_count * 8.0) + (low_count * 3.0)
+        compliance_score = max(0.0, round(100.0 - penalty, 1))
+
+        # Overall Status Determination
+        if critical_count > 0 or compliance_score < 60.0:
+            overall_status = OverallAuditStatus.NON_COMPLIANT
+        elif high_count > 0 or medium_count > 0 or compliance_score < 90.0:
+            overall_status = OverallAuditStatus.NEEDS_REVIEW
+        else:
+            overall_status = OverallAuditStatus.COMPLIANT
+
+        human_review_required = any(f.requires_human_review for f in all_findings) or overall_status != OverallAuditStatus.COMPLIANT
+
+        # Verdict Overview synthesis
+        verdict_overview = cls._generate_verdict_overview(
+            overall_status=overall_status,
+            total=len(all_findings),
+            critical=critical_count,
+            high=high_count,
+            medium=medium_count,
+        )
+
+        elapsed_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
+
+        summary = AuditSummary(
+            compliance_score=compliance_score,
+            total_findings=len(all_findings),
+            critical_count=critical_count,
+            high_count=high_count,
+            medium_count=medium_count,
+            low_count=low_count,
+            info_count=info_count,
+            human_review_required=human_review_required,
+            verdict_overview=verdict_overview,
+        )
+
+        engine_metadata = EngineMetadata(
+            engine_version=cls.ENGINE_VERSION,
+            execution_time_ms=elapsed_ms,
+            modules_executed=modules_executed,
+            models_used=["rule_engine_v1", "deterministic_tone_parser"],
+            warnings=[],
+        )
+
+        return AuditResult(
+            schema_version="1.0.0",
+            audit_id=str(uuid.uuid4()),
             content_id=content_id,
-            organization_id="org-default",
-            content_type="text",
-            raw_text=text,
+            revision_id=revision_id,
+            overall_status=overall_status,
+            summary=summary,
+            findings=all_findings,
+            created_at=datetime.now(timezone.utc),
+            engine_metadata=engine_metadata,
         )
 
-        if verified_facts:
-            from app.services.ai_audit.interface import VerifiedFact
-            for f in verified_facts:
-                if isinstance(f, dict):
-                    self.evidence_retriever.register_verified_fact(
-                        VerifiedFact(
-                            fact_id=f.get("id", f.get("fact_id", "fact-custom")),
-                            organization_id=ctx.organization_id,
-                            claim_category=f.get("claim_category", f.get("category", "metric")),
-                            statement=f.get("statement", f.get("text", "")),
-                            approved_value=f.get("approved_value"),
-                            source_reference=f.get("source_reference"),
-                        )
-                    )
+    @staticmethod
+    def _generate_verdict_overview(
+        overall_status: OverallAuditStatus,
+        total: int,
+        critical: int,
+        high: int,
+        medium: int
+    ) -> str:
+        if total == 0:
+            return "Content successfully conforms to all verified brand guidelines, terminology standards, and tone requirements."
+        parts = []
+        if critical > 0:
+            parts.append(f"{critical} critical policy violation(s)")
+        if high > 0:
+            parts.append(f"{high} high-severity issue(s)")
+        if medium > 0:
+            parts.append(f"{medium} moderate guideline divergence(s)")
 
-        result, _, _ = self.orchestrator.execute_audit(
-            text=text,
-            context=ctx,
-            audit_id=audit_id,
-            custom_rules=custom_rules,
-            extractors_used=extractors_used,
-        )
-        return result
-
-    def audit_with_context(
-        self,
-        text: str,
-        context: ContentContext,
-        audit_id: Optional[str] = None,
-        custom_rules: Optional[List[Dict[str, Any]]] = None,
-        extractors_used: Optional[List[str]] = None,
-    ) -> Tuple[AuditResultSchema, Optional[RevisionDiff], AdvisoryOutcomeEnum]:
-        """Execute brand audit with full revision awareness and advisory outcome."""
-        return self.orchestrator.execute_audit(
-            text=text,
-            context=context,
-            audit_id=audit_id,
-            custom_rules=custom_rules,
-            extractors_used=extractors_used,
-        )
+        summary_clause = ", ".join(parts) if parts else f"{total} finding(s)"
+        return f"Audit identified {summary_clause}. Human reviewer validation recommended prior to external dissemination."

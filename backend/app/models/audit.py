@@ -1,49 +1,38 @@
-"""Audit Results and Findings Database Models."""
-
-from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, JSON, Text
+from sqlalchemy import Column, String, Float, Integer, Boolean, ForeignKey, JSON, Text
 from sqlalchemy.orm import relationship
-from app.database.base import Base, TimestampMixin, TenantMixin, generate_uuid
+from app.models.base_model import TimestampedModel
 
 
-class AuditResultModel(Base, TimestampMixin, TenantMixin):
-    """Database entity persisting audit executions."""
-    __tablename__ = "audit_results"
+class AuditRun(TimestampedModel):
+    __tablename__ = "audit_runs"
 
-    id = Column(String(64), primary_key=True, default=generate_uuid)
-    content_id = Column(String(64), ForeignKey("content_submissions.id", ondelete="CASCADE"), nullable=False, index=True)
-    revision_id = Column(String(64), ForeignKey("content_revisions.id", ondelete="CASCADE"), nullable=False, index=True)
-    guideline_id = Column(String(64), nullable=True, index=True)
-    guideline_version = Column(String(32), default="1.0", nullable=True)
-    schema_version = Column(String(16), default="1.0.0", nullable=False)
-    overall_status = Column(String(32), nullable=False)  # passed, failed, warning, needs_human_review
-    summary = Column(Text, nullable=False)
-    engine_metadata = Column(JSON, default=dict)
+    submission_id = Column(String(36), ForeignKey("content_submissions.id", ondelete="CASCADE"), nullable=False, index=True)
+    revision_id = Column(String(36), ForeignKey("content_revisions.id", ondelete="SET NULL"), nullable=True, index=True)
+    schema_version = Column(String(20), default="1.0.0", nullable=False)
+    overall_status = Column(String(50), nullable=False)  # compliant, needs_review, non_compliant, error
+    summary = Column(JSON, nullable=False)
+    engine_metadata = Column(JSON, nullable=False)
 
+    submission = relationship("ContentSubmission", back_populates="audits")
     revision = relationship("ContentRevision", back_populates="audits")
-    findings = relationship("FindingModel", back_populates="audit", cascade="all, delete-orphan")
+    findings = relationship("AuditFinding", back_populates="audit_run", cascade="all, delete-orphan")
 
 
-class FindingModel(Base, TimestampMixin):
-    """Specific governance violation or warning finding."""
+class AuditFinding(TimestampedModel):
     __tablename__ = "audit_findings"
 
-    id = Column(String(64), primary_key=True, default=generate_uuid)
-    audit_id = Column(String(64), ForeignKey("audit_results.id", ondelete="CASCADE"), nullable=False, index=True)
-    category = Column(String(64), nullable=False)
-    severity = Column(String(32), nullable=False)
+    audit_run_id = Column(String(36), ForeignKey("audit_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    finding_id = Column(String(64), nullable=False, index=True)
+    category = Column(String(50), nullable=False, index=True)
+    severity = Column(String(20), nullable=False, index=True)
     title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
     evidence = Column(Text, nullable=True)
-    original_text = Column(Text, nullable=True)
-    explanation = Column(Text, nullable=True)
-    source_reference = Column(String(500), nullable=True)
-    guideline_id = Column(String(64), nullable=True)
-    evidence_status = Column(String(32), default="unverified", nullable=False)
-    confidence = Column(Float, default=1.0, nullable=False)
-    suggested_correction = Column(Text, nullable=True)
-    suggestion = Column(Text, nullable=True)
-    status = Column(String(32), default="flagged", nullable=False)  # flagged, accepted, dismissed, escalated
-    location_data = Column(JSON, nullable=True)
-    requires_human_review = Column(Boolean, default=True, nullable=False)
+    source_reference = Column(JSON, nullable=True)
+    confidence = Column(Float, nullable=False)
+    suggested_correction = Column(JSON, nullable=True)
+    status = Column(String(50), default="open", nullable=False)  # open, accepted, dismissed, manual_check_required
+    location = Column(JSON, nullable=True)
+    requires_human_review = Column(Boolean, default=False, nullable=False)
 
-    audit = relationship("AuditResultModel", back_populates="findings")
+    audit_run = relationship("AuditRun", back_populates="findings")

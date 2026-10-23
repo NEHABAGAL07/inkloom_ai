@@ -1,85 +1,160 @@
 {
   "schema_version": "1.0.0",
-  "audit_id": "7f8b9a10-2c3d-4e5f-8a9b-0c1d2e3f4a5b",
-  "content_id": "9a8b7c6d-5e4f-3a2b-1c0d-e9f8a7b6c5d4",
-  "overall_status": "warning",
-  "summary": "Content exhibits multiple brand compliance concerns: 1 unverified promotional claim, 1 casing violation of proprietary brand terminology, and 1 informal tone construct. Final publication approval requires human review.",
+  "audit_id": "7f8b3c10-9b4e-4f76-b6b8-6d8b688d6e90",
+  "content_id": "sub_9281729a",
+  "revision_id": "rev_001",
+  "overall_status": "needs_review",
+  "summary": {
+    "compliance_score": 74.5,
+    "total_findings": 4,
+    "critical_count": 0,
+    "high_count": 2,
+    "medium_count": 1,
+    "low_count": 1,
+    "info_count": 0,
+    "human_review_required": true,
+    "verdict_overview": "Content violates brand terminology rules with deprecated product names, makes an unverified performance claim regarding latency reductions, and exhibits overly aggressive sales tone in paragraph 2. Final human sign-off required prior to public release."
+  },
   "findings": [
     {
-      "id": "fnd-001",
+      "id": "find_001",
       "category": "terminology",
-      "severity": "medium",
-      "title": "Brand Name Capitalization Inconsistency",
-      "message": "Product name 'inkloom' is written in lowercase without proper camel-case styling specified in brand identity guidelines.",
-      "evidence": "Try inkloom today for best-in-class workflows.",
-      "source_reference": "Brand Identity Guidelines v2.4, Section 3.1: Naming & Trademarks",
-      "confidence": 0.99,
-      "suggested_correction": "Try Inkloom AI today for best-in-class workflows.",
-      "status": "flagged",
+      "severity": "high",
+      "title": "Use of Deprecated Brand Name",
+      "message": "The phrase 'Inkloom Cloud Suite' has been deprecated in favor of 'Inkloom Governance Hub' as per Q1 2026 Naming Guidelines.",
+      "evidence": "Get started with the powerful Inkloom Cloud Suite today.",
+      "source_reference": {
+        "guideline_id": "guide_naming_2026",
+        "section": "Section 2.1: Product Portfolio Naming",
+        "rule_name": "Prohibited Deprecated Product Names",
+        "source_url": "https://brand.inkloom.internal/guidelines/naming-2026#sec-2-1",
+        "is_external": false,
+        "verification_status": "verified"
+      },
+      "confidence": 0.98,
+      "suggested_correction": {
+        "replacement_text": "Inkloom Governance Hub",
+        "rationale": "Aligns with official 2026 enterprise brand architecture.",
+        "preserves_intent": true
+      },
+      "status": "open",
       "location": {
-        "start_offset": 4,
-        "end_offset": 11,
-        "line": 1,
-        "page": 1,
-        "timestamp_seconds": null,
-        "selector": null,
-        "bounding_box": null
+        "page_number": 1,
+        "line_number": 4,
+        "start_char": 32,
+        "end_char": 51
       },
       "requires_human_review": false
     },
     {
-      "id": "fnd-002",
+      "id": "find_002",
       "category": "claim_verification",
       "severity": "high",
-      "title": "Unsubstantiated Performance Claim",
-      "message": "Superlative claim '100% error-free guarantee' lacks verifiable empirical proof in the corporate claim registry and exposes marketing to regulatory challenge.",
-      "evidence": "Our system delivers a 100% error-free guarantee across all media.",
-      "source_reference": null,
-      "confidence": 0.94,
-      "suggested_correction": "Our system delivers rigorous, multi-stage compliance verification across all media.",
-      "status": "flagged",
+      "title": "Unverified Promotional Performance Claim",
+      "message": "Content asserts a '10x reduction in latency' without reference to certified internal benchmark or published customer whitepaper. This claim is unverified in the approved claims registry.",
+      "evidence": "experience a guaranteed 10x reduction in latency across all regions",
+      "source_reference": {
+        "guideline_id": "guide_claims_regulatory",
+        "section": "Rule C-04: Numerical Performance Claims",
+        "rule_name": "Mandatory Benchmark Citation for Quantitative Claims",
+        "source_url": null,
+        "is_external": false,
+        "verification_status": "unverified"
+      },
+      "confidence": 0.92,
+      "suggested_correction": {
+        "replacement_text": "experience significant latency improvements validated in customer benchmark trials",
+        "rationale": "Replaces unsubstantiated absolute multiplier with verified qualified statement pending published test methodology.",
+        "preserves_intent": true
+      },
+      "status": "manual_check_required",
       "location": {
-        "start_offset": 23,
-        "end_offset": 48,
-        "line": 3,
-        "page": 1,
-        "timestamp_seconds": null,
-        "selector": null,
-        "bounding_box": null
+        "page_number": 1,
+        "line_number": 8,
+        "start_char": 11,
+        "end_char": 79
       },
       "requires_human_review": true
     },
     {
-      "id": "fnd-003",
-      "category": "tone_and_voice",
-      "severity": "low",
-      "title": "Colloquial Phrasing in Enterprise Copy",
-      "message": "Use of colloquial filler 'super pumped' deviates from our professional and authoritative enterprise brand voice standard.",
-      "evidence": "We are super pumped to announce this capability.",
-      "source_reference": "Editorial Voice & Tone Standard v1.2, Principle 2: Authoritative yet Accessible",
-      "confidence": 0.88,
-      "suggested_correction": "We are proud to announce this capability.",
-      "status": "flagged",
+      "id": "find_003",
+      "category": "tone_voice",
+      "severity": "medium",
+      "title": "Overly Aggressive Sales Language",
+      "message": "Brand voice guidelines emphasize an empowering, transparent, and authoritative tone. Phrases like 'Hurry up before your competitors crush you' conflict with our collaborative persona.",
+      "evidence": "Hurry up before your competitors crush you and steal your market share.",
+      "source_reference": {
+        "guideline_id": "guide_voice_tone",
+        "section": "Pillar 1: Empowering, Never Fear-Inducing",
+        "rule_name": "Anti-FUD Messaging Policy",
+        "source_url": "https://brand.inkloom.internal/guidelines/tone#pillar-1",
+        "is_external": false,
+        "verification_status": "verified"
+      },
+      "confidence": 0.89,
+      "suggested_correction": {
+        "replacement_text": "Stay ahead in brand compliance as the market rapidly evolves.",
+        "rationale": "Reframes fear-based incentive into constructive forward-looking value proposition.",
+        "preserves_intent": true
+      },
+      "status": "open",
       "location": {
-        "start_offset": 7,
-        "end_offset": 19,
-        "line": 5,
-        "page": 1,
-        "timestamp_seconds": null,
-        "selector": null,
-        "bounding_box": null
+        "page_number": 1,
+        "line_number": 14,
+        "start_char": 0,
+        "end_char": 71
+      },
+      "requires_human_review": false
+    },
+    {
+      "id": "find_004",
+      "category": "visual_brand",
+      "severity": "low",
+      "title": "Sub-optimal Brand Color Contrast Ratio",
+      "message": "Hero text overlay exhibits a 3.8:1 contrast ratio against the background asset, which fails the WCAG AA 4.5:1 standard for standard body typography.",
+      "evidence": null,
+      "source_reference": {
+        "guideline_id": "guide_visual_brand",
+        "section": "Section 4.3: Digital Accessibility & Contrast",
+        "rule_name": "WCAG AA Contrast Minimums",
+        "source_url": "https://brand.inkloom.internal/guidelines/visual#contrast",
+        "is_external": false,
+        "verification_status": "verified"
+      },
+      "confidence": 0.85,
+      "suggested_correction": {
+        "replacement_text": "Increase hero background overlay opacity from 20% to 45% or switch typography color to Inkloom Slate Dark (#0F172A).",
+        "rationale": "Restores contrast ratio to > 5.2:1 compliant with accessibility rules.",
+        "preserves_intent": true
+      },
+      "status": "open",
+      "location": {
+        "page_number": 1,
+        "bounding_box": {
+          "x": 48.0,
+          "y": 120.0,
+          "width": 640.0,
+          "height": 180.0
+        }
       },
       "requires_human_review": false
     }
   ],
-  "created_at": "2026-10-22T12:00:00Z",
+  "created_at": "2026-10-22T17:00:00Z",
   "engine_metadata": {
-    "engine_version": "inkloom-audit-engine-v1.0.0",
-    "execution_time_ms": 142.5,
-    "rules_checked_count": 48,
-    "ai_model_used": null,
-    "extractors_used": [
-      "plain_text_extractor"
-    ]
+    "engine_version": "0.1.0-alpha",
+    "execution_time_ms": 342.5,
+    "modules_executed": [
+      "guideline_retrieval",
+      "tone_analysis",
+      "terminology_checker",
+      "claim_verifier",
+      "visual_brand_validator"
+    ],
+    "models_used": [
+      "rule_engine_v1",
+      "tone_classifier_heuristics"
+    ],
+    "warnings": []
   }
 }

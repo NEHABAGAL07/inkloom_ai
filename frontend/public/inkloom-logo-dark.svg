@@ -1,0 +1,6 @@
+<svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="40" height="40" rx="8" fill="#6366F1"/>
+  <path d="M15 12H25V18H15V12ZM15 22H25V36H15V22Z" fill="white"/>
+  <text x="50" y="28" fill="#F8FAFC" font-family="Inter, sans-serif" font-weight="800" font-size="20">Inkloom</text>
+  <text x="140" y="28" fill="#818CF8" font-family="Inter, sans-serif" font-weight="900" font-size="14">AI</text>
+</svg>

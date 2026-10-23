@@ -1,35 +1,46 @@
 #!/usr/bin/env python3
-"""Validates the audit result example against the audit result JSON Schema."""
+"""
+Stand-alone Audit Contract Validator
 
-import json
+Validates contracts/audit-result.example.json against contracts/audit-result.schema.json
+using standard library + jsonschema.
+"""
 import os
 import sys
+import json
 
 def main():
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    schema_path = os.path.join(root_dir, "contracts", "audit-result.schema.json")
-    example_path = os.path.join(root_dir, "contracts", "audit-result.example.json")
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    schema_path = os.path.join(root, "contracts", "audit-result.schema.json")
+    example_path = os.path.join(root, "contracts", "audit-result.example.json")
 
-    print(f"Loading schema from: {schema_path}")
+    print(f"Validating contract example: {example_path}")
+    print(f"Against schema: {schema_path}")
+
     with open(schema_path, "r", encoding="utf-8") as f:
         schema = json.load(f)
-
-    print(f"Loading example from: {example_path}")
     with open(example_path, "r", encoding="utf-8") as f:
         example = json.load(f)
 
-    try:
-        import jsonschema
-        jsonschema.validate(instance=example, schema=schema)
-        print(" SUCCESS: contracts/audit-result.example.json strictly conforms to audit-result.schema.json!")
-    except ImportError:
-        print("Note: 'jsonschema' package not installed. Performing structural verification...")
-        required = schema.get("required", [])
-        missing = [f for f in required if f not in example]
-        if missing:
-            print(f" ERROR: Example is missing required fields: {missing}")
+    # Basic structural check
+    required_top = ["schema_version", "audit_id", "content_id", "overall_status", "summary", "findings", "created_at", "engine_metadata"]
+    for field in required_top:
+        if field not in example:
+            print(f"ERROR: Missing required top-level field '{field}' in example.")
             sys.exit(1)
-        print(" SUCCESS: Basic structural verification passed.")
+
+    print(f"Example verified! Contains {len(example['findings'])} findings.")
+    print("Top-level contract fields all present.")
+
+    try:
+        from jsonschema import validate
+        validate(instance=example, schema=schema)
+        print("✓ jsonschema validation passed successfully!")
+    except ImportError:
+        print("Note: 'jsonschema' not installed in current environment; passed standard structural verification.")
+    except Exception as e:
+        print(f"Schema validation error: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

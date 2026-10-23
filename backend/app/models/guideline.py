@@ -1,33 +1,31 @@
-"""Brand Guideline and Rule Models."""
-
-from sqlalchemy import Column, String, Boolean, ForeignKey, JSON
+from sqlalchemy import Column, String, Text, Boolean, Integer, ForeignKey, JSON
 from sqlalchemy.orm import relationship
-from app.database.base import Base, TimestampMixin, TenantMixin, generate_uuid
+from app.models.base_model import TimestampedModel
 
 
-class BrandGuideline(Base, TimestampMixin, TenantMixin):
+class BrandGuideline(TimestampedModel):
     __tablename__ = "brand_guidelines"
 
-    id = Column(String(64), primary_key=True, default=generate_uuid)
+    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(255), nullable=False)
-    version = Column(String(32), default="1.0", nullable=False)
-    category = Column(String(64), nullable=False)  # tone_and_voice, terminology, claims, visual, etc.
-    description = Column(String(1000), nullable=True)
+    description = Column(Text, nullable=True)
+    version = Column(String(50), default="1.0.0", nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
 
+    organization = relationship("Organization", back_populates="guidelines")
     rules = relationship("GuidelineRule", back_populates="guideline", cascade="all, delete-orphan")
 
 
-class GuidelineRule(Base, TimestampMixin):
+class GuidelineRule(TimestampedModel):
     __tablename__ = "guideline_rules"
 
-    id = Column(String(64), primary_key=True, default=generate_uuid)
-    guideline_id = Column(String(64), ForeignKey("brand_guidelines.id", ondelete="CASCADE"), nullable=False, index=True)
-    rule_key = Column(String(128), nullable=False)
-    title = Column(String(255), nullable=False)
-    description = Column(String(1000), nullable=False)
-    severity = Column(String(32), default="medium", nullable=False)  # critical, high, medium, low, info
-    rule_config = Column(JSON, default=dict)  # stores prohibited terms, regex patterns, target tone, etc.
-    is_active = Column(Boolean, default=True, nullable=False)
+    guideline_id = Column(String(36), ForeignKey("brand_guidelines.id", ondelete="CASCADE"), nullable=False, index=True)
+    category = Column(String(50), nullable=False, index=True)  # tone_voice, terminology, claim_verification, visual_brand, accessibility
+    rule_name = Column(String(255), nullable=False)
+    section = Column(String(255), nullable=True)
+    severity_default = Column(String(50), default="medium", nullable=False)  # critical, high, medium, low, info
+    rule_definition = Column(JSON, nullable=False)  # holds patterns, forbidden words, tone attributes, claim benchmarks
+    requires_human_review = Column(Boolean, default=False, nullable=False)
+    source_url = Column(String(512), nullable=True)
 
     guideline = relationship("BrandGuideline", back_populates="rules")

@@ -1,30 +1,30 @@
-"""Review Decision and Workflow Transition Schemas."""
-
 from datetime import datetime
+from enum import Enum
 from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field
-from app.schemas.common import ReviewActionEnum, WorkflowStateEnum
+from pydantic import BaseModel, ConfigDict
+
+
+class ReviewAction(str, Enum):
+    APPROVE = "approve"
+    REJECT = "reject"
+    REQUEST_CHANGES = "request_changes"
 
 
 class ReviewDecisionCreate(BaseModel):
-    content_id: str
-    revision_id: str
-    action: ReviewActionEnum
-    comments: str = Field(..., min_length=2, description="Mandatory rationale for review decision")
-    decision_metadata: Dict[str, Any] = Field(default_factory=dict)
+    submission_id: str
+    revision_id: Optional[str] = None
+    action: ReviewAction
+    comments: Optional[str] = None
+    review_metadata: Optional[Dict[str, Any]] = None
 
 
 class ReviewDecisionResponse(BaseModel):
     id: str
-    content_id: str
-    revision_id: str
-    reviewer_id: str
-    action: ReviewActionEnum
-    comments: str
+    submission_id: str
+    revision_id: Optional[str] = None
+    reviewer_id: Optional[str] = None
+    action: str
+    comments: Optional[str] = None
     created_at: datetime
-    new_workflow_status: WorkflowStateEnum
 
-
-class WorkflowTransitionRequest(BaseModel):
-    target_state: WorkflowStateEnum
-    reason: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)

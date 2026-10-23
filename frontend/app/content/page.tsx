@@ -1,56 +1,55 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { ContentSubmitForm } from '../../components/content/ContentSubmitForm';
+import React from "react";
+import { SubmissionForm } from "@/components/content/SubmissionForm";
 
 export default function ContentSubmissionPage() {
   return (
-    <div className="space-y-6">
-      <div className="pb-4 border-b border-slate-200">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          Intake & Verification
-        </span>
-        <h1 className="text-2xl font-bold text-slate-900 mt-1">Submit Content for Governance Audit</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Submit text copy, advertising scripts, or media files to be checked against active brand voice, terminology, and legal claims.
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-black text-white tracking-tight">Submit Content for Brand Governance Audit</h1>
+        <p className="text-sm text-slate-400 mt-1">
+          Submit copy, press releases, documents (PDF/DOCX), or media assets for multi-dimensional brand guideline verification.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <ContentSubmitForm />
+        {/* Main Form Area */}
+        <div className="lg:col-span-2 glass-panel rounded-2xl p-6 border border-slate-800">
+          <SubmissionForm />
         </div>
 
-        {/* Sidebar Info */}
+        {/* Helpful Sidebar Context */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
-            <h3 className="text-sm font-bold text-slate-900">What will be evaluated?</h3>
-            <ul className="mt-3 space-y-2 text-xs text-slate-600">
+          <div className="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <span>📋</span> What We Check
+            </h3>
+            <ul className="text-xs text-slate-300 space-y-2 leading-relaxed">
               <li className="flex items-start gap-2">
-                <span className="text-indigo-600 font-bold">1.</span>
-                <span><strong>Terminology & Trademark Casing:</strong> Checks for improper casing, depreciated names, and unapproved product phrasing.</span>
+                <span className="text-indigo-400 font-bold">•</span>
+                <span><strong>Voice & Tone:</strong> Empowering, transparent, anti-FUD, respectful language.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-indigo-600 font-bold">2.</span>
-                <span><strong>Editorial Voice & Tone:</strong> Enforces authoritative enterprise standards while flagging hyperbolic colloquialisms.</span>
+                <span className="text-indigo-400 font-bold">•</span>
+                <span><strong>Terminology:</strong> Deprecated legacy naming and trademark rules.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-indigo-600 font-bold">3.</span>
-                <span><strong>Substantiation & Claims:</strong> Identifies absolute guarantees and checks them against the certified claims registry.</span>
+                <span className="text-indigo-400 font-bold">•</span>
+                <span><strong>Claims Verification:</strong> Certified benchmark citations vs unverified marketing multipliers.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-indigo-600 font-bold">4.</span>
-                <span><strong>Visual Compliance:</strong> Contrast ratios, logo clearspace, and official color palette adherence.</span>
+                <span className="text-indigo-400 font-bold">•</span>
+                <span><strong>Visual Standards:</strong> WCAG contrast ratios and logo clear-space.</span>
               </li>
             </ul>
           </div>
 
-          <div className="bg-amber-50 rounded-xl border border-amber-200 p-5 text-xs text-amber-900">
-            <h4 className="font-bold flex items-center gap-1.5 text-amber-950">
-              <span>⚠️</span> Human-in-the-Loop Safeguard
-            </h4>
-            <p className="mt-1 leading-relaxed text-amber-800">
-              AI audit results serve as decision-support analysis. Content cannot be published until a designated brand reviewer formally approves the submission in the review queue.
+          <div className="glass-panel rounded-2xl p-5 border border-slate-800 text-xs text-slate-400 space-y-2">
+            <span className="font-bold text-slate-200 block">🔒 Privacy & Tenant Isolation</span>
+            <p className="leading-relaxed">
+              Your content is scoped strictly to your organization tenant. No proprietary copy is shared across tenants or used to train third-party public models.
             </p>
           </div>
         </div>

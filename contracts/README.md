@@ -1,45 +1,41 @@
-# Inkloom AI — Shared Audit Contract
+# Inkloom AI — Shared Audit Result Contract
 
-This directory contains the canonical, versioned specification for brand governance audit results in **Inkloom AI**.
+The shared contract defines the canonical data structure for brand governance audit results across **Backend**, **Frontend**, **AI Audit Engine**, and **Media Processing**.
 
-All four sub-systems must strictly adhere to this schema:
-1. **AI Audit Engine** (`backend/app/services/ai_audit/`): Generates findings conforming to this contract.
-2. **Media Processing & QA** (`backend/app/services/media_audit/`): Produces extraction metadata and visual audit findings conforming to this contract.
-3. **Backend API** (`backend/app/api/` & `backend/app/schemas/audit.py`): Validates, stores, and serves audit outputs.
-4. **Frontend UI** (`frontend/types/audit.ts` & `frontend/services/`): Consumes and displays audit findings consistently.
+All four components communicate using this schema. No team should alter this structure unilaterally.
 
 ---
 
-## Files in this Directory
+## 1. Files in this Directory
 
-| File | Purpose |
-| :--- | :--- |
-| `audit-result.schema.json` | JSON Schema (Draft 2020-12) defining valid audit result structures. |
-| `audit-result.example.json` | Concrete, validated reference instance of an audit result payload. |
+- [`audit-result.schema.json`](file:///contracts/audit-result.schema.json): The JSON Schema Draft 2020-12 specification.
+- [`audit-result.example.json`](file:///contracts/audit-result.example.json): A realistic example demonstrating all finding categories, severities, evidence excerpts, and suggested corrections.
 
 ---
 
-## Core Contract Principles
+## 2. Core Design Principles
 
-1. **Separation of Confidence vs. Severity**:
+1. **Evidence-Based Reporting**:
+   - `evidence` holds the literal text quote, token range, or bounding box.
+   - If evidence is unavailable, it is represented explicitly as `null`—never fabricated.
+
+2. **Ground Truth & Citation Integrity**:
+   - `source_reference` references real, registered brand guidelines or fact benchmarks.
+   - **Never hallucinate citations**: If a claim has no registered benchmark, `verification_status` must be marked `"unverified"` and `source_reference` must reflect missing reference rather than an invented citation.
+   - `contradicted` claims must be clearly distinguished from `unsupported/unverified` claims.
+
+3. **Separation of Confidence vs. Severity**:
    - `severity` (`critical`, `high`, `medium`, `low`, `info`) indicates business and brand impact.
-   - `confidence` (`0.0` - `1.0`) indicates statistical or rule match certainty. High severity can have moderate confidence, and vice versa.
-2. **No Fabricated Citations**:
-   - `source_reference` points to an actual brand guideline ID or rule section. If no guideline is matched, it **must** be `null`.
-   - `evidence` represents the raw verbatim string, color hex, or extracted metric. If unlocatable, it must be `null`.
-3. **Distinction between Unverified vs. Contradicted Claims**:
-   - Unverified claims are categorized under `claim_verification` with neutral or warning severity and explicit note that no empirical source exists in the claim registry.
-   - Contradicted claims indicate direct mismatch with approved corporate facts.
-4. **Human Review Responsibility**:
-   - `requires_human_review: true` mandates human reviewer sign-off before publishing.
-   - AI findings alone never publish or automatically approve marketing assets.
+   - `confidence` (`0.0` to `1.0`) indicates the algorithmic probability that the rule violation was accurately detected.
+
+4. **Human in the Loop**:
+   - `requires_human_review: true` flags items that require manual reviewer verification before publishing.
+   - The AI engine recommends; human reviewers approve.
 
 ---
 
-## Synchronization Requirements
+## 3. Implementation Mappings
 
-When updating the schema:
-1. Increment `schema_version` (Semantic Versioning).
-2. Update Pydantic model in `backend/app/schemas/audit.py`.
-3. Update TypeScript interface in `frontend/types/audit.ts`.
-4. Run `backend/tests/test_audit_contract.py` to ensure schema conformance.
+- **Backend / AI Engine**: Python Pydantic V2 model in [`backend/app/schemas/audit_contract.py`](file:///backend/app/schemas/audit_contract.py).
+- **Frontend**: TypeScript interface in [`frontend/types/audit.ts`](file:///frontend/types/audit.ts).
+- **Test Suite**: Automated contract test in [`backend/tests/test_audit_contract.py`](file:///backend/tests/test_audit_contract.py) validates example and Pydantic models against the JSON schema.

@@ -1,16 +1,17 @@
-"""Approved Brand Asset Model."""
+from sqlalchemy import Column, String, Text, Boolean, ForeignKey, JSON
+from sqlalchemy.orm import relationship
+from app.models.base_model import TimestampedModel
 
-from sqlalchemy import Column, String, Boolean, JSON
-from app.database.base import Base, TimestampMixin, TenantMixin, generate_uuid
 
-
-class ApprovedAsset(Base, TimestampMixin, TenantMixin):
-    """Approved logos, color schemes, certified claim registry entries, fonts."""
+class ApprovedAsset(TimestampedModel):
     __tablename__ = "approved_assets"
 
-    id = Column(String(64), primary_key=True, default=generate_uuid)
+    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(255), nullable=False)
-    asset_type = Column(String(64), nullable=False)  # logo, color_palette, claim_registry, typography
-    file_path = Column(String(1000), nullable=True)
-    asset_metadata = Column(JSON, default=dict)  # colors: ["#1A365D"], dimensions, approved_claim_text, etc.
+    asset_type = Column(String(50), nullable=False, index=True)  # logo, color_palette, typography, verified_claim, boilerplate
+    file_path = Column(String(512), nullable=True)
+    file_url = Column(String(512), nullable=True)
+    specifications = Column(JSON, nullable=False, default=dict)  # e.g., hex codes, min padding, allowed variants
     is_active = Column(Boolean, default=True, nullable=False)
+
+    organization = relationship("Organization", back_populates="assets")

@@ -1,19 +1,14 @@
-"""User Account Model."""
-
 from sqlalchemy import Column, String, Boolean
 from sqlalchemy.orm import relationship
-from app.database.base import Base, TimestampMixin, generate_uuid
+from app.models.base_model import TimestampedModel
 
 
-class User(Base, TimestampMixin):
+class User(TimestampedModel):
     __tablename__ = "users"
 
-    id = Column(String(64), primary_key=True, default=generate_uuid)
-    email = Column(String(255), unique=True, nullable=False, index=True)
-    full_name = Column(String(255), nullable=False)
-    hashed_password = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    full_name = Column(String(255), nullable=True)
+    hashed_password = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
 
     memberships = relationship("Membership", back_populates="user", cascade="all, delete-orphan")
-    submissions = relationship("ContentSubmission", back_populates="author")
-    reviews = relationship("ReviewDecisionModel", back_populates="reviewer")

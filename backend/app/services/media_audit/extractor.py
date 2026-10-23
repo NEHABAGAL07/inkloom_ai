@@ -1,86 +1,118 @@
-"""High-Level Media Extractor and Safe File Dispatcher."""
+"""
+Central Media Content Extractor and File Validation Dispatcher
 
+Validates file uploads, enforces size and MIME boundaries, defends against
+path traversal attacks, manages temporary workspace directories safely,
+and delegates to format-specific extractors.
+"""
 import os
-from typing import Optional, List
+import re
+import tempfile
+import shutil
+from typing import Optional
+from app.core.config import settings
 from app.services.media_audit.interfaces import (
-    MediaProcessingResult,
+    ExtractedContent,
     MediaProcessingStatus,
-)
-from app.services.media_audit.file_validation import (
-    FileValidator,
-    sanitize_filename,
-    MAX_FILE_SIZE_BYTES,
+    ProcessingWarning,
 )
 from app.services.media_audit.document_processor import DocumentProcessor
 from app.services.media_audit.image_processor import ImageProcessor
 from app.services.media_audit.video_processor import VideoProcessor
 
 
+class MediaExtractionError(Exception):
+    pass
+
+
 class MediaExtractor:
-    """Unified entry point for media validation, extraction, and safe cleanup."""
+    @staticmethod
+    def sanitize_filename(filename: str) -> str:
+        """Removes dangerous characters, path traversal segments (../), and preserves extension."""
+        basename = os.path.basename(filename)
+        sanitized = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", basename)
+        return sanitized or "unnamed_upload"
 
-    def __init__(
-        self,
-        doc_processor: Optional[DocumentProcessor] = None,
-        image_processor: Optional[ImageProcessor] = None,
-        video_processor: Optional[VideoProcessor] = None,
-    ):
-        self.doc_processor = doc_processor or DocumentProcessor()
-        self.image_processor = image_processor or ImageProcessor()
-        self.video_processor = video_processor or VideoProcessor()
+    @classmethod
+    def validate_file(cls, filename: str, file_size_bytes: int, media_type: str) -> None:
+        """Validates file upload limits and permitted media types."""
+        max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+        if file_size_bytes > max_bytes:
+            raise MediaExtractionError(
+                f"File size {file_size_bytes / (1024*1024):.1f}MB exceeds maximum limit of {settings.MAX_UPLOAD_SIZE_MB}MB."
+            )
 
-    def validate_file_constraints(self, file_path: str, mime_type: str, filename: str = "file") -> List[str]:
-        """Validate file size, allowed MIME types, and magic byte signatures."""
-        _, _, errors = FileValidator.validate(
-            file_path=file_path,
-            filename=filename,
-            mime_type=mime_type,
-        )
-        return errors
+        if media_type not in settings.ALLOWED_MEDIA_TYPES and not media_type.startswith("text/"):
+            raise MediaExtractionError(
+                f"Media type '{media_type}' is not supported. Allowed formats: {settings.ALLOWED_MEDIA_TYPES}"
+            )
 
-    def extract(
-        self,
+    @classmethod
+    def extract_from_file(
+        cls,
         file_path: str,
-        filename: str,
-        mime_type: Optional[str] = None,
-        transcript_text: Optional[str] = None,
-    ) -> MediaProcessingResult:
+        media_type: str,
+        original_filename: Optional[str] = None
+    ) -> ExtractedContent:
         """
-        Validate and extract text, layout segmentation, and visual metrics from media.
+        Extracts content from a local file path with safety bounds.
         """
-        sanitized = sanitize_filename(filename)
-        guessed_mime = mime_type or FileValidator.guess_mime_from_extension(sanitized)
+        if not os.path.exists(file_path):
+            raise MediaExtractionError(f"Target file does not exist: {file_path}")
 
-        # Validate existence, size, MIME whitelist, and magic bytes
-        is_valid, resolved_mime, validation_errors = FileValidator.validate(
-            file_path=file_path,
-            filename=sanitized,
-            mime_type=guessed_mime,
+        file_size = os.path.getsize(file_path)
+        safe_name = cls.sanitize_filename(original_filename or os.path.basename(file_path))
+        cls.validate_file(filename=safe_name, file_size_bytes=file_size, media_type=media_type)
+
+        extracted_text = ""
+        segments = []
+        warnings = []
+        metadata = {"file_size_bytes": file_size}
+        status = MediaProcessingStatus.SUCCESS
+
+        try:
+            if media_type == "text/plain" or safe_name.endswith(".txt"):
+                extracted_text, segments, warnings = DocumentProcessor.process_txt(file_path)
+
+            elif media_type == "application/pdf" or safe_name.endswith(".pdf"):
+                extracted_text, segments, warnings = DocumentProcessor.process_pdf(file_path)
+
+            elif (
+                media_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                or safe_name.endswith(".docx")
+            ):
+                extracted_text, segments, warnings = DocumentProcessor.process_docx(file_path)
+
+            elif media_type.startswith("image/"):
+                img_text, img_meta, segments, warnings = ImageProcessor.extract_image_data(file_path)
+                metadata.update(img_meta)
+                extracted_text = img_text
+
+            elif media_type.startswith("video/"):
+                vid_text, vid_meta, segments, warnings = VideoProcessor.process_video(file_path)
+                metadata.update(vid_meta)
+                extracted_text = vid_text
+
+            else:
+                extracted_text, segments, warnings = DocumentProcessor.process_txt(file_path)
+
+        except Exception as e:
+            status = MediaProcessingStatus.FAILED
+            warnings.append(
+                ProcessingWarning(
+                    code="EXTRACTION_FAILURE",
+                    message=f"Critical error extracting content: {str(e)}",
+                    severity="error",
+                )
+            )
+
+        return ExtractedContent(
+            source_filename=safe_name,
+            media_type=media_type,
+            file_size_bytes=file_size,
+            processing_status=status,
+            extracted_text=extracted_text,
+            segments=segments,
+            media_metadata=metadata,
+            warnings=warnings,
         )
-
-        if not is_valid:
-            return MediaProcessingResult(
-                source_filename=sanitized,
-                media_type=resolved_mime,
-                status=MediaProcessingStatus.FAILED,
-                errors=validation_errors,
-            )
-
-        # Dispatch based on MIME type
-        if resolved_mime == "text/plain":
-            return self.doc_processor.process_txt(file_path, sanitized)
-        elif resolved_mime == "application/pdf":
-            return self.doc_processor.process_pdf(file_path, sanitized)
-        elif resolved_mime == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-            return self.doc_processor.process_docx(file_path, sanitized)
-        elif resolved_mime in ("image/png", "image/jpeg", "image/webp"):
-            return self.image_processor.process_image(file_path, sanitized, resolved_mime)
-        elif resolved_mime in ("video/mp4", "video/quicktime", "video/webm"):
-            return self.video_processor.process_video(file_path, sanitized, transcript_text=transcript_text)
-        else:
-            return MediaProcessingResult(
-                source_filename=sanitized,
-                media_type=resolved_mime,
-                status=MediaProcessingStatus.UNSUPPORTED,
-                errors=[f"Unsupported media MIME type: {resolved_mime}"],
-            )
