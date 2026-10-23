@@ -17,39 +17,77 @@ from app.services.ai_audit.interface import VerifiedFact, EvidenceStatusEnum
 class ClaimChecker:
     """Verifies promotional statements and quantitative claims against registered brand facts."""
 
-    def __init__(self, certified_claims_registry: Optional[List[Dict[str, Any]]] = None):
-        # In a real environment, this is loaded from DB ApprovedAssets (type=claim_registry)
-        self.certified_claims = certified_claims_registry or [
-            {
-                "claim_id": "claim-reg-01",
-                "approved_statement": "Enterprise SOC2 Type II Certified",
-                "evidence_url": "https://compliance.example.com/soc2-report-2025.pdf",
-            },
-            {
-                "claim_id": "claim-reg-02",
-                "approved_statement": "Analyzes over 10 million brand assets annually",
-                "evidence_url": "https://data.example.com/2025-annual-throughput-metrics",
-            },
-        ]
+    def __init__(
+        self,
+        certified_claims_registry: Optional[List[Dict[str, Any]]] = None,
+        verified_facts: Optional[List[VerifiedFact]] = None,
+    ):
+        self.verified_facts: List[VerifiedFact] = verified_facts or []
+        
+        # Support legacy certified claims dict format for backward compatibility
+        if certified_claims_registry:
+            for item in certified_claims_registry:
+                self.verified_facts.append(
+                    VerifiedFact(
+                        fact_id=item.get("claim_id", "fact-legacy"),
+                        organization_id="org-default",
+                        claim_category="certification",
+                        statement=item.get("approved_statement", ""),
+                        approved_value=item.get("approved_statement"),
+                        source_reference=item.get("source_reference"),
+                        evidence_url=item.get("evidence_url"),
+                    )
+                )
+
+        if not self.verified_facts:
+            # Baseline certified facts
+            self.verified_facts = [
+                VerifiedFact(
+                    fact_id="fact-soc2-001",
+                    organization_id="org-default",
+                    claim_category="certification",
+                    statement="Enterprise SOC2 Type II Certified",
+                    approved_value="SOC2 Type II",
+                    source_reference="Security & Compliance Certifications Registry 2025-2026, Cert #SC-9921",
+                    evidence_url="https://compliance.example.com/soc2-report-2025.pdf",
+                ),
+                VerifiedFact(
+                    fact_id="fact-metric-002",
+                    organization_id="org-default",
+                    claim_category="metric",
+                    statement="Analyzes over 10 million brand assets annually",
+                    approved_value="10 million",
+                    source_reference="Q4 2025 Throughput Audit, Sec 2.1",
+                    evidence_url="https://data.example.com/2025-annual-throughput-metrics",
+                ),
+                VerifiedFact(
+                    fact_id="fact-uptime-003",
+                    organization_id="org-default",
+                    claim_category="metric",
+                    statement="99.9% uptime SLA guarantee",
+                    approved_value="99.9%",
+                    source_reference="Customer Service Level Agreement 2026",
+                ),
+                VerifiedFact(
+                    fact_id="fact-pricing-004",
+                    organization_id="org-default",
+                    claim_category="pricing",
+                    statement="Standard tier starts at $99 per user per month",
+                    approved_value="$99",
+                    source_reference="Master Pricing Schedule v3.0",
+                ),
+            ]
 
     def check(
         self,
         text: str,
         rules: List[RetrievedRule],
-        verified_facts: Optional[List[Dict[str, Any]]] = None,
+        verified_facts: Optional[List[VerifiedFact]] = None,
     ) -> List[FindingSchema]:
+        """Check content against empirical facts and detect unsubstantiated or contradicted claims."""
         findings: List[FindingSchema] = []
-        claim_rules = [r for r in rules if r.category in ("claim_verification", "claims", "unsupported_claim", "factual_accuracy")]
-
-        # Combine internal certified claims with dynamically passed verified facts
-        claims_pool = list(self.certified_claims)
-        if verified_facts:
-            for fact in verified_facts:
-                claims_pool.append({
-                    "claim_id": fact.get("id", "fact-custom"),
-                    "approved_statement": fact.get("statement") or fact.get("approved_statement", ""),
-                    "evidence_url": fact.get("source_document") or fact.get("evidence_url", ""),
-                })
+        facts_pool = verified_facts if verified_facts is not None else self.verified_facts
+        claim_rules = [r for r in rules if r.category == "claim_verification"]
 
         # 1. Contradiction Checks against Verified Facts
         findings.extend(self._check_contradictions(text, facts_pool))
@@ -75,8 +113,9 @@ class ClaimChecker:
 
                     # Check if this specific superlative statement is certified in registry
                     is_certified = any(
-                        matched_str.lower() in c.get("approved_statement", "").lower()
-                        for c in claims_pool
+                        matched_str.lower() in f.statement.lower() or
+                        (f.approved_value and matched_str.lower() in f.approved_value.lower())
+                        for f in facts_pool
                     )
 
                     if not is_certified:

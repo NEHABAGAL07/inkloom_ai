@@ -80,31 +80,46 @@ class TerminologyChecker:
                 flags = 0 if case_sensitive else re.IGNORECASE
                 pattern = re.compile(rf"\b{re.escape(variant)}\b", flags)
 
-            is_case_sensitive = config.get("case_sensitive", True)
-            flags = 0 if is_case_sensitive else re.IGNORECASE
-
-            # Keep track of matched spans to prevent duplicate findings for the same text location
-            matched_spans = set()
-
-            for variant in forbidden_variants:
-                pattern = re.compile(rf"\b{re.escape(variant)}\b", flags)
                 for match in pattern.finditer(text):
                     start_idx = match.start()
                     end_idx = match.end()
                     matched_str = match.group(0)
-                    start_idx = match.start()
-                    end_idx = match.end()
 
-                    # Prevent duplicate findings for overlapping/identical spans
-                    span = (start_idx, end_idx)
-                    if span in matched_spans:
-                        continue
-                    matched_spans.add(span)
-
-                    # If match equals the preferred term, it's valid, skip
-                    if preferred_term and (matched_str == preferred_term or matched_str.lower() != variant.lower()):
+                    # Sub-match / False positive protection:
+                    # If this match is already covered by a previously flagged span, skip
+                    if any(s <= start_idx and e >= end_idx for (s, e) in flagged_spans):
                         continue
 
+                    # If the text at this location is actually the preferred term, skip!
+                    # Example: "Inkloom" inside "Inkloom AI" when preferred_term is "Inkloom AI"
+                    if preferred_term:
+                        pref_len = len(preferred_term)
+                        # Check forward
+                        candidate_forward = text[start_idx : start_idx + pref_len]
+                        if candidate_forward == preferred_term:
+                            continue
+                        # Check backward (if match started mid-phrase)
+                        pref_start = max(0, start_idx - pref_len)
+                        candidate_context = text[pref_start : end_idx + pref_len]
+                        if preferred_term in candidate_context:
+                            # Verify if the match itself was part of that preferred term
+                            pref_pos_in_context = candidate_context.find(preferred_term)
+                            abs_pref_start = pref_start + pref_pos_in_context
+                            abs_pref_end = abs_pref_start + pref_len
+                            if abs_pref_start <= start_idx and end_idx <= abs_pref_end:
+                                continue
+
+                    # If this match string already exactly equals preferred_term, skip
+                    if preferred_term and matched_str == preferred_term:
+                        continue
+
+                    # Also check if accepted brand names like "Inkloom" are allowed when preferred is "Inkloom AI"
+                    # But if the rule title is "Brand Name Capitalization & Casing", only flag improper casing
+                    if "Capitalization" in rule.title or "Casing" in rule.title:
+                        if matched_str in ("Inkloom", "Inkloom AI"):
+                            continue
+
+                    flagged_spans.add((start_idx, end_idx))
                     line_num = text[:start_idx].count("\n") + 1
 
                     context_start = max(0, start_idx - 30)
