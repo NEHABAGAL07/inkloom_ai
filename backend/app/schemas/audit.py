@@ -1,7 +1,7 @@
 """Shared Audit Result Schema matching `contracts/audit-result.schema.json`."""
 
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 from pydantic import BaseModel, Field, ConfigDict
 from app.schemas.common import (
     AuditStatusEnum,
@@ -51,6 +51,37 @@ class FindingSchema(BaseModel):
     location: Optional[LocationSchema] = None
     requires_human_review: bool = Field(True, description="Human reviewer sign-off requirement")
 
+    def to_brand_finding(self) -> "BrandAuditFinding":
+        """Convert to Section 9 Shared Audit Finding schema."""
+        cat_map = {
+            "tone_and_voice": "tone",
+            "claim_verification": "unsupported_claim",
+            "visual_compliance": "visual_consistency",
+        }
+        category = cat_map.get(self.category.value, self.category.value)
+        return BrandAuditFinding(
+            id=self.id,
+            category=category,
+            severity=self.severity.value if self.severity.value != "info" else "low",
+            original_text=self.evidence or "",
+            explanation=self.message,
+            guideline_id=self.source_reference,
+            evidence_status="unverified" if category in ("unsupported_claim", "factual_accuracy") else "unavailable",
+            suggestion=self.suggested_correction,
+        )
+
+
+class BrandAuditFinding(BaseModel):
+    """Section 9 - Validated response schema for an audit finding."""
+    id: str = Field(..., description="Unique finding ID")
+    category: str = Field(..., description="Allowed: tone, terminology, factual_accuracy, unsupported_claim, visual_consistency, accessibility")
+    severity: str = Field(..., description="Allowed: low, medium, high, critical")
+    original_text: str = Field(..., description="Original excerpt from submitted content")
+    explanation: str = Field(..., description="Explanation of why this violates brand guidelines")
+    guideline_id: Optional[str] = Field(None, description="Optional ID of relevant guideline")
+    evidence_status: str = Field("unverified", description="Allowed: supported, contradicted, unverified, unavailable")
+    suggestion: Optional[str] = Field(None, description="Actionable suggested correction")
+
 
 class EngineMetadataSchema(BaseModel):
     """Audit engine execution telemetry and diagnostics."""
@@ -80,5 +111,19 @@ class AuditResultSchema(BaseModel):
 class AuditRunRequest(BaseModel):
     """Payload to trigger an audit execution."""
     content_id: str
-    revision_id: Optional[int] = None
+    revision_id: Optional[Union[str, int]] = None
     guideline_ids: Optional[List[str]] = None
+
+
+class AuditFindingDetailResponse(BaseModel):
+    """Structured audit response returning findings in the Section 9 format."""
+    audit_id: str
+    content_id: str
+    content_version: int
+    guideline_id: Optional[str] = None
+    guideline_version: Optional[str] = None
+    overall_status: str
+    summary: str
+    findings: List[BrandAuditFinding]
+    created_at: str
+    engine_metadata: Optional[dict] = None
