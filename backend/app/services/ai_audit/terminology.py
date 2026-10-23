@@ -19,17 +19,29 @@ class TerminologyChecker:
             forbidden_variants = config.get("forbidden_variants", [])
             preferred_term = config.get("preferred_term")
 
+            is_case_sensitive = config.get("case_sensitive", True)
+            flags = 0 if is_case_sensitive else re.IGNORECASE
+
+            # Keep track of matched spans to prevent duplicate findings for the same text location
+            matched_spans = set()
+
             for variant in forbidden_variants:
-                # Word boundary match, case-sensitive if needed or case-insensitive
-                pattern = re.compile(rf"\b{re.escape(variant)}\b", re.IGNORECASE)
+                pattern = re.compile(rf"\b{re.escape(variant)}\b", flags)
                 for match in pattern.finditer(text):
                     matched_str = match.group(0)
-                    # If this rule specifically enforces case sensitivity and exact match is identical to preferred, skip
-                    if preferred_term and matched_str == preferred_term:
-                        continue
-
                     start_idx = match.start()
                     end_idx = match.end()
+
+                    # Prevent duplicate findings for overlapping/identical spans
+                    span = (start_idx, end_idx)
+                    if span in matched_spans:
+                        continue
+                    matched_spans.add(span)
+
+                    # If match equals the preferred term, it's valid, skip
+                    if preferred_term and (matched_str == preferred_term or matched_str.lower() != variant.lower()):
+                        continue
+
                     line_num = text[:start_idx].count("\n") + 1
 
                     # Extract snippet context for evidence

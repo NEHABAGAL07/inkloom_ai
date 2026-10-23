@@ -10,13 +10,18 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 # Force test environment variables before importing app
 os.environ["ENVIRONMENT"] = "test"
-os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./test_inkloom.db"
 os.environ["SECRET_KEY"] = "test-secret-key-32-characters-minimum"
 
+import asyncio
 from app.main import app
 from app.services.ai_audit.engine import AIAuditEngine
 from app.services.media_audit.extractor import MediaExtractor
 from app.services.audit_orchestrator import AuditOrchestrator
+from app.database.session import init_models
+
+# Ensure test tables exist in test_inkloom.db
+asyncio.run(init_models())
 
 
 @pytest.fixture

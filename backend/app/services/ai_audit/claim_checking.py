@@ -31,9 +31,24 @@ class ClaimChecker:
             },
         ]
 
-    def check(self, text: str, rules: List[RetrievedRule]) -> List[FindingSchema]:
+    def check(
+        self,
+        text: str,
+        rules: List[RetrievedRule],
+        verified_facts: Optional[List[Dict[str, Any]]] = None,
+    ) -> List[FindingSchema]:
         findings: List[FindingSchema] = []
-        claim_rules = [r for r in rules if r.category == "claim_verification"]
+        claim_rules = [r for r in rules if r.category in ("claim_verification", "claims", "unsupported_claim", "factual_accuracy")]
+
+        # Combine internal certified claims with dynamically passed verified facts
+        claims_pool = list(self.certified_claims)
+        if verified_facts:
+            for fact in verified_facts:
+                claims_pool.append({
+                    "claim_id": fact.get("id", "fact-custom"),
+                    "approved_statement": fact.get("statement") or fact.get("approved_statement", ""),
+                    "evidence_url": fact.get("source_document") or fact.get("evidence_url", ""),
+                })
 
         for rule in claim_rules:
             patterns = rule.rule_config.get("superlative_patterns", [])
@@ -53,7 +68,7 @@ class ClaimChecker:
                     # Check if this superlative claim is certified in the claims registry
                     is_certified = any(
                         matched_str.lower() in c.get("approved_statement", "").lower()
-                        for c in self.certified_claims
+                        for c in claims_pool
                     )
 
                     if not is_certified:
