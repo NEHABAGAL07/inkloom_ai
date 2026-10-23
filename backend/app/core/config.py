@@ -53,7 +53,10 @@ class Settings(BaseSettings):
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "image/png",
         "image/jpeg",
+        "image/webp",
         "video/mp4",
+        "video/quicktime",
+        "video/webm",
     ]
 
     # AI Audit Engine Configuration

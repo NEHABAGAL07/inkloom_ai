@@ -47,3 +47,24 @@ class MediaProcessingResult:
     visual_results: Optional[VisualCheckResult] = None
     warnings: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
+
+
+from pydantic import BaseModel, Field, ConfigDict
+from app.schemas.audit import AuditResultSchema, FindingSchema
+
+
+class MediaAuditResult(BaseModel):
+    """Canonical structured result returned by the Media Audit Service."""
+    model_config = ConfigDict(extra="ignore")
+
+    status: MediaProcessingStatus = MediaProcessingStatus.SUCCESS
+    media_type: str
+    file_metadata: Dict[str, Any] = Field(default_factory=dict)
+    extracted_text: str = ""
+    findings: List[FindingSchema] = Field(default_factory=list)
+    audit_result: Optional[AuditResultSchema] = None
+    capabilities: Dict[str, bool] = Field(default_factory=dict)
+    warnings: List[str] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=list)
+    duration_ms: float = 0.0
+
