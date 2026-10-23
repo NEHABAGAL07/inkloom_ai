@@ -1,41 +1,58 @@
-"""AI Brand Governance Audit Engine.
+"""Inkloom AI - Brand Governance Audit Engine.
 
-Orchestrates deterministic rule-based checks and optional LLM model adapters.
-Produces strictly validated results conforming to `contracts/audit-result.schema.json`.
+Orchestrates deterministic rule-based checks, evidence-aware claim verifications,
+and optional LLM adapters.
+Conforms strictly to `contracts/audit-result.schema.json`.
 """
 
-import time
-import uuid
-from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional
-from app.schemas.audit import (
-    AuditResultSchema,
-    FindingSchema,
-    EngineMetadataSchema,
+from typing import List, Dict, Any, Optional, Tuple
+from app.schemas.audit import AuditResultSchema, FindingSchema
+from app.schemas.common import AuditStatusEnum
+from app.services.ai_audit.interface import (
+    ContentContext,
+    RevisionDiff,
+    AdvisoryOutcomeEnum,
 )
-from app.schemas.common import AuditStatusEnum, FindingSeverityEnum
 from app.services.ai_audit.guideline_retrieval import GuidelineRetriever, RetrievedRule
+from app.services.ai_audit.evidence_retrieval import EvidenceRetriever
 from app.services.ai_audit.terminology import TerminologyChecker
-from app.services.ai_audit.tone_analysis import ToneAnalyzer
+from app.services.ai_audit.brand_voice import BrandVoiceAnalyzer
 from app.services.ai_audit.claim_checking import ClaimChecker
+from app.services.ai_audit.rules_engine import DeterministicRuleEngine
+from app.services.ai_audit.content_quality import ContentQualityChecker
+from app.services.ai_audit.llm_adapter import (
+    BaseLLMAdapter,
+    RuleBasedFallbackAdapter,
+    MockLLMAdapter,
+    create_llm_adapter,
+)
+from app.services.ai_audit.orchestrator import AIAuditOrchestrator
 from app.core.config import settings
 
 
-class LLMModelAdapter:
-    """Abstract interface for optional generative AI model adapters."""
+# Backward-compatible LLMModelAdapter alias
+class LLMModelAdapter(BaseLLMAdapter):
+    """Backward-compatible adapter interface for legacy test/caller compatibility."""
 
-    def __init__(self, provider: str, api_key: Optional[str] = None, model_name: Optional[str] = None):
-        self.provider = provider
-        self.api_key = api_key
-        self.model_name = model_name
+    def __init__(
+        self,
+        provider: str = "rule_based_fallback",
+        api_key: Optional[str] = None,
+        model_name: Optional[str] = None,
+    ):
+        super().__init__(provider=provider, api_key=api_key, model_name=model_name)
+        self._inner = create_llm_adapter(provider=provider, api_key=api_key, model_name=model_name)
 
     def is_configured(self) -> bool:
-        return bool(self.api_key and self.provider != "rule_based_fallback")
+        return self._inner.is_configured()
 
-    def run_advanced_audit(self, text: str, rules: List[RetrievedRule]) -> List[FindingSchema]:
-        """Hook for calling external LLM providers (e.g. Gemini, OpenAI) if configured."""
-        # Baseline scaffold returns empty; falls back to deterministic rule checkers
-        return []
+    def run_advanced_audit(
+        self,
+        text: str,
+        rules: List[RetrievedRule],
+        context: Optional[ContentContext] = None,
+    ) -> List[FindingSchema]:
+        return self._inner.run_advanced_audit(text=text, rules=rules, context=context)
 
 
 from app.services.ai_audit.interface import BaseAuditService
@@ -45,24 +62,37 @@ from app.services.ai_audit.llm_adapter import HostedLLMAdapter, BaseLLMAdapter
 class AIAuditEngine(BaseAuditService):
     """Core AI audit engine for brand governance conforming to BaseAuditService."""
 
-    ENGINE_VERSION = "inkloom-audit-engine-v1.0.0"
+    ENGINE_VERSION = AIAuditOrchestrator.ENGINE_VERSION
 
     def __init__(
         self,
         retriever: Optional[GuidelineRetriever] = None,
         terminology_checker: Optional[TerminologyChecker] = None,
-        tone_analyzer: Optional[ToneAnalyzer] = None,
+        tone_analyzer: Optional[BrandVoiceAnalyzer] = None,
         claim_checker: Optional[ClaimChecker] = None,
         model_adapter: Optional[BaseLLMAdapter] = None,
     ):
         self.retriever = retriever or GuidelineRetriever()
+        self.evidence_retriever = evidence_retriever or EvidenceRetriever()
         self.terminology_checker = terminology_checker or TerminologyChecker()
-        self.tone_analyzer = tone_analyzer or ToneAnalyzer()
+        self.tone_analyzer = tone_analyzer or BrandVoiceAnalyzer()
         self.claim_checker = claim_checker or ClaimChecker()
         self.model_adapter = model_adapter or HostedLLMAdapter(
             provider=settings.LLM_PROVIDER,
             api_key=settings.LLM_API_KEY,
             model_name=settings.LLM_MODEL_NAME,
+        )
+
+        # Underlying orchestrator
+        self.orchestrator = AIAuditOrchestrator(
+            retriever=self.retriever,
+            evidence_retriever=self.evidence_retriever,
+            terminology_checker=self.terminology_checker,
+            brand_voice_analyzer=self.tone_analyzer,
+            claim_checker=self.claim_checker,
+            rules_engine=self.rules_engine,
+            quality_checker=self.quality_checker,
+            llm_adapter=self.model_adapter,
         )
 
     def audit_text(
@@ -129,32 +159,21 @@ class AIAuditEngine(BaseAuditService):
                 extractors_used=extractors,
             ),
         )
+        return result
 
-    def _calculate_overall_status(self, findings: List[FindingSchema]) -> AuditStatusEnum:
-        """Calculate overall status from finding severities."""
-        if not findings:
-            return AuditStatusEnum.PASSED
-
-        severities = {f.severity for f in findings}
-        requires_review = any(f.requires_human_review for f in findings)
-
-        if FindingSeverityEnum.CRITICAL in severities:
-            return AuditStatusEnum.FAILED
-        if FindingSeverityEnum.HIGH in severities:
-            return AuditStatusEnum.WARNING if not requires_review else AuditStatusEnum.NEEDS_HUMAN_REVIEW
-        if requires_review:
-            return AuditStatusEnum.NEEDS_HUMAN_REVIEW
-        return AuditStatusEnum.WARNING
-
-    def _generate_summary(self, findings: List[FindingSchema], status: AuditStatusEnum) -> str:
-        """Generate human-readable executive audit summary."""
-        if not findings:
-            return "Content successfully conforms to all verified brand guidelines, terminology rules, and tone standards."
-
-        count = len(findings)
-        categories = list({f.category.value for f in findings})
-        cat_str = ", ".join(categories)
-        return (
-            f"Audit completed with status '{status.value}'. Detected {count} finding(s) across categories: {cat_str}. "
-            f"Review suggested corrections and ensure compliance before publication."
+    def audit_with_context(
+        self,
+        text: str,
+        context: ContentContext,
+        audit_id: Optional[str] = None,
+        custom_rules: Optional[List[Dict[str, Any]]] = None,
+        extractors_used: Optional[List[str]] = None,
+    ) -> Tuple[AuditResultSchema, Optional[RevisionDiff], AdvisoryOutcomeEnum]:
+        """Execute brand audit with full revision awareness and advisory outcome."""
+        return self.orchestrator.execute_audit(
+            text=text,
+            context=context,
+            audit_id=audit_id,
+            custom_rules=custom_rules,
+            extractors_used=extractors_used,
         )

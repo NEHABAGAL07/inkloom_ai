@@ -184,6 +184,10 @@ async def run_audit(
 
     await db.commit()
 
+    if payload.content_id in _SUBMISSION_STORE:
+        _SUBMISSION_STORE[payload.content_id].current_status = WorkflowStateEnum.PENDING_APPROVAL
+        _SUBMISSION_STORE[payload.content_id].updated_at = datetime.now(timezone.utc)
+
     _AUDIT_STORE[audit_result.audit_id] = audit_result
     return audit_result
 
