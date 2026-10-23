@@ -55,8 +55,11 @@ async def root_health():
     }
 
 
+from app.api.routes.media import router as media_router
+
 # Mount Versioned API
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(media_router, prefix="/api", include_in_schema=False)
 
 
 # Safe Exception Handler
