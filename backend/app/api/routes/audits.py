@@ -2,10 +2,12 @@
 
 import json
 import os
+from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.security import CurrentUser, get_current_user
 from app.schemas.audit import AuditResultSchema, AuditRunRequest
+from app.schemas.common import WorkflowStateEnum
 from app.services.audit_orchestrator import AuditOrchestrator
 from app.api.routes.content import _SUBMISSION_STORE
 
@@ -50,6 +52,10 @@ async def run_audit(
         file_path=file_path,
         filename=filename,
     )
+
+    if payload.content_id in _SUBMISSION_STORE:
+        _SUBMISSION_STORE[payload.content_id].current_status = WorkflowStateEnum.PENDING_APPROVAL
+        _SUBMISSION_STORE[payload.content_id].updated_at = datetime.now(timezone.utc)
 
     _AUDIT_STORE[audit_result.audit_id] = audit_result
     return audit_result

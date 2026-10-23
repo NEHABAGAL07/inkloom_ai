@@ -60,8 +60,10 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "rule_based_fallback")
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
     LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME", "gemini-1.5-pro")
+    LLM_TIMEOUT_SECONDS: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "8.0"))
     CLAIM_VERIFICATION_THRESHOLD: float = 0.75
     MAX_RULES_PER_AUDIT: int = 100
+    MAX_AUDIT_TEXT_LENGTH: int = int(os.getenv("MAX_AUDIT_TEXT_LENGTH", "500000"))
 
     # Media Extraction Tooling
     ENABLE_OCR: bool = os.getenv("ENABLE_OCR", "true").lower() in ("true", "1")
