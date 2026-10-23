@@ -17,8 +17,10 @@ from app.services.media_audit.video_processor import VideoProcessor
 
 def sanitize_filename(filename: str) -> str:
     """Sanitize filename to prevent directory traversal and injection attacks."""
+    # Normalize backslashes to forward slashes so Windows paths are handled on Unix
+    normalized = filename.replace("\\", "/")
     # Remove path elements
-    clean_name = os.path.basename(filename)
+    clean_name = os.path.basename(normalized)
     # Strip dangerous characters
     clean_name = re.sub(r"[^a-zA-Z0-9_\.\-]", "_", clean_name)
     # Limit max length
