@@ -166,6 +166,24 @@ export class ApiService implements IApiService {
     }
   }
 
+  async createGuideline(data: { name: string; description?: string; version?: string }): Promise<BrandGuideline> {
+    if (USE_MOCK) return mockApi.createGuideline(data);
+    try {
+      return await this.fetchJson<BrandGuideline>("/guidelines", {
+        method: "POST",
+        body: JSON.stringify({
+          name: data.name,
+          description: data.description || "",
+          version: data.version || "1.0.0",
+          is_active: true,
+          rules: [],
+        }),
+      });
+    } catch {
+      return mockApi.createGuideline(data);
+    }
+  }
+
   async getAssets(): Promise<ApprovedAsset[]> {
     if (USE_MOCK) return mockApi.getAssets();
     try {

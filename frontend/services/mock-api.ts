@@ -42,6 +42,7 @@ export interface IApiService {
   getPendingReviews(): Promise<ContentSubmission[]>;
   submitReviewDecision(data: ReviewDecisionInput): Promise<ReviewDecision>;
   getGuidelines(): Promise<BrandGuideline[]>;
+  createGuideline(data: { name: string; description?: string; version?: string }): Promise<BrandGuideline>;
   getAssets(): Promise<ApprovedAsset[]>;
   getAnalyticsSummary(): Promise<AnalyticsSummary>;
 
@@ -367,6 +368,17 @@ export class MockApiService implements IApiService {
         is_active: true,
       },
     ];
+  }
+
+  async createGuideline(data: { name: string; description?: string; version?: string }): Promise<BrandGuideline> {
+    return {
+      id: `guide_${Math.random().toString(36).substring(2, 9)}`,
+      organization_id: "org_acme_cloud",
+      name: data.name,
+      description: data.description || "",
+      version: data.version || "1.0.0",
+      is_active: true,
+    };
   }
 
   async getAssets(): Promise<ApprovedAsset[]> {
