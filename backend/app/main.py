@@ -22,6 +22,12 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing Inkloom AI Brand Governance Platform...")
     logger.info(f"Environment: {settings.ENVIRONMENT} | Debug: {settings.DEBUG}")
     logger.info(f"LLM Provider: {settings.LLM_PROVIDER}")
+    try:
+        from app.database.session import init_models
+        await init_models()
+        logger.info("Database schema initialized.")
+    except Exception as exc:
+        logger.warning(f"Database schema initialization notice: {exc}")
     yield
     logger.info("Inkloom AI services shutting down cleanly.")
 
@@ -44,6 +50,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Root index endpoint
+@app.get("/", tags=["Root"])
+async def root_index():
+    return {
+        "name": settings.PROJECT_NAME,
+        "status": "online",
+        "version": "1.0.0",
+        "documentation": "/docs",
+        "alternative_docs": "/redoc",
+        "health": "/api/health",
+        "description": "Enterprise AI-Powered Brand Governance & Compliance Platform",
+    }
+
+
 # Root-level health endpoint
 @app.get("/health", tags=["Health"])
 async def root_health():
@@ -55,11 +75,9 @@ async def root_health():
     }
 
 
-from app.api.routes.media import router as media_router
-
-# Mount Versioned API
+# Mount Versioned APIs (Supports both /api/v1 and predictable /api contract)
 app.include_router(api_router, prefix=settings.API_V1_STR)
-app.include_router(media_router, prefix="/api", include_in_schema=False)
+app.include_router(api_router, prefix="/api")
 
 
 # Safe Exception Handler

@@ -23,7 +23,7 @@ class GuidelineRuleResponse(GuidelineRuleCreate):
 
 class BrandGuidelineCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    organization_id: str
+    organization_id: Optional[str] = None
     category: FindingCategoryEnum
     version: str = "1.0"
     description: Optional[str] = None

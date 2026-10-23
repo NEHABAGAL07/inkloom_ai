@@ -55,8 +55,12 @@ class LLMModelAdapter(BaseLLMAdapter):
         return self._inner.run_advanced_audit(text=text, rules=rules, context=context)
 
 
-class AIAuditEngine:
-    """Core AI audit engine for brand governance and compliance verification."""
+from app.services.ai_audit.interface import BaseAuditService
+from app.services.ai_audit.llm_adapter import HostedLLMAdapter, BaseLLMAdapter
+
+
+class AIAuditEngine(BaseAuditService):
+    """Core AI audit engine for brand governance conforming to BaseAuditService."""
 
     ENGINE_VERSION = AIAuditOrchestrator.ENGINE_VERSION
 
@@ -67,18 +71,13 @@ class AIAuditEngine:
         tone_analyzer: Optional[BrandVoiceAnalyzer] = None,
         claim_checker: Optional[ClaimChecker] = None,
         model_adapter: Optional[BaseLLMAdapter] = None,
-        evidence_retriever: Optional[EvidenceRetriever] = None,
-        rules_engine: Optional[DeterministicRuleEngine] = None,
-        quality_checker: Optional[ContentQualityChecker] = None,
     ):
         self.retriever = retriever or GuidelineRetriever()
         self.evidence_retriever = evidence_retriever or EvidenceRetriever()
         self.terminology_checker = terminology_checker or TerminologyChecker()
         self.tone_analyzer = tone_analyzer or BrandVoiceAnalyzer()
         self.claim_checker = claim_checker or ClaimChecker()
-        self.rules_engine = rules_engine or DeterministicRuleEngine()
-        self.quality_checker = quality_checker or ContentQualityChecker()
-        self.model_adapter = model_adapter or create_llm_adapter(
+        self.model_adapter = model_adapter or HostedLLMAdapter(
             provider=settings.LLM_PROVIDER,
             api_key=settings.LLM_API_KEY,
             model_name=settings.LLM_MODEL_NAME,
@@ -98,30 +97,67 @@ class AIAuditEngine:
 
     def audit_text(
         self,
-        text: str,
-        content_id: str,
+        text: Optional[str] = None,
+        content_id: Optional[str] = None,
         audit_id: Optional[str] = None,
         custom_rules: Optional[List[Dict[str, Any]]] = None,
         extractors_used: Optional[List[str]] = None,
-        context: Optional[ContentContext] = None,
+        content: Optional[str] = None,
+        guidelines: Optional[List[Dict[str, Any]]] = None,
+        verified_facts: Optional[List[Dict[str, Any]]] = None,
     ) -> AuditResultSchema:
         """
-        Execute brand governance audit on text content.
-        Preserves complete backward compatibility with the existing API.
+        Execute brand governance checks on content.
+        Signature supports audit_text(content, guidelines, verified_facts) as well as legacy signatures.
         """
-        ctx = context or ContentContext(
-            content_id=content_id,
-            organization_id="org-default",
+        raw_text = content if content is not None else (text or "")
+        cid = content_id or f"cnt-{uuid.uuid4().hex[:8]}"
+        rules_input = guidelines if guidelines is not None else custom_rules
+
+        start_time = time.perf_counter()
+        audit_uuid = audit_id or str(uuid.uuid4())
+        extractors = extractors_used or ["plain_text_extractor"]
+
+        # 1. Retrieve applicable brand guidelines
+        rules = self.retriever.get_rules_for_content(
             content_type="text",
-            raw_text=text,
+            custom_rules=rules_input,
         )
 
-        result, _, _ = self.orchestrator.execute_audit(
-            text=text,
-            context=ctx,
-            audit_id=audit_id,
-            custom_rules=custom_rules,
-            extractors_used=extractors_used,
+        # 2. Run rule-based checkers
+        findings: List[FindingSchema] = []
+        findings.extend(self.terminology_checker.check(raw_text, rules))
+        findings.extend(self.tone_analyzer.check(raw_text, rules))
+        findings.extend(self.claim_checker.check(raw_text, rules, verified_facts=verified_facts))
+
+        # 3. Optional LLM adapter invocation
+        ai_model_used = None
+        if self.model_adapter.is_configured():
+            ai_findings = self.model_adapter.run_advanced_audit(raw_text, rules, verified_facts=verified_facts)
+            findings.extend(ai_findings)
+            ai_model_used = getattr(self.model_adapter, "model_name", None)
+
+        # 4. Compute aggregate compliance status
+        overall_status = self._calculate_overall_status(findings)
+        summary = self._generate_summary(findings, overall_status)
+
+        execution_time_ms = round((time.perf_counter() - start_time) * 1000, 2)
+
+        return AuditResultSchema(
+            schema_version="1.0.0",
+            audit_id=audit_uuid,
+            content_id=content_id,
+            overall_status=overall_status,
+            summary=summary,
+            findings=findings,
+            created_at=datetime.now(timezone.utc).isoformat(),
+            engine_metadata=EngineMetadataSchema(
+                engine_version=self.ENGINE_VERSION,
+                execution_time_ms=execution_time_ms,
+                rules_checked_count=len(rules),
+                ai_model_used=ai_model_used,
+                extractors_used=extractors,
+            ),
         )
         return result
 

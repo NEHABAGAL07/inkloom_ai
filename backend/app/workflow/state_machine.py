@@ -103,11 +103,11 @@ def resolve_human_review_action(
             f"current state is '{current_state.value}'."
         )
 
-    if action == ReviewActionEnum.APPROVE:
+    if action in (ReviewActionEnum.APPROVE, ReviewActionEnum.APPROVED):
         return WorkflowStateEnum.APPROVED
-    elif action == ReviewActionEnum.REJECT:
+    elif action in (ReviewActionEnum.REJECT, ReviewActionEnum.REJECTED):
         return WorkflowStateEnum.REJECTED
-    elif action == ReviewActionEnum.REQUEST_CHANGES:
+    elif action in (ReviewActionEnum.REQUEST_CHANGES, ReviewActionEnum.CHANGES_REQUESTED):
         return WorkflowStateEnum.CHANGES_REQUESTED
     else:
         raise WorkflowTransitionError(f"Unknown review action: {action}")

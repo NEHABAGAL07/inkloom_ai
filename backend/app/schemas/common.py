@@ -17,11 +17,17 @@ class AuditStatusEnum(str, Enum):
 
 class FindingCategoryEnum(str, Enum):
     """Category of guideline finding."""
-    TONE_AND_VOICE = "tone_and_voice"
+    # Section 9 allowed categories
+    TONE = "tone"
     TERMINOLOGY = "terminology"
+    FACTUAL_ACCURACY = "factual_accuracy"
+    UNSUPPORTED_CLAIM = "unsupported_claim"
+    VISUAL_CONSISTENCY = "visual_consistency"
+    ACCESSIBILITY = "accessibility"
+    # Aliases and contract compatibility
+    TONE_AND_VOICE = "tone_and_voice"
     CLAIM_VERIFICATION = "claim_verification"
     VISUAL_COMPLIANCE = "visual_compliance"
-    ACCESSIBILITY = "accessibility"
     PROHIBITED_CONTENT = "prohibited_content"
     LEGAL_COMPLIANCE = "legal_compliance"
 
@@ -33,6 +39,14 @@ class FindingSeverityEnum(str, Enum):
     MEDIUM = "medium"
     LOW = "low"
     INFO = "info"
+
+
+class EvidenceStatusEnum(str, Enum):
+    """Evidence status for claim substantiation."""
+    SUPPORTED = "supported"
+    CONTRADICTED = "contradicted"
+    UNVERIFIED = "unverified"
+    UNAVAILABLE = "unavailable"
 
 
 class FindingStatusEnum(str, Enum):
@@ -58,8 +72,11 @@ class WorkflowStateEnum(str, Enum):
 class ReviewActionEnum(str, Enum):
     """Action taken by human brand reviewer."""
     APPROVE = "approve"
+    APPROVED = "approved"
     REJECT = "reject"
+    REJECTED = "rejected"
     REQUEST_CHANGES = "request_changes"
+    CHANGES_REQUESTED = "changes_requested"
 
 
 class StandardResponse(BaseModel):

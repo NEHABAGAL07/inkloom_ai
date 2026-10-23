@@ -5,6 +5,7 @@ from app.models.organization import Organization, Workspace, Membership
 from app.models.user import User
 from app.models.guideline import BrandGuideline, GuidelineRule
 from app.models.asset import ApprovedAsset
+from app.models.fact import VerifiedFact
 from app.models.content import ContentSubmission, ContentRevision
 from app.models.audit import AuditResultModel, FindingModel
 from app.models.review import ReviewDecisionModel, AuditEventModel
@@ -18,6 +19,7 @@ __all__ = [
     "BrandGuideline",
     "GuidelineRule",
     "ApprovedAsset",
+    "VerifiedFact",
     "ContentSubmission",
     "ContentRevision",
     "AuditResultModel",
