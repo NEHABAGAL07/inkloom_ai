@@ -152,13 +152,21 @@ function InviteContent() {
                 <ArrowRight className="w-4 h-4" />
               </button>
 
-              <div className="text-center mt-6">
+              <div className="text-center mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-ink-muted">
+                <button
+                  type="button"
+                  onClick={() => router.push("/login")}
+                  className="hover:text-navy transition-colors font-semibold text-teal"
+                >
+                  Return to Workspace Sign-In
+                </button>
+                <span className="hidden sm:inline">•</span>
                 <button
                   type="button"
                   onClick={() => router.push("/")}
-                  className="text-xs text-ink-muted hover:text-navy transition-colors font-medium"
+                  className="hover:text-navy transition-colors font-medium"
                 >
-                  Return to Sign In
+                  Back to Overview
                 </button>
               </div>
             </form>

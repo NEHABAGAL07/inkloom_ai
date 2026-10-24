@@ -1,8 +1,10 @@
 import re
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Header, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Response, Cookie
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from app.core.config import settings
 
 from app.database.session import get_db
 from app.core.security import (
@@ -44,6 +46,7 @@ def slugify(text: str) -> str:
 @router.post("/register", response_model=AuthTokenResponse, status_code=status.HTTP_201_CREATED)
 def register_organization(
     payload: UserRegisterRequest,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """
@@ -169,6 +172,17 @@ def register_organization(
     # Issue access token
     token = create_access_token({"sub": user.id, "email": user.email, "org_id": org.id})
 
+    # Set secure HttpOnly cookie for session persistence
+    response.set_cookie(
+        key="inkloom_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
+    )
+
     return AuthTokenResponse(
         access_token=token,
         token_type="bearer",
@@ -189,11 +203,13 @@ def register_organization(
 @router.post("/login", response_model=AuthTokenResponse)
 def login(
     payload: UserLoginRequest,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """
     Authenticates a user via email and password.
-    Returns access token along with all authorized organizations and roles.
+    Returns access token along with all authorized organizations and roles,
+    and sets a secure HttpOnly session cookie.
     """
     clean_email = payload.email.strip().lower()
     user = db.query(User).filter(User.email == clean_email, User.is_active == True).first()
@@ -235,6 +251,17 @@ def login(
     ]
 
     token = create_access_token({"sub": user.id, "email": user.email, "org_id": first_org.id})
+
+    # Set secure HttpOnly cookie for session persistence
+    response.set_cookie(
+        key="inkloom_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
+    )
 
     return AuthTokenResponse(
         access_token=token,
@@ -298,6 +325,77 @@ def get_current_user_profile(
     )
 
 
+class SwitchOrgPayload(BaseModel):
+    organization_id: str
+
+
+@router.post("/switch-org", response_model=AuthTokenResponse)
+def switch_organization(
+    payload: SwitchOrgPayload,
+    response: Response,
+    auth: AuthContext = Depends(get_current_auth_context),
+    db: Session = Depends(get_db),
+):
+    """
+    Switches active organization context.
+    Validates server-side that the authenticated user has an active membership in the target organization.
+    Issues a fresh scoped access token and updates the session cookie.
+    """
+    membership = (
+        db.query(Membership, Organization)
+        .join(Organization, Membership.organization_id == Organization.id)
+        .filter(
+            Membership.user_id == auth.user_id,
+            Membership.organization_id == payload.organization_id,
+            Organization.is_active == True,
+        )
+        .first()
+    )
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied: You do not have an active membership in organization '{payload.organization_id}'.",
+        )
+    m, org = membership
+
+    new_token = create_access_token({"sub": auth.user_id, "email": auth.email, "org_id": org.id})
+
+    response.set_cookie(
+        key="inkloom_token",
+        value=new_token,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
+    )
+
+    all_memberships = (
+        db.query(Membership, Organization)
+        .join(Organization, Membership.organization_id == Organization.id)
+        .filter(Membership.user_id == auth.user_id, Organization.is_active == True)
+        .all()
+    )
+    org_list = [
+        OrgMembershipInfo(
+            organization_id=o.id,
+            organization_name=o.name,
+            organization_slug=o.slug,
+            role=mem.role,
+        )
+        for mem, o in all_memberships
+    ]
+
+    return AuthTokenResponse(
+        access_token=new_token,
+        token_type="bearer",
+        user=UserInfo(id=auth.user_id, email=auth.email or "", full_name=auth.full_name),
+        active_organization_id=org.id,
+        active_role=m.role,
+        memberships=org_list,
+    )
+
+
 @router.post("/logout")
 def logout(
     response: Response,
@@ -342,7 +440,7 @@ def logout(
     db.add(event)
     db.commit()
 
-    # Clear authentication cookies if any
+    # Clear authentication cookies
     response.delete_cookie(key="inkloom_token", path="/")
     response.delete_cookie(key="inkloom_session", path="/")
 

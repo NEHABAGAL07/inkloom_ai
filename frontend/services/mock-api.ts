@@ -71,7 +71,7 @@ export interface IApiService {
   // Multi-Tenant Authentication & Workspaces
   login(email: string, password: string): Promise<AuthResponse>;
   register(data: { email: string; password: string; full_name: string; organization_name: string; industry?: string }): Promise<AuthResponse>;
-  getCurrentUser(): Promise<{ user: User; active_organization_id: string; active_role: string; memberships: OrgMembership[] }>;
+  getCurrentUser(): Promise<{ user: User; active_organization_id: string; active_role: string; memberships: OrgMembership[] } | null>;
   getOrganizations(): Promise<Organization[]>;
   createOrganization(data: { name: string; industry?: string; description?: string; website?: string }): Promise<Organization>;
   getOrganization(orgId: string): Promise<Organization>;

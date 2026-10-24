@@ -15,7 +15,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isPublicRoute =
     pathname?.startsWith("/invite") ||
     pathname === "/login" ||
-    pathname === "/signin";
+    pathname === "/signin" ||
+    pathname === "/register" ||
+    pathname === "/demo";
 
   if (isLoading) {
     return (

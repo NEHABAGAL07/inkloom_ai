@@ -12,7 +12,7 @@ import time
 from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import List, Optional, Dict, Any, Set
-from fastapi import Header, HTTPException, status, Depends
+from fastapi import Header, Cookie, HTTPException, status, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -260,11 +260,12 @@ def revoke_token(
 def get_current_auth_context(
     x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-Id"),
     authorization: Optional[str] = Header(None, alias="Authorization"),
+    inkloom_token: Optional[str] = Cookie(None),
     db: Session = Depends(get_db),
 ) -> AuthContext:
     """
     Extracts multi-tenant context and user credentials.
-    1. Verifies cryptographic JWT signature and expiry.
+    1. Verifies cryptographic JWT signature and expiry from Bearer header or inkloom_token cookie.
     2. Validates that the token has not been revoked (e.g., via sign-out).
     3. Validates user existence and active status in database.
     4. Validates that user has an active Membership in the target organization.
@@ -274,14 +275,18 @@ def get_current_auth_context(
     from app.models.user import User
     from app.models.organization import Membership, Organization
 
-    if not authorization or not authorization.startswith("Bearer "):
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[7:].strip()
+    elif inkloom_token:
+        token = inkloom_token.strip()
+
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication credentials were not provided.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    token = authorization[7:].strip()
     payload = decode_access_token(token)
     if not payload or "sub" not in payload:
         raise HTTPException(

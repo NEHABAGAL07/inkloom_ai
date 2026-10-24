@@ -1,8 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { User, OrgMembership, Organization } from "@/types";
 import { api, setApiAuthToken, setApiTenantId } from "./api";
+
+// Configurable session policy: 60 minutes of inactivity timeout
+const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000;
+// Absolute session boundary: 24 hours
+const ABSOLUTE_SESSION_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 interface AuthContextType {
   user: User | null;
@@ -13,7 +18,7 @@ interface AuthContextType {
   organizations: Organization[];
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (data: { email: string; password: string; full_name: string; organization_name: string; industry?: string }) => Promise<void>;
   acceptInvite: (token: string, full_name: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -32,12 +37,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Initialize and check current user
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearSession = useCallback(() => {
+    setUser(null);
+    setActiveOrgId(null);
+    setActiveOrgName(null);
+    setActiveRole(null);
+    setMemberships([]);
+    setOrganizations([]);
+    setApiAuthToken(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("inkloom_token");
+      localStorage.removeItem("inkloom_tenant_id");
+      sessionStorage.clear();
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await api.logout();
+    } catch (err) {
+      console.warn("Server session revocation:", err);
+    } finally {
+      clearSession();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login?reason=logged_out";
+      }
+    }
+  }, [clearSession]);
+
+  // Check inactivity & absolute lifetime
+  const checkSessionExpiry = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const sessionStart = sessionStorage.getItem("inkloom_session_start");
+    const lastActive = sessionStorage.getItem("inkloom_last_active");
+    const now = Date.now();
+
+    if (sessionStart && now - parseInt(sessionStart, 10) > ABSOLUTE_SESSION_LIFETIME_MS) {
+      console.warn("Session exceeded maximum absolute lifetime (24 hours).");
+      logout();
+      return;
+    }
+
+    if (lastActive && now - parseInt(lastActive, 10) > INACTIVITY_TIMEOUT_MS) {
+      console.warn("Session expired due to 60 minutes of inactivity.");
+      logout();
+      return;
+    }
+
+    sessionStorage.setItem("inkloom_last_active", now.toString());
+  }, [logout]);
+
+  // Track user activity to update inactivity heartbeat
+  useEffect(() => {
+    if (!user) return;
+
+    const recordActivity = () => {
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("inkloom_last_active", Date.now().toString());
+      }
+    };
+
+    const events = ["mousedown", "keydown", "scroll", "touchstart"];
+    events.forEach((evt) => window.addEventListener(evt, recordActivity, { passive: true }));
+
+    // Periodic heartbeat check every 2 minutes
+    inactivityTimerRef.current = setInterval(() => {
+      checkSessionExpiry();
+    }, 2 * 60 * 1000);
+
+    return () => {
+      events.forEach((evt) => window.removeEventListener(evt, recordActivity));
+      if (inactivityTimerRef.current) clearInterval(inactivityTimerRef.current);
+    };
+  }, [user, checkSessionExpiry]);
+
+  // Initialize and check current user on mount (supports cookies and token)
   useEffect(() => {
     async function initAuth() {
       try {
-        const storedToken = localStorage.getItem("inkloom_token");
-        const storedTenant = localStorage.getItem("inkloom_tenant_id");
+        const storedToken = typeof window !== "undefined" ? localStorage.getItem("inkloom_token") : null;
+        const storedTenant = typeof window !== "undefined" ? localStorage.getItem("inkloom_tenant_id") : null;
 
         if (storedTenant) {
           setActiveOrgId(storedTenant);
@@ -46,32 +127,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (storedToken) {
           setApiAuthToken(storedToken);
-          const currentUserData = await api.getCurrentUser();
-          if (currentUserData && currentUserData.user) {
-            setUser(currentUserData.user);
-            setActiveOrgId(currentUserData.active_organization_id);
-            setActiveRole(currentUserData.active_role);
-            setMemberships(currentUserData.memberships || []);
+        }
 
-            const activeM = currentUserData.memberships?.find(
-              (m) => m.organization_id === currentUserData.active_organization_id
-            );
-            if (activeM) {
-              setActiveOrgName(activeM.organization_name);
-            }
+        // Verify session with server (/auth/me with cookie or token)
+        const currentUserData = await api.getCurrentUser();
+        if (currentUserData && currentUserData.user) {
+          setUser(currentUserData.user);
+          setActiveOrgId(currentUserData.active_organization_id);
+          setActiveRole(currentUserData.active_role);
+          setMemberships(currentUserData.memberships || []);
+
+          const activeM = currentUserData.memberships?.find(
+            (m) => m.organization_id === currentUserData.active_organization_id
+          );
+          if (activeM) {
+            setActiveOrgName(activeM.organization_name);
           }
+
+          if (typeof window !== "undefined") {
+            if (!sessionStorage.getItem("inkloom_session_start")) {
+              sessionStorage.setItem("inkloom_session_start", Date.now().toString());
+            }
+            sessionStorage.setItem("inkloom_last_active", Date.now().toString());
+          }
+        } else {
+          // Token expired or invalid
+          clearSession();
         }
       } catch (err) {
         console.warn("Auth initialization fallback:", err);
+        clearSession();
       } finally {
         setIsLoading(false);
       }
     }
 
     initAuth();
-  }, []);
+  }, [clearSession]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe: boolean = true) => {
     setIsLoading(true);
     try {
       const authRes = await api.login(email, password);
@@ -87,6 +181,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setApiAuthToken(authRes.access_token);
       setApiTenantId(authRes.active_organization_id);
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("inkloom_session_start", Date.now().toString());
+        sessionStorage.setItem("inkloom_last_active", Date.now().toString());
+        if (!rememberMe) {
+          // If not remember me, keep session confined to sessionStorage
+          localStorage.removeItem("inkloom_token");
+        }
+      }
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +217,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setApiAuthToken(authRes.access_token);
       setApiTenantId(authRes.active_organization_id);
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("inkloom_session_start", Date.now().toString());
+        sessionStorage.setItem("inkloom_last_active", Date.now().toString());
+      }
     } finally {
       setIsLoading(false);
     }
@@ -135,29 +243,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setApiAuthToken(authRes.access_token);
       setApiTenantId(authRes.active_organization_id);
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("inkloom_session_start", Date.now().toString());
+        sessionStorage.setItem("inkloom_last_active", Date.now().toString());
+      }
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await api.logout();
-    } catch (err) {
-      console.warn("Server session revocation failed or unavailable:", err);
-    } finally {
-      setUser(null);
-      setActiveOrgId(null);
-      setActiveOrgName(null);
-      setActiveRole(null);
-      setMemberships([]);
-      setOrganizations([]);
-      setApiAuthToken(null);
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("inkloom_token");
-        localStorage.removeItem("inkloom_tenant_id");
-        sessionStorage.clear();
-      }
     }
   };
 
@@ -165,13 +257,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const mem = memberships.find((m) => m.organization_id === orgId);
     if (!mem) return;
 
-    setActiveOrgId(orgId);
-    setActiveOrgName(mem.organization_name);
-    setActiveRole(mem.role);
-    setApiTenantId(orgId);
+    try {
+      // Call server-side verified switch
+      const res = await api.switchOrganization(orgId);
+      setActiveOrgId(res.active_organization_id);
+      setActiveRole(res.active_role);
+      setMemberships(res.memberships || []);
 
-    if (typeof window !== "undefined") {
-      window.location.reload();
+      const switchedM = res.memberships?.find((m) => m.organization_id === res.active_organization_id);
+      setActiveOrgName(switchedM ? switchedM.organization_name : mem.organization_name);
+
+      setApiTenantId(res.active_organization_id);
+      setApiAuthToken(res.access_token);
+
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
+    } catch (err) {
+      console.warn("Server-side switchOrganization failed, applying verified client session:", err);
+      setActiveOrgId(orgId);
+      setActiveOrgName(mem.organization_name);
+      setActiveRole(mem.role);
+      setApiTenantId(orgId);
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
     }
   };
 

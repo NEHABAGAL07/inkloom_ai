@@ -57,25 +57,48 @@ export default function DashboardPage() {
   }
 
   // Role-Specific Dashboards
-  if (activeRole === "designer") {
-    return <DesignerDashboard submissions={submissions} onRefresh={loadData} />;
-  }
+  const renderDashboard = () => {
+    if (activeRole === "designer") {
+      return <DesignerDashboard submissions={submissions} onRefresh={loadData} />;
+    }
 
-  if (activeRole === "compliance_officer" || activeRole === "reviewer") {
-    return <LegalDashboard submissions={submissions} onRefresh={loadData} />;
-  }
+    if (activeRole === "compliance_officer" || activeRole === "legal" || activeRole === "reviewer") {
+      return <LegalDashboard submissions={submissions} onRefresh={loadData} />;
+    }
 
-  if (activeRole === "marketing" || activeRole === "creator") {
-    return <MarketingDashboard submissions={submissions} onRefresh={loadData} />;
-  }
+    if (activeRole === "marketing" || activeRole === "creator") {
+      return <MarketingDashboard submissions={submissions} onRefresh={loadData} />;
+    }
 
-  // Default: Manager / Administrator
-  return (
-    <ManagerDashboard
-      submissions={submissions}
-      analytics={analytics}
-      members={members}
-      onRefresh={loadData}
-    />
-  );
+    if (activeRole === "admin") {
+      return (
+        <ManagerDashboard
+          submissions={submissions}
+          analytics={analytics}
+          members={members}
+          onRefresh={loadData}
+        />
+      );
+    }
+
+    // Default / Fallback for unrecognized role
+    return (
+      <div className="max-w-2xl mx-auto py-16 text-center">
+        <div className="bg-surface border border-border rounded-2xl p-8 shadow-subtle">
+          <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto mb-4">
+            <span className="text-xl font-bold">!</span>
+          </div>
+          <h2 className="text-lg font-bold text-navy mb-2">Restricted Workspace View</h2>
+          <p className="text-sm text-ink-secondary mb-4">
+            Your current assigned role ({activeRole || "Pending"}) does not have a customized dashboard view for this organization.
+          </p>
+          <p className="text-xs text-ink-muted">
+            Please contact your organization administrator to update your role permissions.
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  return renderDashboard();
 }

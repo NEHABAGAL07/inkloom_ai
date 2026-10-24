@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
+from app.core.config import settings
 
 from app.database.session import get_db
 from app.core.security import hash_password, verify_password, create_access_token
@@ -50,6 +51,7 @@ def inspect_invitation(token: str, db: Session = Depends(get_db)):
 @router.post("/accept", response_model=AuthTokenResponse)
 def accept_invitation(
     payload: AcceptInvitationRequest,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """
@@ -137,6 +139,17 @@ def accept_invitation(
 
     # Generate token
     token = create_access_token({"sub": user.id, "email": user.email, "org_id": invitation.organization_id})
+
+    # Set secure HttpOnly cookie for session persistence
+    response.set_cookie(
+        key="inkloom_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
+    )
 
     # Get all user memberships
     all_memberships = (
