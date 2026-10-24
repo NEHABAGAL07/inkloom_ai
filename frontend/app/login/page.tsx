@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/services/auth-context";
+import { ThemeToggle } from "@/services/theme-context";
 import {
   Shield,
   ArrowRight,
@@ -76,13 +77,16 @@ function LoginContent() {
             </div>
           </Link>
 
-          <Link
-            href="/"
-            className="text-xs text-ink-secondary hover:text-ink-primary flex items-center gap-1 font-medium transition"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Return to Home</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link
+              href="/"
+              className="text-xs text-ink-secondary hover:text-ink-primary flex items-center gap-1 font-medium transition"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Return to Home</span>
+            </Link>
+          </div>
         </div>
       </header>
 

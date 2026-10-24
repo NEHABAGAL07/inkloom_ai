@@ -46,7 +46,7 @@ export function BrandGuidelinesViewer({ profile }: BrandGuidelinesViewerProps) {
   if (!published) {
     return (
       <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-slate-100 border border-border flex items-center justify-center mx-auto text-ink-muted">
+        <div className="w-16 h-16 rounded-2xl bg-workspace border border-border flex items-center justify-center mx-auto text-ink-muted">
           <Lock className="w-8 h-8" />
         </div>
         <h2 className="text-2xl font-bold text-navy tracking-tight">
@@ -156,7 +156,7 @@ export function BrandGuidelinesViewer({ profile }: BrandGuidelinesViewerProps) {
                 className={`px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-2 ${
                   isActive
                     ? "bg-teal text-white shadow-sm"
-                    : "text-ink-secondary hover:text-ink-primary hover:bg-slate-100"
+                    : "text-ink-secondary hover:text-ink-primary hover:bg-workspace"
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -297,7 +297,7 @@ export function BrandGuidelinesViewer({ profile }: BrandGuidelinesViewerProps) {
                 {published.voice?.words_to_avoid?.map((word, idx) => (
                   <span
                     key={idx}
-                    className="px-2.5 py-1 bg-white border border-rose-200 text-rose-700 text-xs font-mono font-medium rounded-lg"
+                    className="px-2.5 py-1 bg-surface border border-rose-200 text-rose-700 text-xs font-mono font-medium rounded-lg"
                   >
                     {word}
                   </span>
@@ -378,7 +378,7 @@ export function BrandGuidelinesViewer({ profile }: BrandGuidelinesViewerProps) {
                 <div>
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold text-navy">{c.name}</h4>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-secondary bg-white border border-border px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-secondary bg-surface border border-border px-1.5 py-0.5 rounded">
                       {c.role}
                     </span>
                   </div>
@@ -621,7 +621,7 @@ export function BrandGuidelinesViewer({ profile }: BrandGuidelinesViewerProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-navy">{p.platform}</span>
-                    <span className="text-[10px] text-ink-secondary font-medium px-2 py-0.5 rounded bg-white border border-border">
+                    <span className="text-[10px] text-ink-secondary font-medium px-2 py-0.5 rounded bg-surface border border-border">
                       {p.placement}
                     </span>
                   </div>

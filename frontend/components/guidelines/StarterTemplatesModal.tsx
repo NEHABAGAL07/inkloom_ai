@@ -134,7 +134,7 @@ export function StarterTemplatesModal({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-navy">{t.rule_name}</span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-white border border-border text-ink-secondary">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-surface border border-border text-ink-secondary">
                           {t.jurisdiction}
                         </span>
                         <span

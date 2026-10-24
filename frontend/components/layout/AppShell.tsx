@@ -1,15 +1,32 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/services/auth-context";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { usePathname } from "next/navigation";
-import { Lock, ArrowRight, Home } from "lucide-react";
+import { Lock, ArrowRight, Home, AlertTriangle, RefreshCw, ServerOff } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, backendError, retryAuth } = useAuth();
   const pathname = usePathname();
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [showSlowWarning, setShowSlowWarning] = useState(false);
+
+  // Detect slow loading after 6 seconds to prevent unrecoverable infinite spinner
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (isLoading) {
+      timer = setTimeout(() => {
+        setShowSlowWarning(true);
+      }, 6000);
+    } else {
+      setShowSlowWarning(false);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isLoading]);
 
   // Public routes that don't require the dashboard shell or auth
   const isPublicRoute =
@@ -19,21 +36,97 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname === "/register" ||
     pathname === "/demo";
 
+  // Public routes render immediately without being blocked by background auth verification
+  if (isPublicRoute) {
+    return <main className="min-h-screen bg-workspace text-ink-primary">{children}</main>;
+  }
+
+  // Handle backend connection error / service unavailable
+  if (backendError && !isAuthenticated) {
+    return (
+      <main className="min-h-screen bg-workspace flex flex-col items-center justify-center p-6 text-ink-primary">
+        <div className="max-w-md w-full bg-surface border border-rose-200 dark:border-rose-900/50 rounded-2xl p-8 shadow-card text-center space-y-5">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-center text-rose-600">
+            <ServerOff className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+          </div>
+          <div>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 uppercase tracking-wider">
+              Service Unavailable
+            </span>
+            <h2 className="text-xl font-bold text-navy mt-2 tracking-tight">
+              Governance Service Disconnected
+            </h2>
+            <p className="text-xs text-ink-secondary mt-2 leading-relaxed">
+              Unable to reach the Inkloom AI brand governance backend API at{" "}
+              <code className="px-1.5 py-0.5 bg-workspace rounded border border-border font-mono text-[11px] text-teal">
+                http://localhost:8000
+              </code>
+              .
+            </p>
+            <p className="text-[11px] text-ink-muted mt-2">
+              Please verify that the backend server is running (<code className="font-mono">uvicorn app.main:app --reload</code>) and retry.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col gap-2.5">
+            <button
+              type="button"
+              disabled={isRetrying}
+              onClick={async () => {
+                setIsRetrying(true);
+                try {
+                  await retryAuth();
+                } finally {
+                  setIsRetrying(false);
+                }
+              }}
+              className="w-full py-2.5 px-4 bg-teal hover:bg-teal-hover disabled:opacity-60 text-white font-semibold rounded-lg text-xs transition shadow-sm flex items-center justify-center gap-2"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRetrying ? "animate-spin" : ""}`} />
+              <span>{isRetrying ? "Checking Connection..." : "Retry Connection"}</span>
+            </button>
+            <a
+              href="/"
+              className="w-full py-2 px-4 bg-surface hover:bg-workspace text-ink-secondary font-medium rounded-lg text-xs transition border border-border flex items-center justify-center gap-1.5"
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span>Back to Overview</span>
+            </a>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Branded initial loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-workspace flex flex-col items-center justify-center space-y-4">
+      <div className="min-h-screen bg-workspace flex flex-col items-center justify-center space-y-4 p-6">
         <div className="w-12 h-12 rounded-xl bg-navy flex items-center justify-center shadow-subtle border border-border">
           <span className="text-xl font-black text-white">I</span>
         </div>
         <p className="text-xs text-ink-secondary tracking-wider font-semibold uppercase animate-pulse">
           Loading Inkloom Brand Governance...
         </p>
+        {showSlowWarning && (
+          <div className="pt-2 text-center space-y-2 animate-in fade-in duration-300">
+            <p className="text-[11px] text-ink-muted">
+              Initialization is taking longer than expected.
+            </p>
+            <button
+              onClick={() => retryAuth()}
+              className="px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-workspace text-xs text-ink-primary font-medium transition inline-flex items-center gap-1.5"
+            >
+              <RefreshCw className="w-3 h-3 text-teal" />
+              <span>Retry</span>
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Public route or landing page (/)
-  if (!isAuthenticated && (isPublicRoute || pathname === "/")) {
+  // Public Landing page (/) for unauthenticated visitors
+  if (!isAuthenticated && pathname === "/") {
     return <main className="min-h-screen bg-workspace text-ink-primary">{children}</main>;
   }
 

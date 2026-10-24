@@ -64,8 +64,25 @@ export function getApiTenantId(): string {
   return activeTenantId;
 }
 
+export class ApiError extends Error {
+  status: number;
+  isNetworkError: boolean;
+  detail?: string;
+
+  constructor(message: string, status: number = 0, isNetworkError: boolean = false, detail?: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.isNetworkError = isNetworkError;
+    this.detail = detail;
+  }
+}
+
 export class ApiService implements IApiService {
-  private async fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
+  private async fetchJson<T>(path: string, options?: RequestInit, timeoutMs: number = 10000): Promise<T> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "X-Tenant-Id": activeTenantId,
@@ -76,17 +93,35 @@ export class ApiService implements IApiService {
       headers["Authorization"] = `Bearer ${activeToken}`;
     }
 
-    const res = await fetch(`${API_BASE}${path}`, {
-      credentials: "include",
-      ...options,
-      headers,
-    });
+    try {
+      const res = await fetch(`${API_BASE}${path}`, {
+        credentials: "include",
+        ...options,
+        headers,
+        signal: options?.signal || controller.signal,
+      });
 
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(errBody.detail || `Request failed with status ${res.status}`);
+      if (!res.ok) {
+        let errDetail = res.statusText;
+        try {
+          const errBody = await res.json();
+          errDetail = errBody.detail || errBody.message || res.statusText;
+        } catch {}
+        throw new ApiError(errDetail || `Request failed with status ${res.status}`, res.status, false, errDetail);
+      }
+      return await res.json();
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        throw err;
+      }
+      const isTimeout = err?.name === "AbortError";
+      const msg = isTimeout
+        ? "Network request timed out. Governance service did not respond in time."
+        : (err?.message || "Unable to reach Inkloom brand governance service.");
+      throw new ApiError(msg, 0, true, msg);
+    } finally {
+      clearTimeout(timeoutId);
     }
-    return res.json();
   }
 
   // --- Submissions ---
@@ -440,9 +475,14 @@ export class ApiService implements IApiService {
     try {
       return await this.fetchJson<{ user: User; active_organization_id: string; active_role: string; memberships: OrgMembership[] }>("/auth/me");
     } catch (err: any) {
-      // If unauthorized (token expired, revoked, or absent), clear local token
-      setApiAuthToken(null);
-      return null;
+      if (err instanceof ApiError && err.status === 401) {
+        // Specifically 401 Unauthorized: token expired, invalid, or revoked
+        setApiAuthToken(null);
+        return null;
+      }
+      // If network failure, 5xx, or backend down: DO NOT clear token!
+      // Rethrow so the caller can display a retryable backend unavailable state.
+      throw err;
     }
   }
 

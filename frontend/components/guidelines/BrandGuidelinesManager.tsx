@@ -489,7 +489,7 @@ export function BrandGuidelinesManager({
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-left transition ${
                         isActive
                           ? "bg-teal text-white shadow-sm"
-                          : "text-ink-secondary hover:bg-slate-100 hover:text-ink-primary"
+                          : "text-ink-secondary hover:bg-workspace hover:text-ink-primary"
                       }`}
                     >
                       <div className="flex items-center gap-2.5 truncate">
@@ -728,7 +728,7 @@ export function BrandGuidelinesManager({
                         addTag(["identity", "values"], newTagInput["val"]);
                         setNewTagInput({ ...newTagInput, val: "" });
                       }}
-                      className="px-3 py-1.5 bg-workspace hover:bg-slate-700 text-xs font-semibold rounded-xl text-ink-primary"
+                      className="px-3 py-1.5 bg-workspace hover:bg-surface text-xs font-semibold rounded-xl text-ink-primary border border-border hover:border-teal transition"
                     >
                       + Add
                     </button>

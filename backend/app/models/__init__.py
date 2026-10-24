@@ -11,6 +11,7 @@ from app.models.audit_event import AuditEvent
 
 from app.models.invitation import Invitation
 from app.models.revoked_token import RevokedToken
+from app.models.knowledge import KnowledgeItem
 
 __all__ = [
     "TimestampedModel",
@@ -30,5 +31,6 @@ __all__ = [
     "ReviewDecision",
     "AuditEvent",
     "RevokedToken",
+    "KnowledgeItem",
 ]
 

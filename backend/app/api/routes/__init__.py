@@ -9,6 +9,8 @@ from app.api.routes.submissions import router as submissions_router
 from app.api.routes.audits import router as audits_router
 from app.api.routes.reviews import router as reviews_router
 from app.api.routes.analytics import router as analytics_router
+from app.api.routes.knowledge import router as knowledge_router
+from app.api.routes.intelligence import router as intelligence_router
 
 api_router = APIRouter()
 
@@ -22,5 +24,7 @@ api_router.include_router(submissions_router)
 api_router.include_router(audits_router)
 api_router.include_router(reviews_router)
 api_router.include_router(analytics_router)
+api_router.include_router(knowledge_router)
+api_router.include_router(intelligence_router)
 
 __all__ = ["api_router"]

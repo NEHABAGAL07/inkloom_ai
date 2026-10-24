@@ -18,6 +18,7 @@ class Organization(TimestampedModel):
     guidelines = relationship("BrandGuideline", back_populates="organization", cascade="all, delete-orphan")
     assets = relationship("ApprovedAsset", back_populates="organization", cascade="all, delete-orphan")
     submissions = relationship("ContentSubmission", back_populates="organization", cascade="all, delete-orphan")
+    knowledge_items = relationship("KnowledgeItem", back_populates="organization", cascade="all, delete-orphan")
 
 
 class Membership(TimestampedModel):

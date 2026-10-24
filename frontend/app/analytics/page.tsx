@@ -7,14 +7,52 @@ import { BarChart3, TrendingUp, CheckCircle2, Clock, ShieldCheck } from "lucide-
 
 export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadStats() {
+  const loadStats = async () => {
+    setLoading(true);
+    setError(null);
+    try {
       const stats = await api.getAnalyticsSummary();
       setAnalytics(stats);
+    } catch (e: any) {
+      console.error("Failed to load analytics summary:", e);
+      setError(e?.message || "Failed to load governance telemetry.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadStats();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-3">
+        <div className="w-8 h-8 rounded-full border-2 border-teal border-t-transparent animate-spin"></div>
+        <p className="text-xs text-ink-secondary font-medium">Loading governance analytics...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <div className="bg-surface border border-rose-200 dark:border-rose-900/50 rounded-2xl p-8 shadow-card text-center space-y-4">
+          <p className="text-sm font-bold text-navy">Analytics Telemetry Error</p>
+          <p className="text-xs text-ink-secondary">{error}</p>
+          <button
+            onClick={loadStats}
+            className="px-4 py-2 bg-teal hover:bg-teal-hover text-white text-xs font-semibold rounded-lg transition"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">

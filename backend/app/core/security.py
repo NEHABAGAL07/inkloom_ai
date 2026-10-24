@@ -43,6 +43,10 @@ class Permission(str, Enum):
     CONFIGURE_HUMAN_REVIEW = "configure_human_review"
     AUDIT_CONTENT = "audit_content"
     APPROVE_CONTENT_PUBLICATION = "approve_content_publication"
+    VIEW_KNOWLEDGE = "view_knowledge"
+    MANAGE_KNOWLEDGE = "manage_knowledge"
+    VERIFY_KNOWLEDGE = "verify_knowledge"
+    GENERATE_AI_CONTEXT = "generate_ai_context"
 
 
 # Role-to-Permission mapping enforcing least privilege
@@ -57,6 +61,9 @@ ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
         Permission.VIEW_AUDIT_HISTORY,
         Permission.CONFIGURE_HUMAN_REVIEW,
         Permission.AUDIT_CONTENT,
+        Permission.VIEW_KNOWLEDGE,
+        Permission.MANAGE_KNOWLEDGE,
+        Permission.GENERATE_AI_CONTEXT,
     },
     UserRole.COMPLIANCE_OFFICER: {
         Permission.VIEW_ACTIVE_GUIDELINES,
@@ -70,27 +77,40 @@ ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
         Permission.CONFIGURE_HUMAN_REVIEW,
         Permission.AUDIT_CONTENT,
         Permission.APPROVE_CONTENT_PUBLICATION,
+        Permission.VIEW_KNOWLEDGE,
+        Permission.MANAGE_KNOWLEDGE,
+        Permission.VERIFY_KNOWLEDGE,
+        Permission.GENERATE_AI_CONTEXT,
     },
     UserRole.MARKETING: {
         Permission.VIEW_ACTIVE_GUIDELINES,
         Permission.AUDIT_CONTENT,
+        Permission.VIEW_KNOWLEDGE,
+        Permission.GENERATE_AI_CONTEXT,
     },
     UserRole.DESIGNER: {
         Permission.VIEW_ACTIVE_GUIDELINES,
         Permission.AUDIT_CONTENT,
+        Permission.VIEW_KNOWLEDGE,
+        Permission.GENERATE_AI_CONTEXT,
     },
     UserRole.REVIEWER: {
         Permission.VIEW_ACTIVE_GUIDELINES,
         Permission.VIEW_AUDIT_HISTORY,
         Permission.AUDIT_CONTENT,
         Permission.APPROVE_CONTENT_PUBLICATION,
+        Permission.VIEW_KNOWLEDGE,
+        Permission.GENERATE_AI_CONTEXT,
     },
     UserRole.CREATOR: {
         Permission.VIEW_ACTIVE_GUIDELINES,
         Permission.AUDIT_CONTENT,
+        Permission.VIEW_KNOWLEDGE,
+        Permission.GENERATE_AI_CONTEXT,
     },
     UserRole.VIEWER: {
         Permission.VIEW_ACTIVE_GUIDELINES,
+        Permission.VIEW_KNOWLEDGE,
     },
 }
 

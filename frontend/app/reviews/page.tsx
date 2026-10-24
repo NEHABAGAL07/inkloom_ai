@@ -12,18 +12,23 @@ export default function ReviewsPage() {
   const [selectedSub, setSelectedSub] = useState<ContentSubmission | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadReviews = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const subs = await api.getPendingReviews();
+      setPendingSubmissions(subs || []);
+    } catch (e: any) {
+      console.error("Failed to load review queue:", e);
+      setError(e?.message || "Failed to load pending reviews.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadReviews() {
-      try {
-        const subs = await api.getPendingReviews();
-        setPendingSubmissions(subs);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadReviews();
   }, []);
 
@@ -75,7 +80,23 @@ export default function ReviewsPage() {
             <span className="text-xs text-ink-muted">Sorted by submission date</span>
           </div>
 
-          {pendingSubmissions.length === 0 ? (
+          {loading ? (
+            <div className="bg-surface rounded-2xl p-12 text-center text-ink-muted text-sm border border-border shadow-subtle space-y-3">
+              <div className="w-8 h-8 rounded-full border-2 border-teal border-t-transparent animate-spin mx-auto"></div>
+              <p className="font-semibold text-navy">Loading pending reviews...</p>
+            </div>
+          ) : error ? (
+            <div className="bg-surface border border-rose-200 dark:border-rose-900/50 rounded-2xl p-8 text-center space-y-3 shadow-subtle">
+              <p className="text-sm font-bold text-navy">Review Queue Error</p>
+              <p className="text-xs text-ink-secondary">{error}</p>
+              <button
+                onClick={loadReviews}
+                className="px-4 py-2 bg-teal hover:bg-teal-hover text-white text-xs font-semibold rounded-lg transition"
+              >
+                Retry
+              </button>
+            </div>
+          ) : pendingSubmissions.length === 0 ? (
             <div className="bg-surface rounded-2xl p-12 text-center text-ink-muted text-sm border border-border shadow-subtle space-y-2">
               <CheckCircle className="w-8 h-8 text-status-success mx-auto opacity-70" />
               <div className="font-bold text-navy text-base">Review queue is empty</div>

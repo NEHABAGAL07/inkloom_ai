@@ -20,6 +20,8 @@ function AuditsContent() {
   const [selectedSeverity, setSelectedSeverity] = useState("all");
   const [loading, setLoading] = useState(true);
 
+  const [error, setError] = useState<string | null>(null);
+
   // Load submissions list
   useEffect(() => {
     async function loadSubmissions() {
@@ -29,7 +31,7 @@ function AuditsContent() {
         if (!selectedContentId && subs.length > 0) {
           setSelectedContentId(subs[0].id);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to load submissions", err);
       }
     }
@@ -44,27 +46,83 @@ function AuditsContent() {
   }, [queryId]);
 
   // Load audit result for selected content ID
-  useEffect(() => {
-    async function loadAudit() {
-      setLoading(true);
-      try {
-        const targetId = selectedContentId || "7f8b3c10-9b4e-4f76-b6b8-6d8b688d6e90";
-        const res = await api.getAudit(targetId);
-        setAuditResult(res);
-      } catch (err) {
-        console.error("Failed to load audit result", err);
-      } finally {
-        setLoading(false);
-      }
+  const loadAudit = async () => {
+    const targetId = selectedContentId || (submissions.length > 0 ? submissions[0].id : null);
+    if (!targetId) {
+      setLoading(false);
+      return;
     }
-    loadAudit();
-  }, [selectedContentId]);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.getAudit(targetId);
+      setAuditResult(res);
+    } catch (err: any) {
+      console.error("Failed to load audit result", err);
+      setError(err?.message || "Failed to load audit report for this content asset.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (loading || !auditResult) {
+  useEffect(() => {
+    loadAudit();
+  }, [selectedContentId, submissions]);
+
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-ink-muted text-sm space-y-3">
+      <div className="flex flex-col items-center justify-center min-h-[40vh] text-ink-muted text-sm space-y-3">
         <div className="w-8 h-8 rounded-full border-2 border-teal border-t-transparent animate-spin"></div>
         <p className="font-semibold text-navy">Loading governance audit results...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <div className="bg-surface border border-rose-200 dark:border-rose-900/50 rounded-2xl p-8 shadow-card text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-center text-rose-600">
+            <FileText className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-navy">Audit Result Unavailable</h2>
+            <p className="text-xs text-ink-secondary mt-1">{error}</p>
+          </div>
+          <button
+            onClick={loadAudit}
+            className="px-4 py-2 bg-teal hover:bg-teal-hover text-white text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5 shadow-sm"
+          >
+            <span>Retry Audit Lookup</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!auditResult) {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <div className="bg-surface border border-border rounded-2xl p-8 shadow-card text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal">
+            <ShieldCheck className="w-6 h-6 text-teal" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-navy">No Audit Results Found</h2>
+            <p className="text-xs text-ink-secondary mt-1 max-w-sm mx-auto">
+              No content piece has been submitted or selected for auditing. Submit draft copy or marketing media to initiate automated verification.
+            </p>
+          </div>
+          <div className="pt-2">
+            <a
+              href="/content"
+              className="px-4 py-2.5 bg-teal hover:bg-teal-hover text-white text-xs font-semibold rounded-lg transition inline-flex items-center gap-2 shadow-sm"
+            >
+              <span>Submit Content for Audit</span>
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
       </div>
     );
   }

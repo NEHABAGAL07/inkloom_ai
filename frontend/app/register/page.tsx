@@ -29,6 +29,8 @@ const INDUSTRIES = [
   "Other",
 ];
 
+import { ThemeToggle } from "@/services/theme-context";
+
 export default function RegisterCompanyPage() {
   const router = useRouter();
   const { register, isAuthenticated } = useAuth();
@@ -119,7 +121,10 @@ export default function RegisterCompanyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-workspace text-ink-primary flex flex-col justify-center items-center py-12 px-6">
+    <div className="min-h-screen bg-workspace text-ink-primary flex flex-col justify-center items-center py-12 px-6 relative transition-colors duration-150">
+      <div className="absolute top-6 right-6">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-lg">
         {/* Header Branding */}
         <div className="text-center mb-8">

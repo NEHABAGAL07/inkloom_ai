@@ -20,6 +20,7 @@ from app.models import (
     AuditRun,
     AuditFinding,
     AuditEvent,
+    KnowledgeItem,
 )
 
 

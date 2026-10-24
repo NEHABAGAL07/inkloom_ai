@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { User, OrgMembership, Organization } from "@/types";
-import { api, setApiAuthToken, setApiTenantId } from "./api";
+import { api, setApiAuthToken, setApiTenantId, ApiError } from "./api";
 
 // Configurable session policy: 60 minutes of inactivity timeout
 const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000;
@@ -18,12 +18,15 @@ interface AuthContextType {
   organizations: Organization[];
   isLoading: boolean;
   isAuthenticated: boolean;
+  backendError: string | null;
+  isBackendAvailable: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (data: { email: string; password: string; full_name: string; organization_name: string; industry?: string }) => Promise<void>;
   acceptInvite: (token: string, full_name: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   switchOrganization: (orgId: string) => Promise<void>;
   refreshUser: () => Promise<void>;
+  retryAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,8 +39,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [memberships, setMemberships] = useState<OrgMembership[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [backendError, setBackendError] = useState<string | null>(null);
 
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const initPromiseRef = useRef<Promise<void> | null>(null);
+  const isMountedRef = useRef<boolean>(true);
 
   const clearSession = useCallback(() => {
     setUser(null);
@@ -113,57 +119,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user, checkSessionExpiry]);
 
-  // Initialize and check current user on mount (supports cookies and token)
-  useEffect(() => {
-    async function initAuth() {
-      try {
-        const storedToken = typeof window !== "undefined" ? localStorage.getItem("inkloom_token") : null;
-        const storedTenant = typeof window !== "undefined" ? localStorage.getItem("inkloom_tenant_id") : null;
-
-        if (storedTenant) {
-          setActiveOrgId(storedTenant);
-          setApiTenantId(storedTenant);
-        }
-
-        if (storedToken) {
-          setApiAuthToken(storedToken);
-        }
-
-        // Verify session with server (/auth/me with cookie or token)
-        const currentUserData = await api.getCurrentUser();
-        if (currentUserData && currentUserData.user) {
-          setUser(currentUserData.user);
-          setActiveOrgId(currentUserData.active_organization_id);
-          setActiveRole(currentUserData.active_role);
-          setMemberships(currentUserData.memberships || []);
-
-          const activeM = currentUserData.memberships?.find(
-            (m) => m.organization_id === currentUserData.active_organization_id
-          );
-          if (activeM) {
-            setActiveOrgName(activeM.organization_name);
-          }
-
-          if (typeof window !== "undefined") {
-            if (!sessionStorage.getItem("inkloom_session_start")) {
-              sessionStorage.setItem("inkloom_session_start", Date.now().toString());
-            }
-            sessionStorage.setItem("inkloom_last_active", Date.now().toString());
-          }
-        } else {
-          // Token expired or invalid
-          clearSession();
-        }
-      } catch (err) {
-        console.warn("Auth initialization fallback:", err);
-        clearSession();
-      } finally {
-        setIsLoading(false);
+  // Core initialization routine with deduplication and error distinction
+  const initAuth = useCallback(
+    async (isRetry: boolean = false) => {
+      if (initPromiseRef.current && !isRetry) {
+        return initPromiseRef.current;
       }
-    }
 
+      const task = (async () => {
+        setIsLoading(true);
+        setBackendError(null);
+        try {
+          const storedToken = typeof window !== "undefined" ? localStorage.getItem("inkloom_token") : null;
+          const storedTenant = typeof window !== "undefined" ? localStorage.getItem("inkloom_tenant_id") : null;
+
+          if (storedTenant) {
+            setActiveOrgId(storedTenant);
+            setApiTenantId(storedTenant);
+          }
+
+          if (storedToken) {
+            setApiAuthToken(storedToken);
+          }
+
+          // Verify session with server (/auth/me with cookie or token)
+          const currentUserData = await api.getCurrentUser();
+          if (!isMountedRef.current) return;
+
+          if (currentUserData && currentUserData.user) {
+            setUser(currentUserData.user);
+            setActiveOrgId(currentUserData.active_organization_id);
+            setActiveRole(currentUserData.active_role);
+            setMemberships(currentUserData.memberships || []);
+
+            const activeM = currentUserData.memberships?.find(
+              (m) => m.organization_id === currentUserData.active_organization_id
+            );
+            if (activeM) {
+              setActiveOrgName(activeM.organization_name);
+            }
+
+            if (typeof window !== "undefined") {
+              if (!sessionStorage.getItem("inkloom_session_start")) {
+                sessionStorage.setItem("inkloom_session_start", Date.now().toString());
+              }
+              sessionStorage.setItem("inkloom_last_active", Date.now().toString());
+            }
+          } else {
+            // Token expired, revoked, or absent
+            clearSession();
+          }
+        } catch (err: any) {
+          if (!isMountedRef.current) return;
+          if (err instanceof ApiError && (err.isNetworkError || err.status >= 500)) {
+            console.warn("Backend governance service unavailable:", err.message);
+            setBackendError(
+              err.message || "Unable to reach Inkloom brand governance service at http://localhost:8000."
+            );
+          } else {
+            console.warn("Auth initialization fallback:", err);
+            clearSession();
+          }
+        } finally {
+          if (isMountedRef.current) {
+            setIsLoading(false);
+          }
+          initPromiseRef.current = null;
+        }
+      })();
+
+      initPromiseRef.current = task;
+      return task;
+    },
+    [clearSession]
+  );
+
+  // Initialize and check current user on mount
+  useEffect(() => {
+    isMountedRef.current = true;
     initAuth();
-  }, [clearSession]);
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [initAuth]);
 
   const login = async (email: string, password: string, rememberMe: boolean = true) => {
     setIsLoading(true);
@@ -314,12 +352,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         organizations,
         isLoading,
         isAuthenticated: !!user,
+        backendError,
+        isBackendAvailable: !backendError,
         login,
         register,
         acceptInvite,
         logout,
         switchOrganization,
         refreshUser,
+        retryAuth: () => initAuth(true),
       }}
     >
       {children}

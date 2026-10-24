@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
+import { ThemeToggle } from "@/services/theme-context";
 import { PublicInvitation } from "@/types";
 import {
   ShieldCheck,
@@ -85,7 +86,10 @@ function InviteContent() {
   };
 
   return (
-    <div className="min-h-screen bg-workspace text-ink-primary flex flex-col justify-center items-center p-6">
+    <div className="min-h-screen bg-workspace text-ink-primary flex flex-col justify-center items-center p-6 relative transition-colors duration-150">
+      <div className="absolute top-6 right-6">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-lg">
         {/* Brand Header */}
         <div className="text-center mb-8">

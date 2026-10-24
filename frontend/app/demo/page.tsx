@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/services/auth-context";
+import { ThemeToggle } from "@/services/theme-context";
 import {
   Shield,
   Building,
@@ -137,7 +138,10 @@ export default function DemoSandboxPage() {
   };
 
   return (
-    <div className="min-h-screen bg-workspace text-ink-primary py-12 px-6">
+    <div className="min-h-screen bg-workspace text-ink-primary py-12 px-6 relative transition-colors duration-150">
+      <div className="absolute top-6 right-6">
+        <ThemeToggle />
+      </div>
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">

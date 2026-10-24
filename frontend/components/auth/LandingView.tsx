@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { ThemeToggle } from "@/services/theme-context";
 import {
   Shield,
   Building,
@@ -19,7 +20,7 @@ import {
 
 export function LandingView() {
   return (
-    <div className="min-h-screen bg-workspace text-ink-primary flex flex-col justify-between selection:bg-teal selection:text-white">
+    <div className="min-h-screen bg-workspace text-ink-primary flex flex-col justify-between selection:bg-teal selection:text-white transition-colors duration-150">
       {/* Top Enterprise Brand Navigation */}
       <header className="bg-navy border-b border-navy-dark px-6 py-4 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -40,6 +41,7 @@ export function LandingView() {
 
           {/* Navigation Actions */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Link
               href="/invite"
               className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/5 transition hidden sm:inline-flex items-center gap-1.5"
@@ -93,7 +95,7 @@ export function LandingView() {
 
             <Link
               href="/register"
-              className="px-5 py-3 bg-surface hover:bg-slate-100 text-ink-primary border border-border font-medium text-sm rounded-lg shadow-subtle transition inline-flex items-center gap-2"
+              className="px-5 py-3 bg-surface hover:bg-workspace text-ink-primary border border-border font-medium text-sm rounded-lg shadow-subtle transition inline-flex items-center gap-2"
             >
               <Building className="w-4 h-4 text-teal" />
               <span>Register New Company</span>
@@ -101,7 +103,7 @@ export function LandingView() {
 
             <Link
               href="/invite"
-              className="px-5 py-3 bg-surface hover:bg-slate-100 text-ink-secondary border border-border font-medium text-sm rounded-lg shadow-subtle transition inline-flex items-center gap-2"
+              className="px-5 py-3 bg-surface hover:bg-workspace text-ink-secondary hover:text-ink-primary border border-border font-medium text-sm rounded-lg shadow-subtle transition inline-flex items-center gap-2"
             >
               <Users className="w-4 h-4 text-ink-muted" />
               <span>Accept Team Invitation</span>

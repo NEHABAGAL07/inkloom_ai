@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/services/auth-context";
 import { api } from "@/services/api";
 import { ContentSubmission, AnalyticsSummary, MemberInfo } from "@/types";
@@ -9,38 +9,43 @@ import { ManagerDashboard } from "@/components/dashboards/ManagerDashboard";
 import { DesignerDashboard } from "@/components/dashboards/DesignerDashboard";
 import { LegalDashboard } from "@/components/dashboards/LegalDashboard";
 import { MarketingDashboard } from "@/components/dashboards/MarketingDashboard";
+import { AlertCircle, RefreshCw, Send, BookOpen, Users, ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function DashboardPage() {
-  const { isAuthenticated, activeRole, activeOrgId } = useAuth();
+  const { isAuthenticated, activeRole, activeOrgId, activeOrgName } = useAuth();
   const [submissions, setSubmissions] = useState<ContentSubmission[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!isAuthenticated) return;
+    setLoading(true);
+    setError(null);
     try {
       const [subs, stats] = await Promise.all([
         api.getSubmissions(),
         api.getAnalyticsSummary(),
       ]);
-      setSubmissions(subs);
-      setAnalytics(stats);
+      setSubmissions(subs || []);
+      setAnalytics(stats || null);
 
       if (activeOrgId) {
         const mems = await api.getMembers(activeOrgId).catch(() => []);
-        setMembers(mems);
+        setMembers(mems || []);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error("Dashboard data load failure:", e);
+      setError(e?.message || "Unable to load governance workspace telemetry.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated, activeOrgId]);
 
   useEffect(() => {
     loadData();
-  }, [isAuthenticated, activeOrgId, activeRole]);
+  }, [loadData, activeRole]);
 
   // Public Landing Page if user is not logged in
   if (!isAuthenticated) {
@@ -50,8 +55,31 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-3">
-        <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"></div>
-        <p className="text-xs text-slate-400 font-medium">Loading workspace dashboard...</p>
+        <div className="w-8 h-8 rounded-full border-2 border-teal border-t-transparent animate-spin"></div>
+        <p className="text-xs text-ink-secondary font-medium">Loading workspace dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <div className="bg-surface border border-rose-200 dark:border-rose-900/50 rounded-2xl p-8 shadow-card text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-center text-rose-600">
+            <AlertCircle className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-navy">Workspace Telemetry Error</h2>
+            <p className="text-xs text-ink-secondary mt-1">{error}</p>
+          </div>
+          <button
+            onClick={loadData}
+            className="px-4 py-2 bg-teal hover:bg-teal-hover text-white text-xs font-semibold rounded-lg transition inline-flex items-center gap-1.5 shadow-sm"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Retry Dashboard Load</span>
+          </button>
+        </div>
       </div>
     );
   }
