@@ -4,6 +4,30 @@ __pycache__/
 *$py.class
 *.so
 .Python
+<<<<<<< HEAD
+=======
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+/lib/
+/lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+.venv/
+>>>>>>> d0681a9 (1st)
 env/
 venv/
 ENV/
