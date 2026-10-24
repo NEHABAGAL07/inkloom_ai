@@ -110,10 +110,10 @@ export function Header() {
     setIsSigningOut(true);
     try {
       await logout();
-      router.push("/login?reason=logged_out");
+      router.push("/?reason=logged_out");
     } catch (err) {
       console.error("Sign out error:", err);
-      router.push("/login");
+      router.push("/?reason=logged_out");
     } finally {
       setIsSigningOut(false);
       setIsProfileOpen(false);

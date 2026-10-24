@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       clearSession();
       if (typeof window !== "undefined") {
-        window.location.href = "/login?reason=logged_out";
+        window.location.href = "/?reason=logged_out";
       }
     }
   }, [clearSession]);
