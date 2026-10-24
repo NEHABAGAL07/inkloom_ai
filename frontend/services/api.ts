@@ -30,6 +30,8 @@ import {
   ClarificationReport,
   ConflictCheckResult,
   StarterTemplateRule,
+  ContentComment,
+  CommentsListResponse,
 } from "../types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -204,6 +206,45 @@ export class ApiService implements IApiService {
       });
     } catch {
       return mockApi.submitReviewDecision(data);
+    }
+  }
+
+  // --- Designer Feedback & Change Request Comments ---
+  async getSubmissionComments(submissionId: string): Promise<CommentsListResponse> {
+    if (USE_MOCK) return mockApi.getSubmissionComments(submissionId);
+    try {
+      return await this.fetchJson<CommentsListResponse>(`/submissions/${submissionId}/comments`);
+    } catch {
+      return mockApi.getSubmissionComments(submissionId);
+    }
+  }
+
+  async addSubmissionComment(submissionId: string, commentText: string, category: string = "visual_design"): Promise<ContentComment> {
+    if (USE_MOCK) return mockApi.addSubmissionComment(submissionId, commentText, category);
+    try {
+      return await this.fetchJson<ContentComment>(`/submissions/${submissionId}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ comment_text: commentText, category }),
+      });
+    } catch {
+      return mockApi.addSubmissionComment(submissionId, commentText, category);
+    }
+  }
+
+  async toggleCommentResolution(
+    submissionId: string,
+    commentId: string,
+    isResolved: boolean,
+    resolutionNote?: string
+  ): Promise<ContentComment> {
+    if (USE_MOCK) return mockApi.toggleCommentResolution(submissionId, commentId, isResolved, resolutionNote);
+    try {
+      return await this.fetchJson<ContentComment>(`/submissions/${submissionId}/comments/${commentId}/resolve`, {
+        method: "PATCH",
+        body: JSON.stringify({ is_resolved: isResolved, resolution_note: resolutionNote }),
+      });
+    } catch {
+      return mockApi.toggleCommentResolution(submissionId, commentId, isResolved, resolutionNote);
     }
   }
 

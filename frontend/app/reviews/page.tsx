@@ -5,6 +5,7 @@ import { api } from "@/services/api";
 import { ContentSubmission } from "@/types";
 import { ReviewActionModal } from "@/components/reviews/ReviewActionModal";
 import { AuditTrailTimeline } from "@/components/reviews/AuditTrailTimeline";
+import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { Scale, FileText, CheckCircle, ArrowRight } from "lucide-react";
 
 export default function ReviewsPage() {
@@ -158,6 +159,15 @@ export default function ReviewsPage() {
           <AuditTrailTimeline />
         </div>
       </div>
+
+      {/* Department Reviewer Feedback & Change Requests Tracker */}
+      {pendingSubmissions.length > 0 && (
+        <DesignerFeedbackComments
+          submissionId={selectedSub?.id || pendingSubmissions[0].id}
+          submissionTitle={selectedSub?.title || pendingSubmissions[0].title}
+          contentType={selectedSub?.content_type || pendingSubmissions[0].content_type}
+        />
+      )}
 
       {/* Review Action Modal */}
       {selectedSub && (

@@ -7,6 +7,7 @@ import { AuditResult, ContentSubmission } from "@/types";
 import { AuditSummaryCard } from "@/components/audits/AuditSummaryCard";
 import { FindingsFilter } from "@/components/audits/FindingsFilter";
 import { FindingCard } from "@/components/audits/FindingCard";
+import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { ShieldCheck, ArrowRight, FileText } from "lucide-react";
 
 function AuditsContent() {
@@ -208,6 +209,15 @@ function AuditsContent() {
           ))
         )}
       </div>
+
+      {/* Reviewer Department Feedback & Designer Change Request Box with Resolution Tracking */}
+      {selectedContentId && (
+        <DesignerFeedbackComments
+          submissionId={selectedContentId}
+          submissionTitle={activeSub?.title}
+          contentType={activeSub?.content_type}
+        />
+      )}
     </div>
   );
 }

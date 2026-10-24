@@ -24,6 +24,8 @@ import {
   ClarificationReport,
   ConflictCheckResult,
   StarterTemplateRule,
+  ContentComment,
+  CommentsListResponse,
 } from "../types";
 
 export interface CreateSubmissionInput {
@@ -67,6 +69,11 @@ export interface IApiService {
   getEffectiveSettings(mediaType: string): Promise<EffectiveSettings>;
   getAssets(): Promise<ApprovedAsset[]>;
   getAnalyticsSummary(): Promise<AnalyticsSummary>;
+
+  // Designer Feedback & Change Request Comments
+  getSubmissionComments(submissionId: string): Promise<CommentsListResponse>;
+  addSubmissionComment(submissionId: string, commentText: string, category?: string): Promise<ContentComment>;
+  toggleCommentResolution(submissionId: string, commentId: string, isResolved: boolean, resolutionNote?: string): Promise<ContentComment>;
 
   // Multi-Tenant Authentication & Workspaces
   login(email: string, password: string): Promise<AuthResponse>;
@@ -1845,6 +1852,139 @@ export class MockApiService implements IApiService {
 
   async logout(): Promise<{ message: string; revoked: boolean }> {
     return { message: "Mock logout successful", revoked: true };
+  }
+
+  // --- Designer Feedback & Change Request Comments ---
+  private commentsStore: ContentComment[] = [
+    {
+      id: "cm_1",
+      submission_id: "b5b271f5-507a-4346-9c2e-fb793f67e43d",
+      organization_id: "org_acme_cloud",
+      author_id: "user_acme_compliance",
+      author_name: "Elena Rostova (Legal & Regulatory)",
+      author_role: "compliance_officer",
+      comment_text: "Mandatory FTC disclaimer text is missing from bottom left corner of graphic asset. Please add: 'Based on internal benchmark tests across 10,000 enterprise clusters.'",
+      category: "legal_compliance",
+      is_resolved: false,
+      created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+      updated_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+    },
+    {
+      id: "cm_2",
+      submission_id: "b5b271f5-507a-4346-9c2e-fb793f67e43d",
+      organization_id: "org_acme_cloud",
+      author_id: "user_acme_admin",
+      author_name: "Alex Mercer (Manager)",
+      author_role: "admin",
+      comment_text: "Ensure Acme Cloud primary logo maintains 32px clear exclusion zone around the tagline.",
+      category: "visual_design",
+      is_resolved: true,
+      resolved_at: new Date(Date.now() - 3600000).toISOString(),
+      resolved_by: "Leo Vance (Designer)",
+      resolution_note: "Updated clear-space padding to 40px in vector master.",
+      created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+      updated_at: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: "cm_3",
+      submission_id: "b5b271f5-507a-4346-9c2e-fb793f67e43d",
+      organization_id: "org_acme_cloud",
+      author_id: "user_acme_marketing",
+      author_name: "Maya Lin (Marketing Lead)",
+      author_role: "marketing",
+      comment_text: "Use the approved active headline font 'Inter Display' instead of Roboto Slab to align with Q4 campaign standard.",
+      category: "brand_rules",
+      is_resolved: false,
+      created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+      updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    },
+  ];
+
+  async getSubmissionComments(submissionId: string): Promise<CommentsListResponse> {
+    const matched = this.commentsStore.filter((c) => c.submission_id === submissionId);
+    // If no comments yet, generate standard starter review comments for evaluation
+    if (matched.length === 0) {
+      const seeded: ContentComment[] = [
+        {
+          id: `cm_seed_${Date.now()}_1`,
+          submission_id: submissionId,
+          organization_id: "org_acme_cloud",
+          author_id: "user_acme_compliance",
+          author_name: "Elena Rostova (Legal & Regulatory)",
+          author_role: "compliance_officer",
+          comment_text: "Please verify statutory claim substantiation or add qualification asterisk before release.",
+          category: "legal_compliance",
+          is_resolved: false,
+          created_at: new Date(Date.now() - 1800000).toISOString(),
+          updated_at: new Date(Date.now() - 1800000).toISOString(),
+        },
+        {
+          id: `cm_seed_${Date.now()}_2`,
+          submission_id: submissionId,
+          organization_id: "org_acme_cloud",
+          author_id: "user_acme_admin",
+          author_name: "Alex Mercer (Manager)",
+          author_role: "admin",
+          comment_text: "Review contrast on headline typography to ensure WCAG AA compliance.",
+          category: "visual_design",
+          is_resolved: true,
+          resolved_at: new Date(Date.now() - 600000).toISOString(),
+          resolved_by: "Leo Vance (Designer)",
+          resolution_note: "Fixed typography contrast ratio to 4.8:1.",
+          created_at: new Date(Date.now() - 3600000).toISOString(),
+          updated_at: new Date(Date.now() - 600000).toISOString(),
+        },
+      ];
+      this.commentsStore.push(...seeded);
+      return {
+        comments: seeded,
+        total_count: seeded.length,
+        open_count: seeded.filter((c) => !c.is_resolved).length,
+        resolved_count: seeded.filter((c) => c.is_resolved).length,
+      };
+    }
+    const total = matched.length;
+    const resolved = matched.filter((c) => c.is_resolved).length;
+    return {
+      comments: [...matched].reverse(),
+      total_count: total,
+      open_count: total - resolved,
+      resolved_count: resolved,
+    };
+  }
+
+  async addSubmissionComment(submissionId: string, commentText: string, category: string = "visual_design"): Promise<ContentComment> {
+    const newComment: ContentComment = {
+      id: `cm_${Date.now()}`,
+      submission_id: submissionId,
+      organization_id: "org_acme_cloud",
+      author_id: "user_reviewer",
+      author_name: "Team Reviewer",
+      author_role: "compliance_officer",
+      comment_text: commentText,
+      category,
+      is_resolved: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    this.commentsStore.push(newComment);
+    return newComment;
+  }
+
+  async toggleCommentResolution(
+    submissionId: string,
+    commentId: string,
+    isResolved: boolean,
+    resolutionNote?: string
+  ): Promise<ContentComment> {
+    const comment = this.commentsStore.find((c) => c.id === commentId && c.submission_id === submissionId);
+    if (!comment) throw new Error("Comment not found.");
+    comment.is_resolved = isResolved;
+    comment.resolved_at = isResolved ? new Date().toISOString() : null;
+    comment.resolved_by = isResolved ? "Leo Vance (Designer)" : null;
+    comment.resolution_note = isResolved ? (resolutionNote || "Fixed by designer") : null;
+    comment.updated_at = new Date().toISOString();
+    return { ...comment };
   }
 }
 

@@ -17,6 +17,7 @@ import {
   Sliders,
   Check,
 } from "lucide-react";
+import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 
 interface DesignerDashboardProps {
   submissions: ContentSubmission[];
@@ -386,6 +387,15 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
           </div>
         </div>
       </div>
+
+      {/* Department Feedback & Change Request Tracker for Designer */}
+      {designerSubmissions.length > 0 && (
+        <DesignerFeedbackComments
+          submissionId={activeAuditSub?.id || designerSubmissions[0].id}
+          submissionTitle={activeAuditSub?.title || designerSubmissions[0].title}
+          contentType={activeAuditSub?.content_type || designerSubmissions[0].content_type}
+        />
+      )}
 
       {/* AI Audit Findings Modal */}
       {isModalOpen && activeAudit && (

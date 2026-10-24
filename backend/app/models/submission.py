@@ -20,3 +20,4 @@ class ContentSubmission(TimestampedModel):
     revisions = relationship("ContentRevision", back_populates="submission", cascade="all, delete-orphan", foreign_keys="ContentRevision.submission_id")
     audits = relationship("AuditRun", back_populates="submission", cascade="all, delete-orphan")
     reviews = relationship("ReviewDecision", back_populates="submission", cascade="all, delete-orphan")
+    comments = relationship("ContentComment", back_populates="submission", cascade="all, delete-orphan", order_by="ContentComment.created_at.desc()")

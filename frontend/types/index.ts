@@ -498,3 +498,28 @@ export interface PublicInvitation {
   is_valid: boolean;
   expires_at: string;
 }
+
+export interface ContentComment {
+  id: string;
+  submission_id: string;
+  organization_id: string;
+  author_id?: string;
+  author_name: string;
+  author_role: "admin" | "compliance_officer" | "marketing" | "designer" | string;
+  comment_text: string;
+  category: "visual_design" | "legal_compliance" | "copy_tone" | "brand_rules" | "general" | string;
+  is_resolved: boolean;
+  resolved_at?: string | null;
+  resolved_by?: string | null;
+  resolution_note?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommentsListResponse {
+  comments: ContentComment[];
+  total_count: number;
+  open_count: number;
+  resolved_count: number;
+}
+
