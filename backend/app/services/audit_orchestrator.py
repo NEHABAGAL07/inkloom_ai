@@ -90,7 +90,8 @@ class AuditOrchestrator:
         if guidelines_records:
             primary_guideline = guidelines_records[0]
             guideline_version = primary_guideline.version
-            guideline_profile = primary_guideline.published_data or primary_guideline.draft_data
+            # Strict compliance requirement: AI engine evaluates ONLY published/approved guidelines, NEVER unapproved drafts
+            guideline_profile = primary_guideline.published_data
 
             for g in guidelines_records:
                 for r in g.rules:
@@ -112,7 +113,18 @@ class AuditOrchestrator:
             guideline_profile=guideline_profile,
         )
 
-        # Persist AuditRun
+        # Persist AuditRun with immutable guideline version metadata and compliance disclaimer
+        engine_meta = audit_result.engine_metadata.model_dump()
+        engine_meta.update({
+            "guideline_version": guideline_version,
+            "guideline_id": primary_guideline.id if guidelines_records else None,
+            "jurisdiction": primary_guideline.jurisdiction if guidelines_records else "Global",
+            "compliance_disclaimer": (
+                "Inkloom AI supports compliance workflows. Automated findings do not "
+                "guarantee legal compliance or eliminate dispute risks."
+            ),
+        })
+
         run_record = AuditRun(
             id=audit_result.audit_id,
             submission_id=submission.id,
@@ -120,9 +132,10 @@ class AuditOrchestrator:
             schema_version=audit_result.schema_version,
             overall_status=audit_result.overall_status.value,
             summary=audit_result.summary.model_dump(),
-            engine_metadata=audit_result.engine_metadata.model_dump(),
+            engine_metadata=engine_meta,
         )
         db.add(run_record)
+
 
         # Persist individual findings
         for finding in audit_result.findings:

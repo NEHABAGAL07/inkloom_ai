@@ -11,7 +11,7 @@ import secrets
 import time
 from datetime import datetime, timezone, timedelta
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Set
 from fastapi import Header, HTTPException, status, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -31,6 +31,70 @@ class UserRole(str, Enum):
     VIEWER = "viewer"
 
 
+class Permission(str, Enum):
+    VIEW_ACTIVE_GUIDELINES = "view_active_guidelines"
+    CREATE_BRAND_DRAFTS = "create_brand_drafts"
+    EDIT_BRAND_RULES = "edit_brand_rules"
+    PROPOSE_LEGAL_RULES = "propose_legal_rules"
+    REVIEW_LEGAL_CHANGES = "review_legal_changes"
+    APPROVE_LEGAL_CHANGES = "approve_legal_changes"
+    PUBLISH_GUIDELINES = "publish_guidelines"
+    VIEW_AUDIT_HISTORY = "view_audit_history"
+    CONFIGURE_HUMAN_REVIEW = "configure_human_review"
+    AUDIT_CONTENT = "audit_content"
+    APPROVE_CONTENT_PUBLICATION = "approve_content_publication"
+
+
+# Role-to-Permission mapping enforcing least privilege
+ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
+    UserRole.ADMIN: {
+        Permission.VIEW_ACTIVE_GUIDELINES,
+        Permission.CREATE_BRAND_DRAFTS,
+        Permission.EDIT_BRAND_RULES,
+        Permission.PROPOSE_LEGAL_RULES,
+        # Admin can publish guidelines when legal approval is not required or already granted
+        Permission.PUBLISH_GUIDELINES,
+        Permission.VIEW_AUDIT_HISTORY,
+        Permission.CONFIGURE_HUMAN_REVIEW,
+        Permission.AUDIT_CONTENT,
+    },
+    UserRole.COMPLIANCE_OFFICER: {
+        Permission.VIEW_ACTIVE_GUIDELINES,
+        Permission.CREATE_BRAND_DRAFTS,
+        Permission.EDIT_BRAND_RULES,
+        Permission.PROPOSE_LEGAL_RULES,
+        Permission.REVIEW_LEGAL_CHANGES,
+        Permission.APPROVE_LEGAL_CHANGES,
+        Permission.PUBLISH_GUIDELINES,
+        Permission.VIEW_AUDIT_HISTORY,
+        Permission.CONFIGURE_HUMAN_REVIEW,
+        Permission.AUDIT_CONTENT,
+        Permission.APPROVE_CONTENT_PUBLICATION,
+    },
+    UserRole.MARKETING: {
+        Permission.VIEW_ACTIVE_GUIDELINES,
+        Permission.AUDIT_CONTENT,
+    },
+    UserRole.DESIGNER: {
+        Permission.VIEW_ACTIVE_GUIDELINES,
+        Permission.AUDIT_CONTENT,
+    },
+    UserRole.REVIEWER: {
+        Permission.VIEW_ACTIVE_GUIDELINES,
+        Permission.VIEW_AUDIT_HISTORY,
+        Permission.AUDIT_CONTENT,
+        Permission.APPROVE_CONTENT_PUBLICATION,
+    },
+    UserRole.CREATOR: {
+        Permission.VIEW_ACTIVE_GUIDELINES,
+        Permission.AUDIT_CONTENT,
+    },
+    UserRole.VIEWER: {
+        Permission.VIEW_ACTIVE_GUIDELINES,
+    },
+}
+
+
 class AuthContext(BaseModel):
     user_id: str
     organization_id: str
@@ -39,10 +103,30 @@ class AuthContext(BaseModel):
     full_name: Optional[str] = None
     is_authenticated: bool = True
 
-    def has_role(self, *required_roles: UserRole) -> bool:
-        if UserRole.ADMIN in self.roles:
+    def has_role(self, *required_roles: UserRole, strict: bool = False) -> bool:
+        """
+        Check if user holds any of the required roles.
+        If strict=True, ADMIN does not automatically bypass role check.
+        """
+        if not strict and UserRole.ADMIN in self.roles:
             return True
         return any(role in self.roles for role in required_roles)
+
+    def has_permission(self, permission: Permission) -> bool:
+        """Verify whether any of the user's roles grant the requested permission."""
+        for role in self.roles:
+            if permission in ROLE_PERMISSIONS.get(role, set()):
+                return True
+        return False
+
+    def is_legal_officer(self) -> bool:
+        """Determines if the authenticated user is an authorized Legal/Compliance officer."""
+        return UserRole.COMPLIANCE_OFFICER in self.roles
+
+    def is_admin(self) -> bool:
+        """Determines if the authenticated user has manager/admin role."""
+        return UserRole.ADMIN in self.roles
+
 
 
 # ---------------------------------------------------------
@@ -274,3 +358,16 @@ def require_roles(*allowed_roles: UserRole):
             )
         return auth
     return role_checker
+
+
+def require_permission(permission: Permission):
+    """Dependency factory ensuring current user has a specific required permission."""
+    def permission_checker(auth: AuthContext = Depends(get_current_auth_context)) -> AuthContext:
+        if not auth.has_permission(permission):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied. Missing required permission: '{permission.value}'.",
+            )
+        return auth
+    return permission_checker
+

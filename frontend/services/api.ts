@@ -27,6 +27,9 @@ import {
   MemberInfo,
   Invitation,
   PublicInvitation,
+  ClarificationReport,
+  ConflictCheckResult,
+  StarterTemplateRule,
 } from "../types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -226,6 +229,118 @@ export class ApiService implements IApiService {
       });
     } catch {
       return mockApi.publishGuideline(version, changelog);
+    }
+  }
+
+  async submitGuidelineForReview(notes: string, requiresLegalApproval: boolean = true, jurisdiction?: string, industry?: string): Promise<BrandGuidelineProfile> {
+    if (USE_MOCK) return mockApi.submitGuidelineForReview(notes, requiresLegalApproval, jurisdiction, industry);
+    try {
+      return await this.fetchJson<BrandGuidelineProfile>("/guidelines/submit-for-review", {
+        method: "POST",
+        body: JSON.stringify({
+          submission_notes: notes,
+          requires_legal_approval: requiresLegalApproval,
+          jurisdiction,
+          industry,
+        }),
+      });
+    } catch {
+      return mockApi.submitGuidelineForReview(notes, requiresLegalApproval, jurisdiction, industry);
+    }
+  }
+
+  async getPendingGuidelineReviews(): Promise<BrandGuidelineProfile[]> {
+    if (USE_MOCK) return mockApi.getPendingGuidelineReviews();
+    try {
+      return await this.fetchJson<BrandGuidelineProfile[]>("/guidelines/pending-review");
+    } catch {
+      return mockApi.getPendingGuidelineReviews();
+    }
+  }
+
+  async recordGuidelineReviewDecision(decision: "approved" | "rejected" | "changes_requested", rationale: string): Promise<BrandGuidelineProfile> {
+    if (USE_MOCK) return mockApi.recordGuidelineReviewDecision(decision, rationale);
+    try {
+      return await this.fetchJson<BrandGuidelineProfile>("/guidelines/review-decision", {
+        method: "POST",
+        body: JSON.stringify({ decision, rationale }),
+      });
+    } catch {
+      return mockApi.recordGuidelineReviewDecision(decision, rationale);
+    }
+  }
+
+  async checkGuidelineConflicts(): Promise<ConflictCheckResult> {
+    if (USE_MOCK) return mockApi.checkGuidelineConflicts();
+    try {
+      return await this.fetchJson<ConflictCheckResult>("/guidelines/conflict-check", {
+        method: "POST",
+      });
+    } catch {
+      return mockApi.checkGuidelineConflicts();
+    }
+  }
+
+  async getStarterTemplates(jurisdiction: string = "all", industry: string = "all"): Promise<{ total_templates: number; templates: StarterTemplateRule[]; compliance_disclaimer: string }> {
+    if (USE_MOCK) return mockApi.getStarterTemplates(jurisdiction, industry);
+    try {
+      return await this.fetchJson<{ total_templates: number; templates: StarterTemplateRule[]; compliance_disclaimer: string }>(
+        `/guidelines/starter-templates?jurisdiction=${encodeURIComponent(jurisdiction)}&industry=${encodeURIComponent(industry)}`
+      );
+    } catch {
+      return mockApi.getStarterTemplates(jurisdiction, industry);
+    }
+  }
+
+  async reportUnclearRule(ruleReference: string, reportType: string, description: string): Promise<ClarificationReport> {
+    if (USE_MOCK) return mockApi.reportUnclearRule(ruleReference, reportType, description);
+    try {
+      return await this.fetchJson<ClarificationReport>("/guidelines/report-unclear", {
+        method: "POST",
+        body: JSON.stringify({
+          rule_reference: ruleReference,
+          report_type: reportType,
+          description,
+        }),
+      });
+    } catch {
+      return mockApi.reportUnclearRule(ruleReference, reportType, description);
+    }
+  }
+
+  async getClarificationReports(): Promise<ClarificationReport[]> {
+    if (USE_MOCK) return mockApi.getClarificationReports();
+    try {
+      return await this.fetchJson<ClarificationReport[]>("/guidelines/reports");
+    } catch {
+      return mockApi.getClarificationReports();
+    }
+  }
+
+  async resolveClarificationReport(reportId: string, status: "resolved" | "dismissed", resolutionNotes: string): Promise<ClarificationReport> {
+    if (USE_MOCK) return mockApi.resolveClarificationReport(reportId, status, resolutionNotes);
+    try {
+      return await this.fetchJson<ClarificationReport>(`/guidelines/reports/${reportId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          status,
+          resolution_notes: resolutionNotes,
+        }),
+      });
+    } catch {
+      return mockApi.resolveClarificationReport(reportId, status, resolutionNotes);
+    }
+  }
+
+  async rollbackGuideline(versionId: string, rationale: string): Promise<BrandGuidelineProfile> {
+    if (USE_MOCK) return mockApi.rollbackGuideline(versionId, rationale);
+    try {
+      return await this.fetchJson<BrandGuidelineProfile>("/guidelines/rollback", {
+        method: "POST",
+        body: JSON.stringify({ version_id: versionId, rationale }),
+      });
+    } catch {
+      return mockApi.rollbackGuideline(versionId, rationale);
     }
   }
 

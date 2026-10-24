@@ -28,6 +28,7 @@ export function PublishConfirmModal({
 
   const [version, setVersion] = useState(suggestNextVersion(currentVersion));
   const [changelog, setChangelog] = useState("");
+  const [complianceConfirmed, setComplianceConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -167,6 +168,19 @@ export function PublishConfirmModal({
             />
           </div>
 
+          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 flex items-start gap-2.5">
+            <input
+              type="checkbox"
+              id="compliance-confirm"
+              checked={complianceConfirmed}
+              onChange={(e) => setComplianceConfirmed(e.target.checked)}
+              className="mt-0.5 rounded border-slate-700 text-indigo-600 focus:ring-0 focus:outline-none"
+            />
+            <label htmlFor="compliance-confirm" className="cursor-pointer text-[11px] leading-relaxed text-slate-300">
+              <strong>Compliance Governance Affirmation:</strong> I confirm that any legal claims, advertising terms, or statutory disclaimers in this version adhere to verified organizational compliance policies. I understand that publication immediately binds subsequent AI audits to these standards.
+            </label>
+          </div>
+
           <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-800">
             <button
               type="button"
@@ -177,7 +191,7 @@ export function PublishConfirmModal({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !allRequiredValid || !version.trim()}
+              disabled={isSubmitting || !allRequiredValid || !version.trim() || !complianceConfirmed}
               className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-lg shadow-indigo-600/20"
             >
               {isSubmitting ? "Publishing..." : "Confirm & Publish"}

@@ -21,6 +21,9 @@ import {
   MemberInfo,
   Invitation,
   PublicInvitation,
+  ClarificationReport,
+  ConflictCheckResult,
+  StarterTemplateRule,
 } from "../types";
 
 export interface CreateSubmissionInput {
@@ -50,6 +53,15 @@ export interface IApiService {
   getGuidelineProfile(): Promise<BrandGuidelineProfile>;
   saveDraftGuideline(draftData: BrandGuidelineData, name?: string, description?: string): Promise<BrandGuidelineProfile>;
   publishGuideline(version: string, changelog?: string): Promise<BrandGuidelineProfile>;
+  submitGuidelineForReview(notes: string, requiresLegalApproval?: boolean, jurisdiction?: string, industry?: string): Promise<BrandGuidelineProfile>;
+  getPendingGuidelineReviews(): Promise<BrandGuidelineProfile[]>;
+  recordGuidelineReviewDecision(decision: "approved" | "rejected" | "changes_requested", rationale: string): Promise<BrandGuidelineProfile>;
+  checkGuidelineConflicts(): Promise<ConflictCheckResult>;
+  getStarterTemplates(jurisdiction?: string, industry?: string): Promise<{ total_templates: number; templates: StarterTemplateRule[]; compliance_disclaimer: string }>;
+  reportUnclearRule(ruleReference: string, reportType: string, description: string): Promise<ClarificationReport>;
+  getClarificationReports(): Promise<ClarificationReport[]>;
+  resolveClarificationReport(reportId: string, status: "resolved" | "dismissed", resolutionNotes: string): Promise<ClarificationReport>;
+  rollbackGuideline(versionId: string, rationale: string): Promise<BrandGuidelineProfile>;
   getGuidelineVersions(): Promise<BrandGuidelineVersionInfo[]>;
   restoreGuidelineVersion(versionId: string): Promise<BrandGuidelineProfile>;
   getEffectiveSettings(mediaType: string): Promise<EffectiveSettings>;
@@ -1312,6 +1324,169 @@ export class MockApiService implements IApiService {
       is_manager: true,
     };
   }
+
+  async submitGuidelineForReview(notes: string, requiresLegalApproval: boolean = true, jurisdiction?: string, industry?: string): Promise<BrandGuidelineProfile> {
+    const profile = getStoredBrandProfile();
+    profile.status = "submitted";
+    profile.submitted_by = "Alex Mercer (Manager)";
+    profile.submitted_at = new Date().toISOString();
+    profile.submission_notes = notes;
+    profile.requires_legal_approval = requiresLegalApproval;
+    if (jurisdiction) profile.jurisdiction = jurisdiction;
+    if (industry) profile.industry = industry;
+    saveStoredBrandProfile(profile);
+    return { ...profile, is_manager: true, can_edit: true };
+  }
+
+  async getPendingGuidelineReviews(): Promise<BrandGuidelineProfile[]> {
+    const profile = getStoredBrandProfile();
+    return profile.status === "submitted" || profile.status === "changes_requested" ? [profile] : [];
+  }
+
+  async recordGuidelineReviewDecision(decision: "approved" | "rejected" | "changes_requested", rationale: string): Promise<BrandGuidelineProfile> {
+    const profile = getStoredBrandProfile();
+    profile.status = decision;
+    profile.review_decision = decision;
+    profile.review_rationale = rationale;
+    profile.reviewed_by = "Elena Rostova (Compliance Officer)";
+    profile.reviewed_at = new Date().toISOString();
+    saveStoredBrandProfile(profile);
+    return { ...profile, is_manager: true, can_review_legal: true };
+  }
+
+  async checkGuidelineConflicts(): Promise<ConflictCheckResult> {
+    return {
+      total_conflicts: 1,
+      conflicts: [
+        {
+          rule_name: "Web Ads Contrast Override (3.8:1)",
+          conflicting_with: "W3C WCAG 2.1 AA Contrast Mandate (4.5:1)",
+          category: "accessibility",
+          priority_high: "Priority 1 (Mandatory Legal)",
+          priority_low: "Priority 4 (Media Override)",
+          explanation: "Digital advertisement contrast ratio of 3.8:1 falls below the mandatory WCAG 2.1 AA standard of 4.5:1.",
+          escalate_to_legal: true,
+          remediation_suggestion: "Adjust secondary text color to achieve at least 4.5:1 contrast against light backgrounds.",
+        },
+      ],
+      priority_hierarchy: [
+        { level: 1, name: "Mandatory Legal Requirements", description: "Statutes, regulations, and public safety mandates (e.g. FTC Act §5, WCAG 2.1 AA)." },
+        { level: 2, name: "Organization Legal & Compliance Policies", description: "Internal policies, disclaimers, and certified benchmarks." },
+        { level: 3, name: "Official Brand Standards", description: "Brand voice, logo usage, color systems, and typography." },
+        { level: 4, name: "Channel & Campaign Rules", description: "Media-specific overrides and promotional rules." },
+        { level: 5, name: "Advisory Recommendations", description: "AI suggestions and aesthetic tips." },
+      ],
+      compliance_disclaimer: "Inkloom AI conflict detection assists organizational decision-making by applying documented governance priority hierarchies. It does not replace qualified legal review.",
+    };
+  }
+
+  async getStarterTemplates(jurisdiction: string = "all", industry: string = "all"): Promise<{ total_templates: number; templates: StarterTemplateRule[]; compliance_disclaimer: string }> {
+    return {
+      total_templates: 4,
+      templates: [
+        {
+          category: "claim_verification",
+          rule_name: "Objective Performance Claims Substantiation",
+          rule_type: "legal_mandatory",
+          priority_level: 1,
+          jurisdiction: "US",
+          industry: "General",
+          authoritative_source: "FTC Policy Statement on Deception (103 F.T.C. 110)",
+          source_url: "https://www.ftc.gov/legal-library/browse/ftc-policy-statement-deception",
+          verification_status: "verified",
+          severity_default: "critical",
+          requires_human_review: true,
+          description: "Objective quantitative claims require documented pre-existing scientific, technical, or benchmark substantiation.",
+          rule_definition: { requires_prior_evidence: true },
+          required_disclosure: "Results based on internal enterprise testing; individual operational results may vary.",
+        },
+        {
+          category: "accessibility",
+          rule_name: "W3C WCAG 2.1 AA Minimum Text Contrast Ratio (4.5:1)",
+          rule_type: "legal_mandatory",
+          priority_level: 1,
+          jurisdiction: "Global",
+          industry: "General",
+          authoritative_source: "W3C WCAG 2.1 SC 1.4.3",
+          source_url: "https://www.w3.org/TR/WCAG21/#contrast-minimum",
+          verification_status: "verified",
+          severity_default: "high",
+          requires_human_review: false,
+          description: "Text must have a contrast ratio of at least 4.5:1 against its background.",
+          rule_definition: { min_contrast_normal: 4.5 },
+        },
+      ],
+      compliance_disclaimer: "Templates provide reference points for organizational compliance policies and do not constitute legal advice.",
+    };
+  }
+
+  async reportUnclearRule(ruleReference: string, reportType: string, description: string): Promise<ClarificationReport> {
+    return {
+      id: `rep_${Date.now()}`,
+      guideline_id: "guideline_acme_official",
+      organization_id: "org_acme_cloud",
+      user_email: "employee@acmecloud.com",
+      user_name: "Marketing Creator",
+      rule_reference: ruleReference,
+      report_type: reportType,
+      description,
+      status: "open",
+      created_at: new Date().toISOString(),
+    };
+  }
+
+  async getClarificationReports(): Promise<ClarificationReport[]> {
+    return [
+      {
+        id: "rep_sample_01",
+        guideline_id: "guideline_acme_official",
+        organization_id: "org_acme_cloud",
+        user_email: "maya.lin@acmecloud.com",
+        user_name: "Maya Lin (Marketing Lead)",
+        rule_reference: "Brand Voice - Words to Avoid",
+        report_type: "unclear",
+        description: "Can we use 'robust' when referring to cloud encryption protocols?",
+        status: "open",
+        created_at: new Date().toISOString(),
+      },
+    ];
+  }
+
+  async resolveClarificationReport(reportId: string, status: "resolved" | "dismissed", resolutionNotes: string): Promise<ClarificationReport> {
+    return {
+      id: reportId,
+      guideline_id: "guideline_acme_official",
+      organization_id: "org_acme_cloud",
+      user_email: "maya.lin@acmecloud.com",
+      user_name: "Maya Lin (Marketing Lead)",
+      rule_reference: "Brand Voice - Words to Avoid",
+      report_type: "unclear",
+      description: "Can we use 'robust' when referring to cloud encryption protocols?",
+      status,
+      resolution_notes: resolutionNotes,
+      resolved_by: "Elena Rostova (Compliance Officer)",
+      resolved_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+    };
+  }
+
+  async rollbackGuideline(versionId: string, rationale: string): Promise<BrandGuidelineProfile> {
+    const versions = getStoredBrandVersions();
+    const target = versions.find((v) => v.id === versionId);
+    if (!target) throw new Error("Target version not found");
+
+    const profile = getStoredBrandProfile();
+    const newVersionTag = `${profile.version}.rollback-${Date.now()}`;
+    profile.published_data = target.snapshot_data;
+    profile.draft_data = target.snapshot_data;
+    profile.version = newVersionTag;
+    profile.status = "published";
+    profile.updated_at = new Date().toISOString();
+    saveStoredBrandProfile(profile);
+
+    return { ...profile, is_manager: true };
+  }
+
 
   async getEffectiveSettings(mediaType: string): Promise<EffectiveSettings> {
     const profile = getStoredBrandProfile();

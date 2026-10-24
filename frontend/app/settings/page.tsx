@@ -61,6 +61,7 @@ export default function BrandGuidelinesPage() {
   const isManager =
     activeRole === "admin" ||
     activeRole === "compliance_officer" ||
+    activeRole === "legal" ||
     profile.is_manager === true;
 
   if (isManager) {

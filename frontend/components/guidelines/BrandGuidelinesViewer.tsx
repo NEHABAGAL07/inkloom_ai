@@ -20,7 +20,11 @@ import {
   Share2,
   ExternalLink,
   Lock,
+  MessageSquare,
+  Globe,
+  Building,
 } from "lucide-react";
+import { ReportUnclearModal } from "./ReportUnclearModal";
 
 interface BrandGuidelinesViewerProps {
   profile: BrandGuidelineProfile;
@@ -31,6 +35,7 @@ export function BrandGuidelinesViewer({ profile }: BrandGuidelinesViewerProps) {
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -73,7 +78,7 @@ export function BrandGuidelinesViewer({ profile }: BrandGuidelinesViewerProps) {
       <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 shadow-xl relative">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-950/80 border border-emerald-800/60 text-emerald-400 flex items-center gap-1.5">
                 <CheckCircle className="w-3.5 h-3.5" />
                 Official Published Standard
@@ -81,6 +86,24 @@ export function BrandGuidelinesViewer({ profile }: BrandGuidelinesViewerProps) {
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">
                 v{profile.version}
               </span>
+              {profile.jurisdiction && (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-900 border border-slate-700 text-slate-300 flex items-center gap-1">
+                  <Globe className="w-3 h-3 text-cyan-400" />
+                  {profile.jurisdiction}
+                </span>
+              )}
+              {profile.industry && (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-900 border border-slate-700 text-slate-300 flex items-center gap-1">
+                  <Building className="w-3 h-3 text-amber-400" />
+                  {profile.industry}
+                </span>
+              )}
+              {profile.review_date && (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-900 border border-slate-700 text-slate-300 flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-purple-400" />
+                  Review Due: {new Date(profile.review_date).toLocaleDateString()}
+                </span>
+              )}
             </div>
             <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
               {published.identity?.brand_name || profile.name}
@@ -90,23 +113,34 @@ export function BrandGuidelinesViewer({ profile }: BrandGuidelinesViewerProps) {
             </p>
           </div>
 
-          <div className="text-right text-xs text-slate-400 shrink-0">
-            <div>
-              Published:{" "}
-              <strong className="text-slate-200">
-                {profile.published_at
-                  ? new Date(profile.published_at).toLocaleDateString()
-                  : "Active"}
-              </strong>
-            </div>
-            {profile.published_by && (
-              <div className="mt-0.5">
-                By: <strong className="text-slate-200">{profile.published_by}</strong>
+          <div className="flex flex-col items-start md:items-end justify-between gap-3 shrink-0">
+            <div className="text-left md:text-right text-xs text-slate-400">
+              <div>
+                Published:{" "}
+                <strong className="text-slate-200">
+                  {profile.published_at
+                    ? new Date(profile.published_at).toLocaleDateString()
+                    : "Active"}
+                </strong>
               </div>
-            )}
-            <span className="mt-2 inline-block px-2.5 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
-              Read-Only Viewer
-            </span>
+              {profile.published_by && (
+                <div className="mt-0.5">
+                  By: <strong className="text-slate-200">{profile.published_by}</strong>
+                </div>
+              )}
+              <span className="mt-1 inline-block px-2.5 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                Read-Only Viewer
+              </span>
+            </div>
+
+            <button
+              onClick={() => setShowReportModal(true)}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition shadow-sm"
+              title="Report an ambiguity or question to the legal & brand governance team"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
+              <span>Report Question / Ambiguity</span>
+            </button>
           </div>
         </div>
 
@@ -660,6 +694,26 @@ export function BrandGuidelinesViewer({ profile }: BrandGuidelinesViewerProps) {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Compliance & Legal Disclaimer Banner */}
+      <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-800/40 text-amber-200/90 text-xs flex items-start gap-3">
+        <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="font-semibold text-amber-300">
+            Advisory Notice &amp; Compliance Workflow Role
+          </p>
+          <p className="text-[11px] text-amber-200/70 leading-relaxed">
+            Inkloom AI supports brand governance, factual verification, and internal compliance review workflows. Following approved guidelines establishes organizational conformity but <strong>does not constitute binding legal counsel</strong>, guarantee absolute legal immunity, or eliminate the risk of regulatory enforcement or disputes. Final campaign clearance remains the responsibility of authorized legal counsel and organizational officers.
+          </p>
+        </div>
+      </div>
+
+      {/* Employee Ambiguity Reporting Modal */}
+      {showReportModal && (
+        <ReportUnclearModal
+          onClose={() => setShowReportModal(false)}
+        />
       )}
     </div>
   );

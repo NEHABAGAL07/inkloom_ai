@@ -41,6 +41,7 @@ def on_startup():
         try:
             from sqlalchemy import text
             with engine.connect() as conn:
+                # 1. brand_guidelines table
                 cursor = conn.execute(text("PRAGMA table_info(brand_guidelines)"))
                 cols = [row[1] for row in cursor.fetchall()]
                 if cols:
@@ -54,7 +55,86 @@ def on_startup():
                         conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN draft_data JSON"))
                     if "published_data" not in cols:
                         conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN published_data JSON"))
-                    conn.commit()
+                    if "submission_notes" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN submission_notes TEXT"))
+                    if "submitted_by" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN submitted_by VARCHAR(255)"))
+                    if "submitted_at" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN submitted_at DATETIME"))
+                    if "reviewed_by" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN reviewed_by VARCHAR(255)"))
+                    if "reviewed_at" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN reviewed_at DATETIME"))
+                    if "review_decision" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN review_decision VARCHAR(50)"))
+                    if "review_rationale" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN review_rationale TEXT"))
+                    if "requires_legal_approval" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN requires_legal_approval BOOLEAN DEFAULT 1 NOT NULL"))
+                    if "jurisdiction" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN jurisdiction VARCHAR(100) DEFAULT 'Global' NOT NULL"))
+                    if "industry" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN industry VARCHAR(100) DEFAULT 'General' NOT NULL"))
+                    if "product_category" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN product_category VARCHAR(100) DEFAULT 'Enterprise Software'"))
+                    if "content_channels" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN content_channels JSON"))
+                    if "effective_date" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN effective_date DATETIME"))
+                    if "review_date" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN review_date DATETIME"))
+
+                # 2. brand_guideline_versions table
+                cursor_v = conn.execute(text("PRAGMA table_info(brand_guideline_versions)"))
+                cols_v = [row[1] for row in cursor_v.fetchall()]
+                if cols_v:
+                    if "approved_by" not in cols_v:
+                        conn.execute(text("ALTER TABLE brand_guideline_versions ADD COLUMN approved_by VARCHAR(255)"))
+                    if "approved_at" not in cols_v:
+                        conn.execute(text("ALTER TABLE brand_guideline_versions ADD COLUMN approved_at DATETIME"))
+                    if "approval_rationale" not in cols_v:
+                        conn.execute(text("ALTER TABLE brand_guideline_versions ADD COLUMN approval_rationale TEXT"))
+                    if "jurisdiction" not in cols_v:
+                        conn.execute(text("ALTER TABLE brand_guideline_versions ADD COLUMN jurisdiction VARCHAR(100) DEFAULT 'Global' NOT NULL"))
+                    if "industry" not in cols_v:
+                        conn.execute(text("ALTER TABLE brand_guideline_versions ADD COLUMN industry VARCHAR(100) DEFAULT 'General' NOT NULL"))
+                    if "effective_date" not in cols_v:
+                        conn.execute(text("ALTER TABLE brand_guideline_versions ADD COLUMN effective_date DATETIME"))
+                    if "review_date" not in cols_v:
+                        conn.execute(text("ALTER TABLE brand_guideline_versions ADD COLUMN review_date DATETIME"))
+
+                # 3. guideline_rules table
+                cursor_r = conn.execute(text("PRAGMA table_info(guideline_rules)"))
+                cols_r = [row[1] for row in cursor_r.fetchall()]
+                if cols_r:
+                    if "rule_type" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN rule_type VARCHAR(50) DEFAULT 'brand_standard' NOT NULL"))
+                    if "priority_level" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN priority_level INTEGER DEFAULT 3 NOT NULL"))
+                    if "jurisdiction" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN jurisdiction VARCHAR(100) DEFAULT 'Global' NOT NULL"))
+                    if "industry" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN industry VARCHAR(100) DEFAULT 'General' NOT NULL"))
+                    if "content_channels" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN content_channels JSON"))
+                    if "authoritative_source" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN authoritative_source VARCHAR(255)"))
+                    if "source_revision_date" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN source_revision_date VARCHAR(100)"))
+                    if "effective_date" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN effective_date DATETIME"))
+                    if "review_date" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN review_date DATETIME"))
+                    if "verification_status" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN verification_status VARCHAR(50) DEFAULT 'verified' NOT NULL"))
+                    if "evidence_required" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN evidence_required BOOLEAN DEFAULT 0 NOT NULL"))
+                    if "evidence_description" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN evidence_description TEXT"))
+                    if "required_disclosure" not in cols_r:
+                        conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN required_disclosure TEXT"))
+
+                conn.commit()
         except Exception as e:
             print("Notice: SQLite migration check:", e)
 

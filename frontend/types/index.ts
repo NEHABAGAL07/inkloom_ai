@@ -64,16 +64,87 @@ export interface BrandGuidelineProfile {
   name: string;
   description?: string;
   version: string;
-  status: "draft" | "published" | "changes_pending";
+  status: "draft" | "submitted" | "changes_requested" | "rejected" | "approved" | "published" | "changes_pending" | "archived";
   is_active: boolean;
   published_at?: string;
   published_by?: string;
   is_manager: boolean;
+  can_edit?: boolean;
+  can_review_legal?: boolean;
+  can_publish?: boolean;
+  user_role?: string;
+  submission_notes?: string;
+  submitted_by?: string;
+  submitted_at?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  review_decision?: string;
+  review_rationale?: string;
+  requires_legal_approval?: boolean;
+  jurisdiction?: string;
+  industry?: string;
+  product_category?: string;
+  content_channels?: string[];
+  effective_date?: string;
+  review_date?: string;
+  compliance_disclaimer?: string;
   draft_data?: BrandGuidelineData;
   published_data?: BrandGuidelineData;
   created_at?: string;
   updated_at?: string;
 }
+
+export interface RuleConflictItem {
+  rule_name: string;
+  conflicting_with: string;
+  category: string;
+  priority_high: string;
+  priority_low: string;
+  explanation: string;
+  escalate_to_legal: boolean;
+  remediation_suggestion: string;
+}
+
+export interface ConflictCheckResult {
+  total_conflicts: number;
+  conflicts: RuleConflictItem[];
+  priority_hierarchy: { level: number; name: string; description: string }[];
+  compliance_disclaimer: string;
+}
+
+export interface ClarificationReport {
+  id: string;
+  guideline_id: string;
+  organization_id: string;
+  user_email: string;
+  user_name: string;
+  rule_reference: string;
+  report_type: string;
+  description: string;
+  status: "open" | "in_review" | "resolved" | "dismissed";
+  resolution_notes?: string;
+  resolved_by?: string;
+  resolved_at?: string;
+  created_at: string;
+}
+
+export interface StarterTemplateRule {
+  category: string;
+  rule_name: string;
+  rule_type: string;
+  priority_level: number;
+  jurisdiction: string;
+  industry: string;
+  authoritative_source?: string;
+  source_url?: string;
+  verification_status: string;
+  severity_default: string;
+  requires_human_review: boolean;
+  description: string;
+  rule_definition: Record<string, any>;
+  required_disclosure?: string;
+}
+
 
 export interface BrandColor {
   id: string;
