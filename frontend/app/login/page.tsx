@@ -182,13 +182,13 @@ function LoginContent() {
           <div className="lg:col-span-5 space-y-6">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold">
-                <span>⚡ Instant One-Click Login</span>
+                <span>🛠️ Development / Demo Accounts</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
                 Access Workspace
               </h1>
               <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-                Log in to your tenant-isolated brand governance dashboard, or test out any role instantly below.
+                Log in to your tenant-isolated brand governance dashboard with verified credentials, or select a pre-configured demo account below for evaluation.
               </p>
             </div>
 
@@ -196,7 +196,7 @@ function LoginContent() {
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 backdrop-blur-xl shadow-xl space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
                 <span className="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
-                  <span>🚀</span> Quick Test Personas
+                  <span>🚀</span> Demo Accounts (Dev Environment)
                 </span>
                 <span className="text-[11px] text-slate-400 font-mono">pwd: password123</span>
               </div>

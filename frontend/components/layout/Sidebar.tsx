@@ -90,7 +90,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 pb-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -122,22 +122,6 @@ export function Sidebar() {
           );
         })}
       </nav>
-
-      {/* Footer Info & Human in loop reassurance */}
-      <div className="p-4 m-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs text-slate-400">
-        <div className="flex items-center space-x-2 text-indigo-400 font-semibold mb-1">
-          <span>🔒 Human Authority Guarantee</span>
-        </div>
-        <p className="text-[11px] leading-relaxed text-slate-400">
-          AI checks tone, terminology & verified facts. Only human compliance officers authorize public release.
-        </p>
-        <a
-          href="/login"
-          className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 hover:text-indigo-400 transition"
-        >
-          <span>🔑</span> Switch User / Login Portal
-        </a>
-      </div>
     </aside>
   );
 }
