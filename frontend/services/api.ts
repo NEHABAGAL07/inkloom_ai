@@ -101,14 +101,22 @@ export class ApiService implements IApiService {
   }
 
   async createSubmission(data: CreateSubmissionInput): Promise<ContentSubmission> {
-    if (USE_MOCK) return mockApi.createSubmission(data);
+    if (USE_MOCK) {
+      const res = await mockApi.createSubmission(data);
+      await mockApi.triggerAudit(res.id);
+      return res;
+    }
     try {
-      return await this.fetchJson<ContentSubmission>("/submissions", {
+      const res = await this.fetchJson<ContentSubmission>("/submissions", {
         method: "POST",
         body: JSON.stringify(data),
       });
+      await this.triggerAudit(res.id).catch((err) => console.warn("Auto-audit trigger warning:", err));
+      return res;
     } catch {
-      return mockApi.createSubmission(data);
+      const mockRes = await mockApi.createSubmission(data);
+      await mockApi.triggerAudit(mockRes.id);
+      return mockRes;
     }
   }
 
