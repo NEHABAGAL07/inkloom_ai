@@ -40,7 +40,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadData();
-  }, [isAuthenticated, activeOrgId]);
+  }, [isAuthenticated, activeOrgId, activeRole]);
 
   // Public Landing Page if user is not logged in
   if (!isAuthenticated) {

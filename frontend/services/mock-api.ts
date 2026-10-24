@@ -269,66 +269,280 @@ let mockSubmissions: ContentSubmission[] = [
   },
 ];
 
+function getStoredSubmissions(): ContentSubmission[] {
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("inkloom_mock_submissions_v2");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to read stored submissions:", e);
+    }
+  }
+  return [...mockSubmissions];
+}
+
+function saveStoredSubmissions(subs: ContentSubmission[]) {
+  mockSubmissions = subs;
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("inkloom_mock_submissions_v2", JSON.stringify(subs));
+    } catch (e) {
+      console.warn("Failed to save stored submissions:", e);
+    }
+  }
+}
+
+function generateAuditForSubmission(sub: ContentSubmission): AuditResult {
+  const isVisual = sub.content_type === "image" || sub.content_type === "video";
+  const auditId = `aud_${Math.random().toString(36).substring(2, 10)}`;
+
+  if (isVisual) {
+    return {
+      schema_version: "1.0.0",
+      audit_id: auditId,
+      content_id: sub.id,
+      revision_id: sub.current_revision_id || "rev_001",
+      overall_status: "needs_review",
+      summary: {
+        compliance_score: 91.5,
+        total_findings: 3,
+        critical_count: 0,
+        high_count: 0,
+        medium_count: 1,
+        low_count: 1,
+        info_count: 1,
+        human_review_required: true,
+        verdict_overview:
+          "AI Media Extractor & Visual Brand Engine Analysis: Asset conforms to enterprise color depth and dark moody aesthetic. Color palette adheres to primary slate (#0F172A) with 5.1:1 contrast ratio passing WCAG AA. Safe-margin padding around brand wordmark meets 24px requirement. Ready for final manager sign-off.",
+      },
+      findings: [
+        {
+          id: `find_${Date.now()}_1`,
+          category: "visual_brand",
+          severity: "medium",
+          title: "Atmospheric Shadow Contrast Verification",
+          message:
+            "Dark moody lighting style detected. Lower-third text elements achieve a 4.6:1 contrast ratio against the textured background. Compliant with WCAG AA standards (> 4.5:1), but recommend increasing text fill luminance for optimal readability.",
+          evidence: `Asset: ${sub.title}`,
+          source_reference: {
+            guideline_id: "guide_visual_brand",
+            section: "Section 5.3: Visual Standards & Contrast",
+            rule_name: "Primary Color Contrast & Safe Margin",
+            source_url: "https://brand.acmecloud.com/visual#sec-5-3",
+            is_external: false,
+            verification_status: "verified",
+          },
+          confidence: 0.94,
+          suggested_correction: {
+            replacement_text: "Increase foreground text opacity to 100% or apply subtle 15% dark vignette behind copy.",
+            rationale: "Elevates contrast ratio to > 6.0:1 surpassing WCAG AAA.",
+            preserves_intent: true,
+          },
+          status: "open",
+          requires_human_review: false,
+        },
+        {
+          id: `find_${Date.now()}_2`,
+          category: "visual_brand",
+          severity: "info",
+          title: "Logo Safe-Area & Wordmark Placement",
+          message:
+            "Primary Wordmark safe-margin detected at 28px padding, exceeding the minimum 24px requirement. No visual encroachment found.",
+          evidence: "Vector bounds analysis: 28px margin clear.",
+          source_reference: {
+            guideline_id: "guide_visual_brand",
+            section: "Section 2.1: Brand Wordmark Usage",
+            rule_name: "Safe Area Margin",
+            is_external: false,
+            verification_status: "verified",
+          },
+          confidence: 0.99,
+          suggested_correction: {
+            replacement_text: "Wordmark placement is approved. Maintain current margins.",
+            rationale: "Fully compliant with official brand kit.",
+            preserves_intent: true,
+          },
+          status: "open",
+          requires_human_review: false,
+        },
+        {
+          id: `find_${Date.now()}_3`,
+          category: "terminology",
+          severity: "low",
+          title: "Resolution & Format Optimization",
+          message:
+            "Asset successfully ingested via Media Extractor. Image dimensions and compression profile conform to digital web guidelines.",
+          evidence: "Lossless PNG header verified.",
+          source_reference: {
+            guideline_id: "guide_visual_brand",
+            section: "Section 6.1: Digital Asset Specifications",
+            rule_name: "Approved Export Formats",
+            is_external: false,
+            verification_status: "verified",
+          },
+          confidence: 0.98,
+          suggested_correction: {
+            replacement_text: "No action required.",
+            rationale: "File meets all upload limits and security sanitization rules.",
+            preserves_intent: true,
+          },
+          status: "open",
+          requires_human_review: false,
+        },
+      ],
+      created_at: new Date().toISOString(),
+      engine_metadata: {
+        engine_version: "0.1.0-alpha",
+        execution_time_ms: 285.4,
+        modules_executed: ["media_extractor", "color_palette_checker", "contrast_analyzer", "wordmark_safe_area"],
+        models_used: ["media_qa_v1", "contrast_calc_wcag21"],
+        warnings: [],
+      },
+    };
+  }
+
+  return {
+    ...MOCK_AUDIT_RESULT,
+    audit_id: auditId,
+    content_id: sub.id,
+    revision_id: sub.current_revision_id || "rev_001",
+    created_at: new Date().toISOString(),
+  };
+}
+
+function getStoredAudits(): Record<string, AuditResult> {
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("inkloom_mock_audits_v2");
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {}
+  }
+  return {
+    "7f8b3c10-9b4e-4f76-b6b8-6d8b688d6e90": MOCK_AUDIT_RESULT,
+    "sub_9281729a": MOCK_AUDIT_RESULT,
+  };
+}
+
+function saveStoredAudit(key: string, audit: AuditResult) {
+  const audits = getStoredAudits();
+  audits[key] = audit;
+  if (audit.content_id) {
+    audits[audit.content_id] = audit;
+  }
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("inkloom_mock_audits_v2", JSON.stringify(audits));
+    } catch (e) {}
+  }
+}
+
 export class MockApiService implements IApiService {
   async getSubmissions(): Promise<ContentSubmission[]> {
-    return [...mockSubmissions];
+    return getStoredSubmissions();
   }
 
   async getSubmission(id: string): Promise<ContentSubmission> {
-    const item = mockSubmissions.find((s) => s.id === id);
+    const subs = getStoredSubmissions();
+    const item = subs.find((s) => s.id === id);
     if (!item) throw new Error(`Submission with id ${id} not found.`);
     return item;
   }
 
   async createSubmission(data: CreateSubmissionInput): Promise<ContentSubmission> {
+    const subs = getStoredSubmissions();
+    const subId = `sub_${Math.random().toString(36).substring(2, 10)}`;
+    const revId = `rev_${Date.now()}`;
     const newSub: ContentSubmission = {
-      id: `sub_${Math.random().toString(36).substring(2, 10)}`,
-      organization_id: "org_default_inkloom",
-      creator_id: "user_local_dev",
+      id: subId,
+      organization_id: "org_acme_cloud",
+      creator_id: "user_designer_active",
       title: data.title,
       description: data.description,
       content_type: data.content_type,
-      status: "submitted",
-      current_revision_id: `rev_${Date.now()}`,
+      status: "pending_approval",
+      current_revision_id: revId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    mockSubmissions.unshift(newSub);
+    subs.unshift(newSub);
+    saveStoredSubmissions(subs);
+
+    // Automatically generate and persist AI Audit Result
+    const audit = generateAuditForSubmission(newSub);
+    saveStoredAudit(audit.audit_id, audit);
+    saveStoredAudit(subId, audit);
+
     return newSub;
   }
 
   async triggerAudit(submissionId: string, revisionId?: string): Promise<AuditResult> {
-    const sub = mockSubmissions.find((s) => s.id === submissionId);
+    const subs = getStoredSubmissions();
+    const sub = subs.find((s) => s.id === submissionId);
     if (sub) {
       sub.status = "pending_approval";
       sub.updated_at = new Date().toISOString();
+      saveStoredSubmissions(subs);
     }
-    return {
-      ...MOCK_AUDIT_RESULT,
-      audit_id: `aud_${Math.random().toString(36).substring(2, 10)}`,
-      content_id: submissionId,
-      revision_id: revisionId || "rev_001",
-      created_at: new Date().toISOString(),
-    };
+    const audits = getStoredAudits();
+    if (audits[submissionId]) {
+      return audits[submissionId];
+    }
+    const generated = generateAuditForSubmission(
+      sub || {
+        id: submissionId,
+        organization_id: "org_acme_cloud",
+        creator_id: "user_designer",
+        title: "Design Visual Asset",
+        content_type: "image",
+        status: "pending_approval",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    );
+    saveStoredAudit(generated.audit_id, generated);
+    saveStoredAudit(submissionId, generated);
+    return generated;
   }
 
   async getAudit(auditId: string): Promise<AuditResult> {
+    const audits = getStoredAudits();
+    if (audits[auditId]) {
+      return audits[auditId];
+    }
+    const subs = getStoredSubmissions();
+    const matchingSub = subs.find((s) => s.id === auditId);
+    if (matchingSub) {
+      const generated = generateAuditForSubmission(matchingSub);
+      saveStoredAudit(generated.audit_id, generated);
+      saveStoredAudit(matchingSub.id, generated);
+      return generated;
+    }
     return { ...MOCK_AUDIT_RESULT, audit_id: auditId };
   }
 
   async getPendingReviews(): Promise<ContentSubmission[]> {
-    return mockSubmissions.filter((s) =>
-      ["pending_approval", "changes_requested"].includes(s.status)
+    const subs = getStoredSubmissions();
+    return subs.filter((s) =>
+      ["pending_approval", "changes_requested", "submitted"].includes(s.status)
     );
   }
 
   async submitReviewDecision(data: ReviewDecisionInput): Promise<ReviewDecision> {
-    const sub = mockSubmissions.find((s) => s.id === data.submission_id);
+    const subs = getStoredSubmissions();
+    const sub = subs.find((s) => s.id === data.submission_id);
     if (sub) {
       if (data.action === "approve") sub.status = "approved";
       else if (data.action === "reject") sub.status = "rejected";
       else if (data.action === "request_changes") sub.status = "changes_requested";
       sub.updated_at = new Date().toISOString();
+      saveStoredSubmissions(subs);
     }
     return {
       id: `dec_${Date.now()}`,
