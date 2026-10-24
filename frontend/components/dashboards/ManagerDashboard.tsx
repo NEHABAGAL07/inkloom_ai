@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ContentSubmission, AnalyticsSummary, MemberInfo, AuditResult } from "@/types";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
@@ -22,7 +22,10 @@ import {
   Check,
   AlertCircle,
   FileCheck,
+  Eye,
 } from "lucide-react";
+import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
+import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
 
 interface ManagerDashboardProps {
   submissions: ContentSubmission[];
@@ -53,6 +56,29 @@ export function ManagerDashboard({
   const [isLoadingAudit, setIsLoadingAudit] = useState(false);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+
+  // Selected submission for live comments & manager suggestions
+  const [selectedPipelineSub, setSelectedPipelineSub] = useState<ContentSubmission | null>(null);
+
+  // Asset Viewer Modal state
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [viewingSub, setViewingSub] = useState<ContentSubmission | null>(null);
+
+  useEffect(() => {
+    if (!selectedPipelineSub && submissions.length > 0) {
+      setSelectedPipelineSub(submissions[0]);
+    }
+  }, [submissions.length]);
+
+  useEffect(() => {
+    const handleAssetUpdate = () => {
+      onRefresh();
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("inkloom_asset_updated", handleAssetUpdate);
+      return () => window.removeEventListener("inkloom_asset_updated", handleAssetUpdate);
+    }
+  }, [onRefresh]);
 
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -340,10 +366,16 @@ export function ManagerDashboard({
               filteredSubmissions.map((sub) => {
                 const badge = getStatusBadge(sub.status);
                 const BadgeIcon = badge.icon;
+                const isSelected = selectedPipelineSub?.id === sub.id;
                 return (
                   <div
                     key={sub.id}
-                    className="py-3.5 flex items-center justify-between hover:bg-workspace/60 px-3 rounded-lg transition-colors gap-3"
+                    onClick={() => setSelectedPipelineSub(sub)}
+                    className={`py-3.5 flex items-center justify-between px-3 rounded-lg transition-colors gap-3 cursor-pointer ${
+                      isSelected
+                        ? "bg-teal/5 border border-teal/40 dark:bg-teal-950/20 shadow-sm"
+                        : "hover:bg-workspace/60 border border-transparent"
+                    }`}
                   >
                     <div className="space-y-1 max-w-[55%] min-w-0">
                       <div className="text-xs font-bold text-navy flex items-center gap-2 truncate">
@@ -366,7 +398,23 @@ export function ManagerDashboard({
                       </span>
 
                       <button
-                        onClick={() => handleInspectAudit(sub)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewingSub(sub);
+                          setIsViewerOpen(true);
+                        }}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal hover:bg-teal-hover text-white transition flex items-center gap-1 shadow-sm"
+                        title="Open and view design asset or document"
+                      >
+                        <Eye className="w-3 h-3" />
+                        <span>Open</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleInspectAudit(sub);
+                        }}
                         className="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition flex items-center gap-1"
                         title="Inspect AI rule checks and audit summary"
                       >
@@ -376,6 +424,7 @@ export function ManagerDashboard({
 
                       <a
                         href={`/audits?id=${sub.id}`}
+                        onClick={(e) => e.stopPropagation()}
                         className="text-xs font-medium px-2 py-1 rounded-md bg-workspace hover:bg-border text-ink-secondary border border-border transition"
                       >
                         Details
@@ -436,6 +485,20 @@ export function ManagerDashboard({
           </div>
         </div>
       </div>
+
+      {/* Suggestion / Improvement Box under Designer's Content for Manager */}
+      {selectedPipelineSub && (
+        <DesignerFeedbackComments
+          submissionId={selectedPipelineSub.id}
+          submissionTitle={selectedPipelineSub.title}
+          contentType={selectedPipelineSub.content_type}
+          description={selectedPipelineSub.description}
+          rawText={selectedPipelineSub.raw_text}
+          fileName={selectedPipelineSub.file_name}
+          mediaUrl={selectedPipelineSub.media_url}
+          submission={selectedPipelineSub}
+        />
+      )}
 
       {/* Manager Audit Summary Modal */}
       {isAuditModalOpen && selectedSubForAudit && (
@@ -538,13 +601,25 @@ export function ManagerDashboard({
 
                 {/* Actions */}
                 <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <a
-                    href={`/audits?id=${inspectionAudit.content_id}`}
-                    className="text-xs text-teal hover:text-teal-hover font-semibold flex items-center gap-1"
-                  >
-                    <span>Open in Full Audit Workspace</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        setViewingSub(selectedSubForAudit);
+                        setIsViewerOpen(true);
+                      }}
+                      className="text-xs text-teal hover:text-teal-hover font-bold flex items-center gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Open Visual Asset Inspector ↗</span>
+                    </button>
+                    <a
+                      href={`/audits?id=${inspectionAudit.content_id}`}
+                      className="text-xs text-ink-secondary hover:text-navy font-semibold flex items-center gap-1"
+                    >
+                      <span>Full Audit</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
 
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     <button
@@ -641,6 +716,14 @@ export function ManagerDashboard({
           </div>
         </div>
       )}
+
+      {/* Design Asset Viewer Modal */}
+      <DesignAssetViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        submission={viewingSub}
+        canAuthorize={true}
+      />
     </div>
   );
 }

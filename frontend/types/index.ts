@@ -4,6 +4,7 @@ export interface ContentSubmission {
   id: string;
   organization_id: string;
   creator_id?: string;
+  creator_name?: string;
   title: string;
   description?: string;
   content_type: "text" | "document" | "image" | "video";
@@ -17,6 +18,11 @@ export interface ContentSubmission {
     | "approved"
     | "rejected";
   current_revision_id?: string;
+  raw_text?: string;
+  file_name?: string;
+  file_path?: string;
+  media_url?: string;
+  revisions?: ContentRevision[];
   created_at: string;
   updated_at: string;
 }
@@ -27,7 +33,9 @@ export interface ContentRevision {
   version_number: number;
   raw_text?: string;
   file_name?: string;
+  file_path?: string;
   file_size_bytes?: number;
+  media_metadata?: Record<string, any>;
   created_at: string;
 }
 

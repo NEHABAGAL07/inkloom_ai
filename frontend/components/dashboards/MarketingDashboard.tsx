@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ContentSubmission, AuditResult } from "@/types";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
@@ -15,6 +15,8 @@ import {
   Send,
   Eye,
 } from "lucide-react";
+import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
+import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
 
 interface MarketingDashboardProps {
   submissions: ContentSubmission[];
@@ -27,6 +29,29 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
   const [quickText, setQuickText] = useState("");
   const [isAuditing, setIsAuditing] = useState(false);
   const [liveAuditResult, setLiveAuditResult] = useState<AuditResult | null>(null);
+
+  // Selected submission for marketing suggestions & comments
+  const [selectedMarketingSub, setSelectedMarketingSub] = useState<ContentSubmission | null>(null);
+
+  // Asset Viewer Modal state
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [viewingSub, setViewingSub] = useState<ContentSubmission | null>(null);
+
+  useEffect(() => {
+    if (!selectedMarketingSub && submissions.length > 0) {
+      setSelectedMarketingSub(submissions[0]);
+    }
+  }, [submissions.length]);
+
+  useEffect(() => {
+    const handleAssetUpdate = () => {
+      onRefresh();
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("inkloom_asset_updated", handleAssetUpdate);
+      return () => window.removeEventListener("inkloom_asset_updated", handleAssetUpdate);
+    }
+  }, [onRefresh]);
 
   const handleQuickSubmitAndAudit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,39 +249,59 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
           <div className="divide-y divide-border">
             {submissions.length > 0 ? (
-              submissions.map((sub) => (
-                <div
-                  key={sub.id}
-                  className="py-3.5 flex items-center justify-between hover:bg-workspace px-3 rounded-xl transition-all gap-3"
-                >
-                  <div className="space-y-1 min-w-0">
-                    <div className="text-sm font-bold text-navy flex items-center gap-2">
-                      <span className="truncate">{sub.title}</span>
-                      <span className="text-[10px] text-ink-muted uppercase px-1.5 py-0.5 rounded bg-workspace border border-border shrink-0 font-medium">
-                        {sub.content_type}
-                      </span>
+              submissions.map((sub) => {
+                const isSelected = selectedMarketingSub?.id === sub.id;
+                return (
+                  <div
+                    key={sub.id}
+                    onClick={() => setSelectedMarketingSub(sub)}
+                    className={`py-3.5 flex items-center justify-between px-3 rounded-xl transition-all gap-3 cursor-pointer ${
+                      isSelected
+                        ? "bg-teal/5 border border-teal/40 dark:bg-teal-950/20 shadow-sm"
+                        : "hover:bg-workspace border border-transparent"
+                    }`}
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="text-sm font-bold text-navy flex items-center gap-2">
+                        <span className="truncate">{sub.title}</span>
+                        <span className="text-[10px] text-ink-muted uppercase px-1.5 py-0.5 rounded bg-workspace border border-border shrink-0 font-medium">
+                          {sub.content_type}
+                        </span>
+                      </div>
+                      <div className="text-xs text-ink-secondary truncate">{sub.description}</div>
                     </div>
-                    <div className="text-xs text-ink-secondary truncate">{sub.description}</div>
-                  </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span
-                      className={`text-[11px] px-2.5 py-1 rounded-full font-bold border capitalize ${getStatusBadge(
-                        sub.status
-                      )}`}
-                    >
-                      {sub.status.replace("_", " ")}
-                    </span>
-                    <a
-                      href={`/audits?id=${sub.id}`}
-                      className="text-xs px-2.5 py-1 bg-workspace hover:bg-slate-200 text-ink-primary rounded-lg border border-border transition flex items-center gap-1"
-                    >
-                      <Eye className="w-3 h-3" />
-                      <span>Audit</span>
-                    </a>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`text-[11px] px-2.5 py-1 rounded-full font-bold border capitalize ${getStatusBadge(
+                          sub.status
+                        )}`}
+                      >
+                        {sub.status.replace("_", " ")}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewingSub(sub);
+                          setIsViewerOpen(true);
+                        }}
+                        className="text-xs px-2.5 py-1 bg-teal hover:bg-teal-hover text-white rounded-lg font-semibold transition flex items-center gap-1 shadow-subtle"
+                        title="Open and view design asset or document"
+                      >
+                        <Eye className="w-3 h-3" />
+                        <span>Open</span>
+                      </button>
+                      <a
+                        href={`/audits?id=${sub.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs px-2.5 py-1 bg-workspace hover:bg-slate-200 text-ink-primary rounded-lg border border-border transition flex items-center gap-1"
+                      >
+                        <span>Audit</span>
+                      </a>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="py-16 text-center text-ink-muted text-xs">
                 No active campaign submissions found. Submit copy above to begin governance checks.
@@ -265,6 +310,28 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
           </div>
         </div>
       </div>
+
+      {/* Suggestion / Improvement Box under Designer's Content for Marketing Department */}
+      {selectedMarketingSub && (
+        <DesignerFeedbackComments
+          submissionId={selectedMarketingSub.id}
+          submissionTitle={selectedMarketingSub.title}
+          contentType={selectedMarketingSub.content_type}
+          description={selectedMarketingSub.description}
+          rawText={selectedMarketingSub.raw_text}
+          fileName={selectedMarketingSub.file_name}
+          mediaUrl={selectedMarketingSub.media_url}
+          submission={selectedMarketingSub}
+        />
+      )}
+
+      {/* Design Asset Viewer Modal */}
+      <DesignAssetViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        submission={viewingSub}
+        canAuthorize={false}
+      />
     </div>
   );
 }

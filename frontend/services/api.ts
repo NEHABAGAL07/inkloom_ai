@@ -165,6 +165,20 @@ export class ApiService implements IApiService {
     }
   }
 
+  async createRevision(submissionId: string, data: { raw_text?: string; file_name?: string; file_path?: string; file_size_bytes?: number }): Promise<any> {
+    if (USE_MOCK) return mockApi.createRevision(submissionId, data);
+    try {
+      const res = await this.fetchJson<any>(`/submissions/${submissionId}/revisions`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      this.triggerAudit(submissionId).catch((err) => console.warn("Auto-audit after revision warning:", err));
+      return res;
+    } catch {
+      return mockApi.createRevision(submissionId, data);
+    }
+  }
+
   // --- Audits ---
   async triggerAudit(submissionId: string, revisionId?: string): Promise<AuditResult> {
     if (USE_MOCK) return mockApi.triggerAudit(submissionId, revisionId);

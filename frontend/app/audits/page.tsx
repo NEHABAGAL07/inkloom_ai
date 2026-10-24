@@ -8,7 +8,8 @@ import { AuditSummaryCard } from "@/components/audits/AuditSummaryCard";
 import { FindingsFilter } from "@/components/audits/FindingsFilter";
 import { FindingCard } from "@/components/audits/FindingCard";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
-import { ShieldCheck, ArrowRight, FileText } from "lucide-react";
+import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
+import { ShieldCheck, ArrowRight, FileText, Eye } from "lucide-react";
 
 function AuditsContent() {
   const searchParams = useSearchParams();
@@ -20,6 +21,7 @@ function AuditsContent() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSeverity, setSelectedSeverity] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -171,6 +173,16 @@ function AuditsContent() {
             </div>
           )}
 
+          {activeSub && (
+            <button
+              onClick={() => setIsViewerOpen(true)}
+              className="bg-teal/10 hover:bg-teal/20 text-teal border border-teal/30 font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-subtle"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Open &amp; View Asset ↗</span>
+            </button>
+          )}
+
           <a
             href="/reviews"
             className="bg-teal hover:bg-teal-hover text-white font-bold text-xs px-4 py-2 rounded-xl shadow-subtle transition whitespace-nowrap flex items-center gap-1.5"
@@ -216,8 +228,21 @@ function AuditsContent() {
           submissionId={selectedContentId}
           submissionTitle={activeSub?.title}
           contentType={activeSub?.content_type}
+          description={activeSub?.description}
+          rawText={activeSub?.raw_text}
+          fileName={activeSub?.file_name}
+          mediaUrl={activeSub?.media_url}
+          submission={activeSub}
         />
       )}
+
+      {/* Design Asset Viewer Modal */}
+      <DesignAssetViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        submission={activeSub || null}
+        canAuthorize={true}
+      />
     </div>
   );
 }

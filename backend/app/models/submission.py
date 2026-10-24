@@ -17,7 +17,54 @@ class ContentSubmission(TimestampedModel):
     current_revision_id = Column(String(36), nullable=True)
 
     organization = relationship("Organization", back_populates="submissions")
-    revisions = relationship("ContentRevision", back_populates="submission", cascade="all, delete-orphan", foreign_keys="ContentRevision.submission_id")
+    revisions = relationship("ContentRevision", back_populates="submission", cascade="all, delete-orphan", foreign_keys="ContentRevision.submission_id", order_by="desc(ContentRevision.version_number)")
     audits = relationship("AuditRun", back_populates="submission", cascade="all, delete-orphan")
     reviews = relationship("ReviewDecision", back_populates="submission", cascade="all, delete-orphan")
     comments = relationship("ContentComment", back_populates="submission", cascade="all, delete-orphan", order_by="ContentComment.created_at.desc()")
+
+    @property
+    def raw_text(self):
+        if self.revisions:
+            for r in self.revisions:
+                if self.current_revision_id and r.id == self.current_revision_id:
+                    return r.raw_text
+            return self.revisions[0].raw_text
+        return None
+
+    @property
+    def file_name(self):
+        if self.revisions:
+            for r in self.revisions:
+                if self.current_revision_id and r.id == self.current_revision_id and r.file_name:
+                    return r.file_name
+            for r in self.revisions:
+                if r.file_name:
+                    return r.file_name
+        if self.title and any(self.title.lower().endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".webp", ".svg", ".pdf", ".mp4"]):
+            return self.title.replace("Design Asset: ", "")
+        return None
+
+    @property
+    def file_path(self):
+        if self.revisions:
+            for r in self.revisions:
+                if self.current_revision_id and r.id == self.current_revision_id:
+                    return r.file_path
+            return self.revisions[0].file_path
+        return None
+
+    @property
+    def media_url(self):
+        if self.revisions:
+            for r in self.revisions:
+                if self.current_revision_id and r.id == self.current_revision_id:
+                    if r.file_path and (r.file_path.startswith("data:") or r.file_path.startswith("http") or r.file_path.startswith("/")):
+                        return r.file_path
+                    if r.raw_text and (r.raw_text.startswith("data:") or r.raw_text.startswith("http") or r.raw_text.startswith("/")):
+                        return r.raw_text
+            for r in self.revisions:
+                if r.file_path and (r.file_path.startswith("data:") or r.file_path.startswith("http") or r.file_path.startswith("/")):
+                    return r.file_path
+                if r.raw_text and (r.raw_text.startswith("data:") or r.raw_text.startswith("http") or r.raw_text.startswith("/")):
+                    return r.raw_text
+        return None

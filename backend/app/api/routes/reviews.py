@@ -23,6 +23,7 @@ def list_pending_reviews(
         .filter(
             ContentSubmission.organization_id == auth.organization_id,
             ContentSubmission.status.in_([
+                WorkflowState.SUBMITTED.value,
                 WorkflowState.PENDING_APPROVAL.value,
                 WorkflowState.CHANGES_REQUESTED.value,
             ]),

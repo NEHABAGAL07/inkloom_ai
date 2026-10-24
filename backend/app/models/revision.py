@@ -9,7 +9,7 @@ class ContentRevision(TimestampedModel):
     submission_id = Column(String(36), ForeignKey("content_submissions.id", ondelete="CASCADE"), nullable=False, index=True)
     version_number = Column(Integer, default=1, nullable=False)
     raw_text = Column(Text, nullable=True)
-    file_path = Column(String(512), nullable=True)
+    file_path = Column(Text, nullable=True)
     file_name = Column(String(255), nullable=True)
     file_size_bytes = Column(Integer, nullable=True)
     media_metadata = Column(JSON, nullable=True, default=dict)

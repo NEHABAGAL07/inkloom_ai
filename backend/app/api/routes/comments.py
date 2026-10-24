@@ -74,8 +74,9 @@ def add_comment(
     auth: AuthContext = Depends(get_current_auth_context),
 ):
     """
-    Add a targeted change request or comment on a designer's uploaded asset or copy.
-    Accessible to Manager, Legal, Marketing, and Designers.
+    Add a targeted change request or improvement comment on a designer's uploaded asset or copy.
+    Accessible strictly to Manager, Legal Department, and Marketing Department.
+    Designers have access to view all comments and mark them as done (✓).
     """
     sub = (
         db.query(ContentSubmission)
@@ -87,6 +88,14 @@ def add_comment(
     )
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found.")
+
+    # Only Manager, Legal Department, and Marketing Department can add suggestions / improvement comments
+    allowed_roles = {UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER, UserRole.MARKETING}
+    if not any(role in allowed_roles for role in auth.roles):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only Manager, Legal Department, and Marketing Department have access to submit suggestions and improvements for designer uploads.",
+        )
 
     role_str = auth.roles[0].value if auth.roles else "viewer"
     author_name = auth.full_name or auth.email or "Team Reviewer"

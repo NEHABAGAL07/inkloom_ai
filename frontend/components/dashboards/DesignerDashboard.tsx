@@ -18,6 +18,7 @@ import {
   Check,
 } from "lucide-react";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
+import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
 
 interface DesignerDashboardProps {
   submissions: ContentSubmission[];
@@ -30,11 +31,16 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditFeedback, setAuditFeedback] = useState<string | null>(null);
+  const [updatingSubId, setUpdatingSubId] = useState<string | null>(null);
 
   // Active AI Audit state for inspection
   const [activeAudit, setActiveAudit] = useState<AuditResult | null>(null);
   const [activeAuditSub, setActiveAuditSub] = useState<ContentSubmission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Asset Viewer Modal state
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [viewingSub, setViewingSub] = useState<ContentSubmission | null>(null);
 
   useEffect(() => {
     async function loadAssets() {
@@ -51,6 +57,17 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
   const designerSubmissions = submissions.filter(
     (s) => s.content_type === "image" || s.content_type === "video" || s.content_type === "document"
   );
+
+  // Synchronize dynamic asset updates
+  useEffect(() => {
+    const handleAssetUpdate = (e: any) => {
+      onRefresh();
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("inkloom_asset_updated", handleAssetUpdate);
+      return () => window.removeEventListener("inkloom_asset_updated", handleAssetUpdate);
+    }
+  }, [onRefresh]);
 
   // Auto-load audit for the most recent visual submission if not yet loaded
   useEffect(() => {
@@ -75,13 +92,42 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
     setIsAuditing(true);
     setAuditFeedback(null);
     try {
+      let fileDataUrl: string | undefined = undefined;
+      const isImg =
+        selectedFile.type.startsWith("image/") ||
+        /\.(png|jpe?g|webp|svg|gif|bmp|avif)$/i.test(selectedFile.name);
+      const isVid =
+        selectedFile.type.startsWith("video/") ||
+        /\.(mp4|webm|mov|mkv)$/i.test(selectedFile.name);
+
+      if (isImg) {
+        fileDataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => resolve("");
+          reader.readAsDataURL(selectedFile);
+        });
+      }
+
       // 1. Create visual media submission
       const newSub = await api.createSubmission({
         title: `Design Asset: ${selectedFile.name}`,
-        description: `Visual brand asset submission (${selectedFile.type})`,
-        content_type: selectedFile.type.startsWith("video") ? "video" : "image",
-        initial_text: `Visual asset ${selectedFile.name} submitted for brand palette & typography compliance check.`,
+        description: `Visual brand asset submission (${selectedFile.type || "image/png"})`,
+        content_type: isVid ? "video" : "image",
+        initial_text: fileDataUrl || `Visual asset ${selectedFile.name} submitted for brand palette & typography compliance check.`,
+        file_name: selectedFile.name,
+        media_url: fileDataUrl,
+        file_path: fileDataUrl,
       });
+
+      if (fileDataUrl && typeof window !== "undefined") {
+        localStorage.setItem(`inkloom_media_${newSub.id}`, fileDataUrl);
+        localStorage.setItem(`inkloom_media_${selectedFile.name}`, fileDataUrl);
+      }
+      if (fileDataUrl) {
+        newSub.media_url = fileDataUrl;
+        newSub.file_path = fileDataUrl;
+      }
 
       // 2. Trigger AI media audit immediately
       const auditRes = await api.triggerAudit(newSub.id);
@@ -95,6 +141,53 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
       alert(err.message || "Upload failed");
     } finally {
       setIsAuditing(false);
+    }
+  };
+
+  const handleUpdateImageFromDashboard = async (sub: ContentSubmission, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUpdatingSubId(sub.id);
+    try {
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => resolve("");
+        reader.readAsDataURL(file);
+      });
+
+      if (dataUrl) {
+        sub.media_url = dataUrl;
+        sub.file_path = dataUrl;
+        sub.file_name = file.name;
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`inkloom_media_${sub.id}`, dataUrl);
+          localStorage.setItem(`inkloom_media_${file.name}`, dataUrl);
+        }
+
+        await api.createRevision(sub.id, {
+          raw_text: dataUrl,
+          file_name: file.name,
+          file_path: dataUrl,
+          file_size_bytes: file.size,
+        });
+
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("inkloom_asset_updated", {
+              detail: { submissionId: sub.id, mediaUrl: dataUrl, fileName: file.name },
+            })
+          );
+        }
+
+        setAuditFeedback(`✓ Updated image '${file.name}' saved and published for review!`);
+        onRefresh();
+      }
+    } catch (err: any) {
+      alert(err?.message || "Failed to update image");
+    } finally {
+      setUpdatingSubId(null);
     }
   };
 
@@ -266,6 +359,18 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
                 ✓ Ready for Review
               </div>
               <button
+                onClick={() => {
+                  if (activeAuditSub) {
+                    setViewingSub(activeAuditSub);
+                    setIsViewerOpen(true);
+                  }
+                }}
+                className="w-full py-2 px-3 bg-workspace hover:bg-slate-200 text-ink-primary font-bold rounded-xl text-xs transition border border-border flex items-center justify-center gap-1.5"
+              >
+                <Eye className="w-3.5 h-3.5 text-teal" />
+                <span>Open & View Asset ↗</span>
+              </button>
+              <button
                 onClick={() => setIsModalOpen(true)}
                 className="w-full py-2 px-3 bg-teal hover:bg-teal-hover text-white font-bold rounded-xl text-xs transition shadow-subtle"
               >
@@ -364,10 +469,34 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
                       {sub.status.replace("_", " ")}
                     </span>
                     <button
+                      onClick={() => {
+                        setViewingSub(sub);
+                        setIsViewerOpen(true);
+                      }}
+                      className="text-xs px-2.5 py-1 bg-teal hover:bg-teal-hover text-white rounded-lg font-semibold transition flex items-center gap-1 shadow-subtle"
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>Open</span>
+                    </button>
+                    <label
+                      htmlFor={`dash-update-input-${sub.id}`}
+                      className="cursor-pointer text-xs px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 rounded-lg font-semibold transition flex items-center gap-1 shadow-sm"
+                      title="Upload an updated graphic or new visual revision"
+                    >
+                      <UploadCloud className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                      <span>{updatingSubId === sub.id ? "Updating..." : "Update Image"}</span>
+                    </label>
+                    <input
+                      id={`dash-update-input-${sub.id}`}
+                      type="file"
+                      accept="image/*,.png,.jpg,.jpeg,.webp,.svg"
+                      className="hidden"
+                      onChange={(e) => handleUpdateImageFromDashboard(sub, e)}
+                    />
+                    <button
                       onClick={() => handleInspectAudit(sub)}
                       className="text-xs px-2.5 py-1 bg-teal/10 hover:bg-teal/20 text-teal rounded-lg border border-teal/30 font-semibold transition flex items-center gap-1"
                     >
-                      <Eye className="w-3 h-3" />
                       <span>Summary</span>
                     </button>
                     <a
@@ -394,8 +523,21 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
           submissionId={activeAuditSub?.id || designerSubmissions[0].id}
           submissionTitle={activeAuditSub?.title || designerSubmissions[0].title}
           contentType={activeAuditSub?.content_type || designerSubmissions[0].content_type}
+          description={activeAuditSub?.description || designerSubmissions[0].description}
+          rawText={activeAuditSub?.raw_text || designerSubmissions[0].raw_text}
+          fileName={activeAuditSub?.file_name || designerSubmissions[0].file_name}
+          mediaUrl={activeAuditSub?.media_url || designerSubmissions[0].media_url}
+          submission={activeAuditSub || designerSubmissions[0]}
         />
       )}
+
+      {/* Full-Stage Design Asset Viewer Modal */}
+      <DesignAssetViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        submission={viewingSub}
+        canAuthorize={false}
+      />
 
       {/* AI Audit Findings Modal */}
       {isModalOpen && activeAudit && (

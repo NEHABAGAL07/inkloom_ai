@@ -33,6 +33,9 @@ export interface CreateSubmissionInput {
   description?: string;
   content_type: "text" | "document" | "image" | "video";
   initial_text?: string;
+  file_name?: string;
+  media_url?: string;
+  file_path?: string;
 }
 
 export interface ReviewDecisionInput {
@@ -46,6 +49,7 @@ export interface IApiService {
   getSubmissions(): Promise<ContentSubmission[]>;
   getSubmission(id: string): Promise<ContentSubmission>;
   createSubmission(data: CreateSubmissionInput): Promise<ContentSubmission>;
+  createRevision(submissionId: string, data: { raw_text?: string; file_name?: string; file_path?: string; file_size_bytes?: number }): Promise<any>;
   triggerAudit(submissionId: string, revisionId?: string): Promise<AuditResult>;
   getAudit(auditId: string): Promise<AuditResult>;
   getPendingReviews(): Promise<ContentSubmission[]>;
@@ -262,13 +266,31 @@ const MOCK_AUDIT_RESULT: AuditResult = {
 
 let mockSubmissions: ContentSubmission[] = [
   {
+    id: "sub_designer_banner",
+    organization_id: "org_default_inkloom",
+    creator_id: "user_designer_active",
+    creator_name: "Leo Vance (Senior Designer)",
+    title: "Q4 Campaign Hero Banner - Cyber Slate",
+    description: "Visual brand asset submission for Q4 enterprise campaign. Features dark moody aesthetic, compliant 5.2:1 contrast wordmark, and approved 2026 executive palette.",
+    content_type: "image",
+    status: "pending_approval",
+    file_name: "Q4_Hero_Campaign_Banner.png",
+    raw_text: "Visual asset Q4_Hero_Campaign_Banner.png submitted for brand palette & typography compliance check. Colors: #14263D, #0F766E. Wordmark safe-margin: 28px.",
+    current_revision_id: "rev_001",
+    created_at: "2026-10-23T10:15:00Z",
+    updated_at: "2026-10-23T11:00:00Z",
+  },
+  {
     id: "sub_9281729a",
     organization_id: "org_default_inkloom",
     creator_id: "user_sarah_marketing",
+    creator_name: "Sarah Jenkins (Marketing)",
     title: "Q4 Enterprise Product Launch Announcement",
     description: "Global announcement campaign for launch of new enterprise governance suite.",
     content_type: "text",
     status: "pending_approval",
+    file_name: "Launch_Announcement.txt",
+    raw_text: "Get started with the powerful CloudSpeed Suite today.\nOur newest release lets organizations experience a guaranteed 10x reduction in latency across all regions.\nHurry up before your competitors crush you and steal your market share.",
     current_revision_id: "rev_001",
     created_at: "2026-10-22T16:30:00Z",
     updated_at: "2026-10-22T17:00:00Z",
@@ -277,10 +299,13 @@ let mockSubmissions: ContentSubmission[] = [
     id: "sub_4102941b",
     organization_id: "org_default_inkloom",
     creator_id: "user_david_design",
+    creator_name: "David Vance (Senior Designer)",
     title: "Annual Sustainability Brand Report PDF",
-    description: "Annual ESG and governance disclosures brochure.",
+    description: "Annual ESG and governance disclosures brochure with verified typography standards.",
     content_type: "document",
     status: "approved",
+    file_name: "Annual_Sustainability_Report_2026.pdf",
+    raw_text: "Acme Cloud Systems datacenters run with 100% certified renewable energy matching ISO 14001 specifications.",
     current_revision_id: "rev_002",
     created_at: "2026-10-21T11:20:00Z",
     updated_at: "2026-10-21T14:45:00Z",
@@ -289,10 +314,13 @@ let mockSubmissions: ContentSubmission[] = [
     id: "sub_5581923c",
     organization_id: "org_default_inkloom",
     creator_id: "user_elena_social",
+    creator_name: "Elena Rostova (Social Lead)",
     title: "LinkedIn Brand Campaign Video Transcript",
     description: "Short promotional reel script introducing new AI safety pillars.",
     content_type: "video",
     status: "changes_requested",
+    file_name: "Brand_Safety_Reel_Script.mp4",
+    raw_text: "Empowering organizations with verified brand compliance safeguards and human-in-the-loop audit controls.",
     current_revision_id: "rev_001",
     created_at: "2026-10-22T09:15:00Z",
     updated_at: "2026-10-22T10:00:00Z",
@@ -1112,11 +1140,16 @@ export class MockApiService implements IApiService {
       id: subId,
       organization_id: "org_acme_cloud",
       creator_id: "user_designer_active",
+      creator_name: "Leo Vance (Designer)",
       title: data.title,
       description: data.description,
       content_type: data.content_type,
       status: "pending_approval",
       current_revision_id: revId,
+      raw_text: data.initial_text || data.media_url,
+      file_name: data.file_name || (data.content_type === "image" ? `${data.title.replace(/\s+/g, "_")}.png` : undefined),
+      file_path: data.file_path || data.media_url,
+      media_url: data.media_url,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -1129,6 +1162,32 @@ export class MockApiService implements IApiService {
     saveStoredAudit(subId, audit);
 
     return newSub;
+  }
+
+  async createRevision(submissionId: string, data: { raw_text?: string; file_name?: string; file_path?: string; file_size_bytes?: number }): Promise<any> {
+    const subs = getStoredSubmissions();
+    const idx = subs.findIndex((s) => s.id === submissionId);
+    const revId = `rev_${Date.now()}`;
+    if (idx !== -1) {
+      if (data.file_path) {
+        subs[idx].file_path = data.file_path;
+        subs[idx].media_url = data.file_path;
+      }
+      if (data.file_name) subs[idx].file_name = data.file_name;
+      if (data.raw_text) subs[idx].raw_text = data.raw_text;
+      subs[idx].current_revision_id = revId;
+      subs[idx].updated_at = new Date().toISOString();
+      saveStoredSubmissions(subs);
+    }
+    return {
+      id: revId,
+      submission_id: submissionId,
+      version_number: 2,
+      raw_text: data.raw_text,
+      file_name: data.file_name,
+      file_path: data.file_path,
+      created_at: new Date().toISOString(),
+    };
   }
 
   async triggerAudit(submissionId: string, revisionId?: string): Promise<AuditResult> {

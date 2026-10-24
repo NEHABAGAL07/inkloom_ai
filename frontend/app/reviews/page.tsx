@@ -6,12 +6,15 @@ import { ContentSubmission } from "@/types";
 import { ReviewActionModal } from "@/components/reviews/ReviewActionModal";
 import { AuditTrailTimeline } from "@/components/reviews/AuditTrailTimeline";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
-import { Scale, FileText, CheckCircle, ArrowRight } from "lucide-react";
+import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
+import { Scale, FileText, CheckCircle, ArrowRight, Eye } from "lucide-react";
 
 export default function ReviewsPage() {
   const [pendingSubmissions, setPendingSubmissions] = useState<ContentSubmission[]>([]);
   const [selectedSub, setSelectedSub] = useState<ContentSubmission | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [viewingSub, setViewingSub] = useState<ContentSubmission | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -133,14 +136,27 @@ export default function ReviewsPage() {
                   </span>
                 </div>
 
-                <div className="pt-3 border-t border-border flex items-center justify-between">
-                  <a
-                    href={`/audits?id=${sub.id}`}
-                    className="text-xs text-teal hover:underline font-semibold flex items-center gap-1"
-                  >
-                    <span>Inspect AI Findings</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </a>
+                <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        setViewingSub(sub);
+                        setIsViewerOpen(true);
+                      }}
+                      className="text-xs px-3 py-1.5 bg-teal/10 hover:bg-teal/20 text-teal font-bold rounded-xl border border-teal/20 transition flex items-center gap-1.5"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Open &amp; View Asset</span>
+                    </button>
+
+                    <a
+                      href={`/audits?id=${sub.id}`}
+                      className="text-xs text-ink-secondary hover:text-navy font-semibold flex items-center gap-1"
+                    >
+                      <span>Inspect AI Findings</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </a>
+                  </div>
 
                   <button
                     onClick={() => handleOpenReview(sub)}
@@ -166,6 +182,11 @@ export default function ReviewsPage() {
           submissionId={selectedSub?.id || pendingSubmissions[0].id}
           submissionTitle={selectedSub?.title || pendingSubmissions[0].title}
           contentType={selectedSub?.content_type || pendingSubmissions[0].content_type}
+          description={selectedSub?.description || pendingSubmissions[0].description}
+          rawText={selectedSub?.raw_text || pendingSubmissions[0].raw_text}
+          fileName={selectedSub?.file_name || pendingSubmissions[0].file_name}
+          mediaUrl={selectedSub?.media_url || pendingSubmissions[0].media_url}
+          submission={selectedSub || pendingSubmissions[0]}
         />
       )}
 
@@ -179,6 +200,14 @@ export default function ReviewsPage() {
           onSubmitDecision={handleDecisionSubmit}
         />
       )}
+
+      {/* Design Asset Viewer Modal */}
+      <DesignAssetViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        submission={viewingSub}
+        canAuthorize={true}
+      />
     </div>
   );
 }

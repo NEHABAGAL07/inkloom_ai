@@ -48,12 +48,16 @@ def create_submission(
     db.add(submission)
     db.flush()
 
-    if payload.initial_text:
+    text_content = payload.initial_text or payload.media_url or ""
+    if text_content or payload.file_name or payload.media_url or payload.file_path:
         revision = ContentRevision(
             submission_id=submission.id,
             version_number=1,
-            raw_text=payload.initial_text,
-            file_size_bytes=len(payload.initial_text.encode("utf-8")),
+            raw_text=text_content or None,
+            file_name=payload.file_name or (payload.title if payload.content_type in ["image", "video"] else None),
+            file_path=payload.media_url or payload.file_path or None,
+            file_size_bytes=len(text_content.encode("utf-8")) if text_content else 0,
+            media_metadata=payload.media_metadata or {},
         )
         db.add(revision)
         db.flush()
@@ -119,12 +123,14 @@ def create_revision(
     )
     next_ver = (max_ver[0] + 1) if max_ver else 1
 
+    file_path_val = payload.file_path or (payload.raw_text if payload.raw_text and (payload.raw_text.startswith("data:") or payload.raw_text.startswith("http")) else None)
     revision = ContentRevision(
         submission_id=submission.id,
         version_number=next_ver,
         raw_text=payload.raw_text,
         file_name=payload.file_name,
-        file_size_bytes=payload.file_size_bytes,
+        file_path=file_path_val,
+        file_size_bytes=payload.file_size_bytes or (len(payload.raw_text.encode("utf-8")) if payload.raw_text else 0),
         media_metadata=payload.media_metadata or {},
     )
     db.add(revision)

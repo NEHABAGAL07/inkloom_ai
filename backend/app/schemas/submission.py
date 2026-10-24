@@ -7,6 +7,7 @@ class ContentRevisionBase(BaseModel):
     version_number: int = 1
     raw_text: Optional[str] = None
     file_name: Optional[str] = None
+    file_path: Optional[str] = None
     file_size_bytes: Optional[int] = None
     media_metadata: Optional[Dict[str, Any]] = None
 
@@ -32,6 +33,10 @@ class ContentSubmissionBase(BaseModel):
 
 class ContentSubmissionCreate(ContentSubmissionBase):
     initial_text: Optional[str] = None
+    file_name: Optional[str] = None
+    file_path: Optional[str] = None
+    media_url: Optional[str] = None
+    media_metadata: Optional[Dict[str, Any]] = None
 
 
 class ContentSubmissionResponse(ContentSubmissionBase):
@@ -40,6 +45,10 @@ class ContentSubmissionResponse(ContentSubmissionBase):
     creator_id: Optional[str] = None
     status: str
     current_revision_id: Optional[str] = None
+    raw_text: Optional[str] = None
+    file_name: Optional[str] = None
+    file_path: Optional[str] = None
+    media_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     revisions: Optional[List[ContentRevisionResponse]] = None

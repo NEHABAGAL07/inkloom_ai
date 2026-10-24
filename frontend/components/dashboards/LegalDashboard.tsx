@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ContentSubmission, AuditResult } from "@/types";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
@@ -16,7 +16,10 @@ import {
   Check,
   X,
   MessageSquare,
+  Eye,
 } from "lucide-react";
+import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
+import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
 
 interface LegalDashboardProps {
   submissions: ContentSubmission[];
@@ -28,6 +31,7 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
   const [selectedSubmission, setSelectedSubmission] = useState<ContentSubmission | null>(null);
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [isLoadingAudit, setIsLoadingAudit] = useState(false);
+  const [isAssetViewerOpen, setIsAssetViewerOpen] = useState(false);
 
   // Decision Modal
   const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
@@ -36,10 +40,44 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
   const [isSubmittingDecision, setIsSubmittingDecision] = useState(false);
   const [decisionFeedback, setDecisionFeedback] = useState<string | null>(null);
 
+  // Queue Filter: pending, visual, all, approved
+  const [queueFilter, setQueueFilter] = useState<"pending" | "visual" | "all" | "approved">("pending");
+
   // Filter queue for submissions requiring human approval
-  const reviewQueue = submissions.filter(
-    (s) => s.status === "pending_approval" || s.status === "changes_requested"
-  );
+  const filteredQueue = submissions.filter((s) => {
+    if (queueFilter === "pending")
+      return s.status === "pending_approval" || s.status === "changes_requested" || s.status === "submitted";
+    if (queueFilter === "visual")
+      return s.content_type === "image" || s.content_type === "video";
+    if (queueFilter === "approved")
+      return s.status === "approved";
+    return true;
+  });
+
+  const pendingCount = submissions.filter(
+    (s) => s.status === "pending_approval" || s.status === "changes_requested" || s.status === "submitted"
+  ).length;
+  const visualCount = submissions.filter(
+    (s) => s.content_type === "image" || s.content_type === "video"
+  ).length;
+  const approvedCount = submissions.filter((s) => s.status === "approved").length;
+
+  // Auto-select first pending submission for review if none selected
+  useEffect(() => {
+    if (!selectedSubmission && filteredQueue.length > 0) {
+      handleInspectSubmission(filteredQueue[0]);
+    }
+  }, [filteredQueue.length]);
+
+  useEffect(() => {
+    const handleAssetUpdate = () => {
+      onRefresh();
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("inkloom_asset_updated", handleAssetUpdate);
+      return () => window.removeEventListener("inkloom_asset_updated", handleAssetUpdate);
+    }
+  }, [onRefresh]);
 
   const handleInspectSubmission = async (sub: ContentSubmission) => {
     setSelectedSubmission(sub);
@@ -97,7 +135,7 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
           <div className="bg-workspace border border-border rounded-xl px-4 py-3 text-center">
             <span className="block text-[11px] font-bold uppercase tracking-wider text-ink-muted">Awaiting Action</span>
-            <span className="text-2xl font-black text-navy">{reviewQueue.length}</span>
+            <span className="text-2xl font-black text-navy">{pendingCount}</span>
           </div>
         </div>
       </div>
@@ -124,16 +162,60 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
           <div className="flex items-center justify-between pb-3 border-b border-border">
             <h2 className="text-sm font-bold text-navy flex items-center gap-2">
               <FileText className="w-4 h-4 text-teal" />
-              <span>Awaiting Sign-Off ({reviewQueue.length})</span>
+              <span>Review Queue ({filteredQueue.length})</span>
             </h2>
             <span className="text-[11px] font-bold text-status-warning bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
               Separation of Duties
             </span>
           </div>
 
+          {/* Queue Filter Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5 pb-2">
+            <button
+              onClick={() => setQueueFilter("pending")}
+              className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
+                queueFilter === "pending"
+                  ? "bg-navy text-white shadow-sm"
+                  : "bg-workspace hover:bg-slate-200 text-ink-secondary border border-border"
+              }`}
+            >
+              Awaiting ({pendingCount})
+            </button>
+            <button
+              onClick={() => setQueueFilter("visual")}
+              className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
+                queueFilter === "visual"
+                  ? "bg-navy text-white shadow-sm"
+                  : "bg-workspace hover:bg-slate-200 text-ink-secondary border border-border"
+              }`}
+            >
+              Visual Media ({visualCount})
+            </button>
+            <button
+              onClick={() => setQueueFilter("all")}
+              className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
+                queueFilter === "all"
+                  ? "bg-navy text-white shadow-sm"
+                  : "bg-workspace hover:bg-slate-200 text-ink-secondary border border-border"
+              }`}
+            >
+              All ({submissions.length})
+            </button>
+            <button
+              onClick={() => setQueueFilter("approved")}
+              className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
+                queueFilter === "approved"
+                  ? "bg-navy text-white shadow-sm"
+                  : "bg-workspace hover:bg-slate-200 text-ink-secondary border border-border"
+              }`}
+            >
+              Approved ({approvedCount})
+            </button>
+          </div>
+
           <div className="divide-y divide-border space-y-2">
-            {reviewQueue.length > 0 ? (
-              reviewQueue.map((sub) => {
+            {filteredQueue.length > 0 ? (
+              filteredQueue.map((sub) => {
                 const isSelected = selectedSubmission?.id === sub.id;
                 return (
                   <div
@@ -195,6 +277,14 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setIsAssetViewerOpen(true)}
+                    className="px-3.5 py-2 bg-teal/10 hover:bg-teal/20 text-teal border border-teal/30 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                    title="Open visual design canvas, inspect WCAG contrast, and view high-resolution media"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Open Design Asset ↗</span>
+                  </button>
                   <button
                     onClick={() => {
                       setDecisionAction("approve");
@@ -283,6 +373,17 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                     No critical violations detected by automated rule checks. Reviewer judgment required for release.
                   </div>
                 )}
+                {/* Department Suggestions & Improvement Box under Designer's Content */}
+                <DesignerFeedbackComments
+                  submissionId={selectedSubmission.id}
+                  submissionTitle={selectedSubmission.title}
+                  contentType={selectedSubmission.content_type}
+                  description={selectedSubmission.description}
+                  rawText={selectedSubmission.raw_text}
+                  fileName={selectedSubmission.file_name}
+                  mediaUrl={selectedSubmission.media_url}
+                  submission={selectedSubmission}
+                />
               </div>
             </div>
           ) : (
@@ -395,6 +496,29 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
             </form>
           </div>
         </div>
+      )}
+
+      {/* Interactive Design Asset Viewer Modal for Legal Reviewer */}
+      {isAssetViewerOpen && selectedSubmission && (
+        <DesignAssetViewerModal
+          isOpen={isAssetViewerOpen}
+          onClose={() => setIsAssetViewerOpen(false)}
+          submission={selectedSubmission}
+          auditResult={auditResult}
+          canAuthorize={true}
+          onAuthorize={() => {
+            setDecisionAction("approve");
+            setIsDecisionModalOpen(true);
+          }}
+          onRequestChanges={() => {
+            setDecisionAction("request_changes");
+            setIsDecisionModalOpen(true);
+          }}
+          onOpenFeedback={() => {
+            const el = document.getElementById("department-suggestion-form");
+            if (el) el.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
       )}
     </div>
   );
