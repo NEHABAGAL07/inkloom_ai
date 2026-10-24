@@ -73,8 +73,6 @@ export default function SettingsPage() {
       name: aName.trim(),
       specifications: aType === "verified_claim" ? { certified_statement: aSpec } : { details: aSpec },
       is_active: true,
-      is_approved: true,
-      created_at: new Date().toISOString(),
     };
 
     setAssets((prev) => [newAsset, ...prev]);
