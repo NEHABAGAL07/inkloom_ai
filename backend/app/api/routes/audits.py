@@ -59,8 +59,28 @@ def get_audit(
     auth: AuthContext = Depends(get_current_auth_context),
 ):
     """Fetch an audit run with full findings adhering to the contract."""
-    audit_run = db.query(AuditRun).filter(AuditRun.id == audit_id).first()
+    audit_run = (
+        db.query(AuditRun)
+        .filter((AuditRun.id == audit_id) | (AuditRun.submission_id == audit_id))
+        .order_by(AuditRun.created_at.desc())
+        .first()
+    )
     if not audit_run:
+        # Check if audit_id is a submission_id that has not yet been audited
+        submission = (
+            db.query(ContentSubmission)
+            .filter(
+                ContentSubmission.id == audit_id,
+                ContentSubmission.organization_id == auth.organization_id,
+            )
+            .first()
+        )
+        if submission:
+            return AuditOrchestrator.execute_audit_for_submission(
+                db=db,
+                submission_id=submission.id,
+                actor_id=auth.user_id,
+            )
         raise HTTPException(status_code=404, detail="Audit run not found.")
 
     submission = db.query(ContentSubmission).filter(ContentSubmission.id == audit_run.submission_id).first()

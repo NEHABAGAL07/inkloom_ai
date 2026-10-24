@@ -35,7 +35,7 @@ def main():
     try:
         from jsonschema import validate
         validate(instance=example, schema=schema)
-        print("✓ jsonschema validation passed successfully!")
+        print("[PASS] jsonschema validation passed successfully!")
     except ImportError:
         print("Note: 'jsonschema' not installed in current environment; passed standard structural verification.")
     except Exception as e:

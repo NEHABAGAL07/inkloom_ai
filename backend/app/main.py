@@ -164,8 +164,11 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Mount health route at root and versioned routes under /api/v1
+# Mount health route and API routes under both /api and /api/v1
 app.include_router(health_router)
+app.include_router(health_router, prefix="/api")
+app.include_router(health_router, prefix=settings.API_V1_PREFIX)
+app.include_router(api_router, prefix="/api")
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
 

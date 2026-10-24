@@ -69,7 +69,7 @@ export function FindingsFilter({
           ))}
         </select>
         <span className="text-xs text-navy bg-workspace border border-border px-2.5 py-1 rounded-xl font-mono font-bold">
-          {totalFindings} issues
+          {totalFindings ?? 0} issues
         </span>
       </div>
     </div>

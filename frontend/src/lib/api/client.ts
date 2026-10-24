@@ -16,7 +16,8 @@ export function isMockModeEnabled(): boolean {
   if (typeof window === 'undefined') return false;
   const stored = localStorage.getItem(MOCK_STORAGE_KEY);
   if (stored !== null) return stored === 'true';
-  return import.meta.env.VITE_USE_MOCK_API === 'true';
+  const viteMock = typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_USE_MOCK_API;
+  return process.env.NEXT_PUBLIC_USE_MOCK === 'true' || viteMock === 'true';
 }
 
 export function setMockModeEnabled(enabled: boolean): void {
@@ -25,7 +26,10 @@ export function setMockModeEnabled(enabled: boolean): void {
   window.dispatchEvent(new CustomEvent('mock-mode-changed', { detail: { enabled } }));
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) ||
+  'http://localhost:8000/api';
 
 // In-memory mock store
 let mockContentItems: ContentItem[] = [

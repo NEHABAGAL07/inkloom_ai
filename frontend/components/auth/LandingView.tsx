@@ -43,6 +43,13 @@ export function LandingView() {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <Link
+              href="/demo"
+              className="text-xs font-semibold text-teal-light hover:text-white px-3 py-1.5 rounded-lg bg-teal/20 border border-teal/40 hover:bg-teal/30 transition inline-flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-teal-light" />
+              <span>Demo Sandbox</span>
+            </Link>
+            <Link
               href="/invite"
               className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/5 transition hidden sm:inline-flex items-center gap-1.5"
             >
@@ -86,11 +93,19 @@ export function LandingView() {
           {/* Hero CTAs */}
           <div className="pt-4 flex flex-wrap items-center justify-center gap-3.5">
             <Link
+              href="/demo"
+              className="px-6 py-3 bg-teal hover:bg-teal-hover text-white font-bold text-sm rounded-lg shadow-sm transition inline-flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-white" />
+              <span>⚡ Try Demo Personas (Instant Access)</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+
+            <Link
               href="/login"
-              className="px-6 py-3 bg-teal hover:bg-teal-hover text-white font-semibold text-sm rounded-lg shadow-sm transition inline-flex items-center gap-2"
+              className="px-6 py-3 bg-navy hover:bg-navy-dark text-white font-semibold text-sm rounded-lg shadow-sm transition inline-flex items-center gap-2"
             >
               <span>Sign In to Workspace</span>
-              <ArrowRight className="w-4 h-4" />
             </Link>
 
             <Link
