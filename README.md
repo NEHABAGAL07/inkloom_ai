@@ -167,10 +167,16 @@ npm run dev
 - Application is live at: [http://localhost:3000](http://localhost:3000)
 - By default, `NEXT_PUBLIC_USE_MOCK=true` allows the frontend to run fully offline with deterministic brand governance mock data. Set to `false` when connecting to the live FastAPI backend.
 
-### 5.3 Run with Docker Compose
+### 5.3 Run with Docker Compose (Production Multi-Container)
 ```bash
-docker-compose up --build
+# Using one-click deployment script
+./scripts/deploy-docker.sh     # Linux / macOS / Cloud VPS
+.\scripts\deploy-docker.ps1    # Windows PowerShell
+
+# Or directly:
+docker compose up --build -d
 ```
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for full deployment instructions (Docker, Google Cloud Run, AWS EC2, and VPS with Nginx SSL).
 
 ---
 

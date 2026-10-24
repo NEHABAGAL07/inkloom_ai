@@ -1,20 +1,21 @@
-# Multi-stage Dockerfile for Inkloom AI Backend Service
-FROM python:3.11-slim as backend
+FROM python:3.11-slim
 
-WORKDIR /workspace/backend
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
 
-# Install system dependencies for build and optional media extractors
+WORKDIR /app
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
-COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy backend source code and contracts
-COPY backend/ ./
+COPY backend/ /app/
 COPY contracts/ /workspace/contracts/
 
 EXPOSE 8000
