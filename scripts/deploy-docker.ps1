@@ -16,9 +16,18 @@ try {
     docker info > $null 2>&1
 } catch {
     Write-Warning "Docker daemon is not running. Attempting to start Docker Desktop..."
-    Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe" -ErrorAction SilentlyContinue
-    Write-Host "Waiting 15 seconds for Docker to initialize..."
-    Start-Sleep -Seconds 15
+    $dockerPaths = @(
+        "$env:LOCALAPPDATA\Programs\DockerDesktop\Docker Desktop.exe",
+        "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+    )
+    foreach ($p in $dockerPaths) {
+        if (Test-Path $p) {
+            Start-Process $p
+            break
+        }
+    }
+    Write-Host "Waiting 20 seconds for Docker to initialize..."
+    Start-Sleep -Seconds 20
 }
 
 Write-Host "Building and launching containers via docker-compose..." -ForegroundColor Yellow
