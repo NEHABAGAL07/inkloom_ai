@@ -3,14 +3,13 @@
 import React, { useState } from "react";
 import {
   X,
-  ShieldCheck,
+  Scale,
   CheckCircle,
   AlertTriangle,
   XCircle,
+  ShieldCheck,
   Clock,
   User,
-  FileText,
-  Scale,
 } from "lucide-react";
 import { BrandGuidelineProfile } from "@/types";
 import { api } from "@/services/api";
@@ -33,8 +32,8 @@ export function LegalReviewModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rationale.trim() || rationale.length < 5) {
-      setError("Please document a formal legal/compliance rationale of at least 5 characters.");
+    if (!rationale.trim()) {
+      setError("Please provide clear statutory justification or required revisions.");
       return;
     }
 
@@ -52,46 +51,46 @@ export function LegalReviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#0B0F19] border border-slate-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl relative text-slate-200 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl p-6 shadow-xl relative text-ink-primary max-h-[90vh] flex flex-col">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition"
+          className="absolute top-4 right-4 text-ink-muted hover:text-navy transition p-1"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">
+        <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-wider mb-1">
           <Scale className="w-4 h-4" />
           <span>Legal &amp; Compliance Authority</span>
         </div>
-        <h2 className="text-xl font-black text-white tracking-tight">
+        <h2 className="text-xl font-extrabold text-navy tracking-tight">
           Guideline Proposal Review &amp; Statutory Authorization
         </h2>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-ink-secondary mt-1 leading-relaxed">
           Review the submitted brand guidelines proposal against applicable statutory requirements, advertising standards, and internal risk policies.
         </p>
 
         {error && (
-          <div className="mt-4 p-3 rounded-xl bg-rose-950/50 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+          <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-status-error text-xs flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         <div className="mt-4 flex-1 overflow-y-auto space-y-4 pr-1">
           {/* Submission Info Banner */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+          <div className="p-4 rounded-xl bg-workspace border border-border space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-300">Submitted by:</span>
-              <span className="text-indigo-400 font-medium flex items-center gap-1">
-                <User className="w-3.5 h-3.5" />
+              <span className="font-semibold text-ink-secondary">Submitted by:</span>
+              <span className="text-navy font-bold flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-teal" />
                 {guideline.submitted_by || "Brand Manager"}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-300">Submitted at:</span>
-              <span className="text-slate-400 flex items-center gap-1">
+              <span className="font-semibold text-ink-secondary">Submitted at:</span>
+              <span className="text-ink-muted flex items-center gap-1 font-mono text-[11px]">
                 <Clock className="w-3.5 h-3.5" />
                 {guideline.submitted_at
                   ? new Date(guideline.submitted_at).toLocaleString()
@@ -99,18 +98,18 @@ export function LegalReviewModal({
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-300">Scope:</span>
-              <span className="text-slate-300 font-mono text-[11px]">
+              <span className="font-semibold text-ink-secondary">Scope:</span>
+              <span className="text-navy font-mono text-[11px] font-bold">
                 {guideline.jurisdiction} · {guideline.industry}
               </span>
             </div>
 
             {guideline.submission_notes && (
-              <div className="pt-2 border-t border-slate-800 text-xs">
-                <span className="font-bold text-[11px] uppercase tracking-wider text-slate-400 block mb-1">
+              <div className="pt-2 border-t border-border text-xs">
+                <span className="font-bold text-[11px] uppercase tracking-wider text-ink-muted block mb-1">
                   Manager Rationale
                 </span>
-                <p className="text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
+                <p className="text-navy leading-relaxed bg-surface p-2.5 rounded-lg border border-border">
                   {guideline.submission_notes}
                 </p>
               </div>
@@ -119,8 +118,8 @@ export function LegalReviewModal({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Legal Decision
+              <label className="block text-[11px] font-bold text-navy uppercase tracking-wider mb-2">
+                Legal Decision *
               </label>
               <div className="grid grid-cols-3 gap-3">
                 <button
@@ -128,13 +127,13 @@ export function LegalReviewModal({
                   onClick={() => setDecision("approved")}
                   className={`p-3 rounded-xl border text-left transition flex flex-col items-start gap-1.5 ${
                     decision === "approved"
-                      ? "bg-emerald-950/40 border-emerald-500 text-emerald-300 shadow-md shadow-emerald-900/20"
-                      : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
+                      ? "bg-emerald-50 border-status-success text-status-success shadow-subtle"
+                      : "bg-surface border-border text-ink-secondary hover:bg-workspace"
                   }`}
                 >
-                  <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <span className="font-bold text-xs text-white">Approve</span>
-                  <span className="text-[10px] leading-tight text-slate-400">
+                  <CheckCircle className="w-4 h-4 text-status-success" />
+                  <span className="font-bold text-xs text-navy">Approve</span>
+                  <span className="text-[10px] leading-tight text-ink-muted">
                     Authorize publication under compliance policy
                   </span>
                 </button>
@@ -144,13 +143,13 @@ export function LegalReviewModal({
                   onClick={() => setDecision("changes_requested")}
                   className={`p-3 rounded-xl border text-left transition flex flex-col items-start gap-1.5 ${
                     decision === "changes_requested"
-                      ? "bg-amber-950/40 border-amber-500 text-amber-300 shadow-md shadow-amber-900/20"
-                      : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
+                      ? "bg-amber-50 border-status-warning text-status-warning shadow-subtle"
+                      : "bg-surface border-border text-ink-secondary hover:bg-workspace"
                   }`}
                 >
-                  <AlertTriangle className="w-4 h-4 text-amber-400" />
-                  <span className="font-bold text-xs text-white">Request Changes</span>
-                  <span className="text-[10px] leading-tight text-slate-400">
+                  <AlertTriangle className="w-4 h-4 text-status-warning" />
+                  <span className="font-bold text-xs text-navy">Changes</span>
+                  <span className="text-[10px] leading-tight text-ink-muted">
                     Return to manager with required revisions
                   </span>
                 </button>
@@ -160,13 +159,13 @@ export function LegalReviewModal({
                   onClick={() => setDecision("rejected")}
                   className={`p-3 rounded-xl border text-left transition flex flex-col items-start gap-1.5 ${
                     decision === "rejected"
-                      ? "bg-rose-950/40 border-rose-500 text-rose-300 shadow-md shadow-rose-900/20"
-                      : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
+                      ? "bg-red-50 border-status-error text-status-error shadow-subtle"
+                      : "bg-surface border-border text-ink-secondary hover:bg-workspace"
                   }`}
                 >
-                  <XCircle className="w-4 h-4 text-rose-400" />
-                  <span className="font-bold text-xs text-white">Reject</span>
-                  <span className="text-[10px] leading-tight text-slate-400">
+                  <XCircle className="w-4 h-4 text-status-error" />
+                  <span className="font-bold text-xs text-navy">Reject</span>
+                  <span className="text-[10px] leading-tight text-ink-muted">
                     Decline proposal due to compliance risks
                   </span>
                 </button>
@@ -174,8 +173,8 @@ export function LegalReviewModal({
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                Legal &amp; Regulatory Rationale <span className="text-rose-400">*</span>
+              <label className="block text-[11px] font-bold text-navy uppercase tracking-wider mb-1.5">
+                Legal &amp; Regulatory Rationale <span className="text-status-error">*</span>
               </label>
               <textarea
                 required
@@ -183,33 +182,33 @@ export function LegalReviewModal({
                 value={rationale}
                 onChange={(e) => setRationale(e.target.value)}
                 placeholder="State statutory citations, risk considerations, or specific required revisions..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-workspace border border-border rounded-xl p-3 text-xs text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal leading-relaxed"
               />
             </div>
 
-            <div className="p-3 bg-slate-900/50 border border-slate-800 rounded-xl text-[11px] text-slate-400 leading-relaxed">
-              <strong className="text-slate-300 block mb-0.5">Statutory Governance Notice:</strong>
+            <div className="p-3 bg-workspace border border-border rounded-xl text-[11px] text-ink-secondary leading-relaxed">
+              <strong className="text-navy block mb-0.5 font-bold">Statutory Governance Notice:</strong>
               Inkloom AI supports compliance workflows. Guidelines and automated audit results do not constitute formal legal counsel or guarantee dispute immunity. Review decisions are recorded permanently in the immutable audit trail.
             </div>
 
-            <div className="pt-3 border-t border-slate-800/80 flex items-center justify-end gap-3">
+            <div className="pt-3 border-t border-border flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
+                className="px-4 py-2 bg-workspace hover:bg-slate-200 text-ink-secondary text-xs font-semibold rounded-xl border border-border transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`px-5 py-2 text-white text-xs font-bold rounded-xl transition shadow-lg flex items-center gap-2 ${
+                className={`px-5 py-2 text-white text-xs font-bold rounded-xl transition shadow-subtle flex items-center gap-2 ${
                   decision === "approved"
-                    ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30"
+                    ? "bg-status-success hover:bg-emerald-800"
                     : decision === "changes_requested"
-                    ? "bg-amber-600 hover:bg-amber-500 shadow-amber-600/30"
-                    : "bg-rose-600 hover:bg-rose-500 shadow-rose-600/30"
+                    ? "bg-status-warning hover:bg-amber-800"
+                    : "bg-status-error hover:bg-red-800"
                 }`}
               >
                 {isSubmitting ? (

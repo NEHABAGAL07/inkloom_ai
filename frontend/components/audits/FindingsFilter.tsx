@@ -36,17 +36,17 @@ export function FindingsFilter({
   totalFindings,
 }: FindingsFilterProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-surface p-3 rounded-2xl border border-border shadow-subtle">
       {/* Category Pills */}
       <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.value}
             onClick={() => onSelectCategory(cat.value)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
               selectedCategory === cat.value
-                ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                ? "bg-navy text-white shadow-subtle"
+                : "text-ink-secondary hover:text-navy hover:bg-workspace"
             }`}
           >
             {cat.label}
@@ -56,11 +56,11 @@ export function FindingsFilter({
 
       {/* Severity Selector */}
       <div className="flex items-center gap-2 self-end sm:self-auto">
-        <span className="text-xs text-slate-400 font-medium">Severity:</span>
+        <span className="text-xs text-ink-muted font-medium">Severity:</span>
         <select
           value={selectedSeverity}
           onChange={(e) => onSelectSeverity(e.target.value)}
-          className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+          className="bg-workspace border border-border rounded-xl px-2.5 py-1 text-xs text-navy focus:outline-none focus:border-teal"
         >
           {SEVERITIES.map((sev) => (
             <option key={sev.value} value={sev.value}>
@@ -68,7 +68,7 @@ export function FindingsFilter({
             </option>
           ))}
         </select>
-        <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded font-mono">
+        <span className="text-xs text-navy bg-workspace border border-border px-2.5 py-1 rounded-xl font-mono font-bold">
           {totalFindings} issues
         </span>
       </div>

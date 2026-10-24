@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Check, X, AlertTriangle, Shield, FileText } from "lucide-react";
 
 interface TimelineEvent {
   id: string;
@@ -42,40 +43,41 @@ export function AuditTrailTimeline({ events = SAMPLE_EVENTS }: { events?: Timeli
   const getBadge = (type: TimelineEvent["type"]) => {
     switch (type) {
       case "approved":
-        return { icon: "✓", bg: "bg-emerald-500", text: "text-emerald-400" };
+        return { icon: Check, bg: "bg-emerald-50 text-status-success border-emerald-200" };
       case "rejected":
-        return { icon: "✕", bg: "bg-rose-500", text: "text-rose-400" };
+        return { icon: X, bg: "bg-red-50 text-status-error border-red-200" };
       case "changes_requested":
-        return { icon: "✏️", bg: "bg-amber-500", text: "text-amber-400" };
+        return { icon: AlertTriangle, bg: "bg-amber-50 text-status-warning border-amber-200" };
       case "audited":
-        return { icon: "🛡️", bg: "bg-indigo-500", text: "text-indigo-400" };
+        return { icon: Shield, bg: "bg-teal/10 text-teal border-teal/20" };
       default:
-        return { icon: "📄", bg: "bg-slate-500", text: "text-slate-400" };
+        return { icon: FileText, bg: "bg-slate-100 text-ink-muted border-border" };
     }
   };
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-bold text-slate-200">Governance & Decision Audit Trail</h3>
+      <h3 className="text-sm font-bold text-navy">Governance & Decision Audit Trail</h3>
 
-      <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
+      <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
         {events.map((evt) => {
           const badge = getBadge(evt.type);
+          const Icon = badge.icon;
           return (
             <div key={evt.id} className="relative group">
               <div
-                className={`absolute -left-6 top-1 w-5 h-5 rounded-full ${badge.bg}/20 border border-${badge.bg} flex items-center justify-center text-[10px]`}
+                className={`absolute -left-6 top-1 w-5 h-5 rounded-full ${badge.bg} border flex items-center justify-center`}
               >
-                {badge.icon}
+                <Icon className="w-3 h-3 shrink-0" />
               </div>
-              <div className="bg-slate-900/60 border border-slate-800 p-3.5 rounded-xl hover:border-slate-700 transition">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-white">{evt.title}</span>
-                  <span className="text-slate-500 font-mono text-[10px]">{evt.timestamp}</span>
+              <div className="bg-workspace border border-border p-3.5 rounded-xl hover:border-slate-300 transition shadow-subtle">
+                <div className="flex items-center justify-between text-xs gap-2">
+                  <span className="font-bold text-navy">{evt.title}</span>
+                  <span className="text-ink-muted font-mono text-[10px] shrink-0">{evt.timestamp}</span>
                 </div>
-                <div className="text-[11px] text-indigo-400 font-medium mt-0.5">By: {evt.actor}</div>
+                <div className="text-[11px] text-teal font-semibold mt-0.5">By: {evt.actor}</div>
                 {evt.details && (
-                  <p className="text-xs text-slate-400 mt-2 bg-slate-950/60 p-2 rounded border border-slate-800/60">
+                  <p className="text-xs text-ink-secondary mt-2 bg-surface p-2 rounded-lg border border-border leading-relaxed">
                     {evt.details}
                   </p>
                 )}

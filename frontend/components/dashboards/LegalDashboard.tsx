@@ -4,6 +4,19 @@ import React, { useState } from "react";
 import { ContentSubmission, AuditResult } from "@/types";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
+import {
+  Scale,
+  FileText,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  ArrowRight,
+  Shield,
+  Check,
+  X,
+  MessageSquare,
+} from "lucide-react";
 
 interface LegalDashboardProps {
   submissions: ContentSubmission[];
@@ -33,7 +46,6 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
     setIsLoadingAudit(true);
     setDecisionFeedback(null);
     try {
-      // Fetch or trigger audit for this submission
       const audit = await api.triggerAudit(sub.id, sub.current_revision_id);
       setAuditResult(audit);
     } catch (err: any) {
@@ -54,7 +66,7 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
         action: decisionAction,
         comments,
       });
-      setDecisionFeedback(`✓ Review recorded: Marked as ${decisionAction.replace("_", " ")}.`);
+      setDecisionFeedback(`Review recorded successfully: Content marked as ${decisionAction.replace("_", " ")}.`);
       setIsDecisionModalOpen(false);
       setComments("");
       onRefresh();
@@ -66,45 +78,60 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Hero */}
-      <div className="relative rounded-3xl overflow-hidden p-8 border border-emerald-500/20 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 shadow-2xl">
-        <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
-            <span>⚖️ Legal & Regulatory Compliance Triage</span>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Enterprise Page Header */}
+      <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-border shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2 max-w-3xl">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-semibold">
+            <Scale className="w-3.5 h-3.5" />
+            <span>Legal & Regulatory Compliance Station</span>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight sm:text-4xl">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-navy tracking-tight">
             {activeOrgName || "Enterprise"} Compliance Review Queue
           </h1>
-          <p className="text-slate-300 text-sm leading-relaxed">
-            Human-in-the-loop review station. Inspect unverified claims, tone severity, and evidence citations. Authorized reviewers record final publication approval or change requests.
+          <p className="text-ink-secondary text-sm leading-relaxed">
+            Human-in-the-loop review station for brand governance. Inspect factual accuracy, statutory disclosures, and guideline alignment before authorizing public release.
           </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+          <div className="bg-workspace border border-border rounded-xl px-4 py-3 text-center">
+            <span className="block text-[11px] font-bold uppercase tracking-wider text-ink-muted">Awaiting Action</span>
+            <span className="text-2xl font-black text-navy">{reviewQueue.length}</span>
+          </div>
         </div>
       </div>
 
       {decisionFeedback && (
-        <div className="p-4 bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-sm rounded-2xl flex items-center justify-between">
-          <span>{decisionFeedback}</span>
-          <button onClick={() => setDecisionFeedback(null)} className="text-emerald-400 hover:text-white font-bold">
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl flex items-center justify-between shadow-subtle">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-status-success shrink-0" />
+            <span>{decisionFeedback}</span>
+          </div>
+          <button
+            onClick={() => setDecisionFeedback(null)}
+            className="text-emerald-700 hover:text-emerald-900 font-bold p-1"
+          >
             ✕
           </button>
         </div>
       )}
 
       {/* Main Review Section: Queue on Left, Findings Inspection on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Pending Review Queue */}
-        <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <span>📋</span> Awaiting Compliance Sign-Off ({reviewQueue.length})
+        <div className="lg:col-span-5 bg-surface border border-border rounded-2xl p-5 shadow-subtle space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-border">
+            <h2 className="text-sm font-bold text-navy flex items-center gap-2">
+              <FileText className="w-4 h-4 text-teal" />
+              <span>Awaiting Sign-Off ({reviewQueue.length})</span>
             </h2>
-            <span className="text-xs text-amber-400 font-bold bg-amber-950/80 border border-amber-800 px-2 py-0.5 rounded-full">
-              Mandatory Human Sign-off
+            <span className="text-[11px] font-bold text-status-warning bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+              Separation of Duties
             </span>
           </div>
 
-          <div className="divide-y divide-slate-800 space-y-2">
+          <div className="divide-y divide-border space-y-2">
             {reviewQueue.length > 0 ? (
               reviewQueue.map((sub) => {
                 const isSelected = selectedSubmission?.id === sub.id;
@@ -112,137 +139,158 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                   <div
                     key={sub.id}
                     onClick={() => handleInspectSubmission(sub)}
-                    className={`p-4 rounded-2xl cursor-pointer transition-all border ${
+                    className={`p-4 rounded-xl cursor-pointer transition-all border ${
                       isSelected
-                        ? "bg-slate-800/80 border-indigo-500 shadow-lg"
-                        : "bg-slate-950/50 border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/40"
+                        ? "bg-teal/5 border-teal shadow-subtle ring-1 ring-teal"
+                        : "bg-surface border-border hover:border-slate-300 hover:bg-workspace"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white truncate max-w-[200px]">{sub.title}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-bold text-navy truncate">{sub.title}</span>
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize shrink-0 ${
                           sub.status === "pending_approval"
-                            ? "bg-indigo-950/80 text-indigo-300 border-indigo-800"
-                            : "bg-amber-950/80 text-amber-300 border-amber-800"
+                            ? "bg-blue-50 text-status-info border-blue-200"
+                            : "bg-amber-50 text-status-warning border-amber-200"
                         }`}
                       >
                         {sub.status.replace("_", " ")}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-400 mt-1 line-clamp-2">{sub.description}</div>
-                    <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-800/80 pt-2">
-                      <span className="uppercase font-semibold">{sub.content_type}</span>
-                      <span className="text-indigo-400 font-bold">Inspect Findings →</span>
+                    <div className="text-xs text-ink-secondary mt-1.5 line-clamp-2 leading-relaxed">
+                      {sub.description}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-[11px] text-ink-muted border-t border-border/80 pt-2">
+                      <span className="uppercase font-semibold tracking-wider">{sub.content_type}</span>
+                      <span className="text-teal font-bold flex items-center gap-1">
+                        Inspect Evidence <ArrowRight className="w-3 h-3" />
+                      </span>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <div className="py-12 text-center text-xs text-slate-500">
-                🎉 No pending reviews in the queue! All submissions approved or resolved.
+              <div className="py-16 text-center text-ink-muted text-xs space-y-2">
+                <CheckCircle className="w-8 h-8 text-status-success mx-auto opacity-70" />
+                <div className="font-semibold text-navy">Review queue is clear</div>
+                <p className="text-[11px] text-ink-muted max-w-xs mx-auto">
+                  All submitted content pieces have received authorized decisions.
+                </p>
               </div>
             )}
           </div>
         </div>
 
         {/* Right: Detailed Finding Inspection & Decision Hub */}
-        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-5">
+        <div className="lg:col-span-7 bg-surface border border-border rounded-2xl p-6 shadow-subtle space-y-6">
           {selectedSubmission ? (
             <div className="space-y-6">
-              <div className="flex items-start justify-between border-b border-slate-800 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-border pb-5">
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Inspecting Submission</div>
-                  <h3 className="text-lg font-bold text-white mt-0.5">{selectedSubmission.title}</h3>
-                  <div className="text-xs text-slate-400 mt-1">{selectedSubmission.description}</div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                    Inspecting Submission
+                  </div>
+                  <h3 className="text-lg font-bold text-navy mt-0.5">{selectedSubmission.title}</h3>
+                  <div className="text-xs text-ink-secondary mt-1">{selectedSubmission.description}</div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => {
                       setDecisionAction("approve");
                       setIsDecisionModalOpen(true);
                     }}
-                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all"
+                    className="px-3.5 py-2 bg-status-success hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-subtle transition flex items-center gap-1.5"
                   >
-                    ✓ Authorize Release
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Authorize</span>
                   </button>
                   <button
                     onClick={() => {
                       setDecisionAction("request_changes");
                       setIsDecisionModalOpen(true);
                     }}
-                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-amber-600/20 transition-all"
+                    className="px-3.5 py-2 bg-status-warning hover:bg-amber-800 text-white text-xs font-bold rounded-xl shadow-subtle transition flex items-center gap-1.5"
                   >
-                    Request Changes
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>Request Changes</span>
                   </button>
                 </div>
               </div>
 
               {/* Audit Findings List */}
               <div className="space-y-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <div className="text-xs font-bold uppercase tracking-wider text-ink-secondary flex items-center justify-between">
                   <span>AI Audit Evidence & Findings</span>
                   {auditResult && (
-                    <span className="text-indigo-400">Score: {auditResult.summary.compliance_score}/100</span>
+                    <span className="text-navy font-semibold">
+                      Compliance Score: <strong className="text-teal">{auditResult.summary.compliance_score}/100</strong>
+                    </span>
                   )}
                 </div>
 
                 {isLoadingAudit ? (
-                  <div className="py-12 text-center text-xs text-slate-400 animate-pulse">
-                    Retrieving AI Audit Findings & Certified Benchmarks...
+                  <div className="py-16 text-center text-xs text-ink-muted space-y-2">
+                    <div className="inline-block w-6 h-6 border-2 border-teal border-t-transparent rounded-full animate-spin" />
+                    <div>Retrieving AI audit findings and benchmark citations...</div>
                   </div>
                 ) : auditResult && auditResult.findings.length > 0 ? (
                   <div className="space-y-3">
                     {auditResult.findings.map((f) => (
-                      <div key={f.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                        <div className="flex items-center justify-between">
+                      <div
+                        key={f.id}
+                        className="p-4 rounded-xl bg-workspace border border-border space-y-2.5 transition hover:border-slate-300"
+                      >
+                        <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
                             <span
-                              className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
+                              className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded border ${
                                 f.severity === "critical"
-                                  ? "bg-rose-950 text-rose-300 border-rose-800"
+                                  ? "bg-red-50 text-status-error border-red-200"
                                   : f.severity === "high"
-                                  ? "bg-amber-950 text-amber-300 border-amber-800"
-                                  : "bg-indigo-950 text-indigo-300 border-indigo-800"
+                                  ? "bg-amber-50 text-status-warning border-amber-200"
+                                  : "bg-blue-50 text-status-info border-blue-200"
                               }`}
                             >
                               {f.severity}
                             </span>
-                            <span className="text-xs font-bold text-white">{f.title}</span>
+                            <span className="text-xs font-bold text-navy">{f.title}</span>
                           </div>
-                          <span className="text-[10px] text-slate-500 font-mono">Confidence: {Math.round(f.confidence * 100)}%</span>
+                          <span className="text-[10px] text-ink-muted font-mono font-medium">
+                            Confidence: {Math.round(f.confidence * 100)}%
+                          </span>
                         </div>
 
-                        <div className="text-xs text-slate-300">{f.message}</div>
+                        <div className="text-xs text-ink-secondary leading-relaxed">{f.message}</div>
 
                         {f.evidence && (
-                          <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-amber-300/90">
+                          <div className="p-2.5 rounded-lg bg-surface border border-border text-xs font-mono text-status-warning">
                             &ldquo;{f.evidence}&rdquo;
                           </div>
                         )}
 
                         {f.suggested_correction && (
-                          <div className="text-xs text-emerald-400 font-medium pt-1">
-                            💡 Suggested Compliant Phrasing: &quot;{f.suggested_correction.replacement_text}&quot;
+                          <div className="text-xs text-status-success font-medium pt-0.5 flex items-start gap-1.5">
+                            <span className="font-bold shrink-0">Compliant Phrasing:</span>
+                            <span>&quot;{f.suggested_correction.replacement_text}&quot;</span>
                           </div>
                         )}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 text-center text-xs text-slate-400">
+                  <div className="p-6 rounded-xl bg-workspace border border-border text-center text-xs text-ink-muted">
                     No critical violations detected by automated rule checks. Reviewer judgment required for release.
                   </div>
                 )}
               </div>
             </div>
           ) : (
-            <div className="py-20 text-center text-slate-500 space-y-2">
-              <div className="text-3xl">⚖️</div>
-              <div className="text-sm font-semibold text-slate-400">Select a submission from the review queue</div>
-              <div className="text-xs max-w-sm mx-auto text-slate-500">
-                Inspect AI findings, verify benchmark citations, and record authorized approval decisions.
+            <div className="py-24 text-center text-ink-muted space-y-3">
+              <Scale className="w-12 h-12 text-ink-muted/50 mx-auto" />
+              <div className="text-sm font-semibold text-navy">Select a submission from the review queue</div>
+              <div className="text-xs max-w-sm mx-auto text-ink-secondary leading-relaxed">
+                Inspect AI findings, verify benchmark citations, and record authorized approval decisions with complete audit trail accountability.
               </div>
             </div>
           )}
@@ -251,60 +299,67 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
 
       {/* Review Decision Modal */}
       {isDecisionModalOpen && selectedSubmission && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>📝</span> Record Compliance Decision
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-base font-bold text-navy flex items-center gap-2">
+                <Shield className="w-4 h-4 text-teal" />
+                <span>Record Compliance Decision</span>
               </h3>
-              <button onClick={() => setIsDecisionModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button
+                onClick={() => setIsDecisionModalOpen(false)}
+                className="text-ink-muted hover:text-navy p-1 text-sm"
+              >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleSubmitDecision} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Target Action</label>
+                <label className="block text-xs font-semibold text-navy mb-2">Target Action</label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setDecisionAction("approve")}
-                    className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
                       decisionAction === "approve"
-                        ? "bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30"
-                        : "bg-slate-950 text-slate-400 border-slate-800"
+                        ? "bg-status-success text-white border-status-success shadow-subtle"
+                        : "bg-surface text-ink-secondary border-border hover:bg-workspace"
                     }`}
                   >
-                    ✓ Approve
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Approve</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setDecisionAction("request_changes")}
-                    className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
                       decisionAction === "request_changes"
-                        ? "bg-amber-600 text-white border-amber-500 shadow-md shadow-amber-600/30"
-                        : "bg-slate-950 text-slate-400 border-slate-800"
+                        ? "bg-status-warning text-white border-status-warning shadow-subtle"
+                        : "bg-surface text-ink-secondary border-border hover:bg-workspace"
                     }`}
                   >
-                    Needs Changes
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>Changes</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setDecisionAction("reject")}
-                    className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
                       decisionAction === "reject"
-                        ? "bg-rose-600 text-white border-rose-500 shadow-md shadow-rose-600/30"
-                        : "bg-slate-950 text-slate-400 border-slate-800"
+                        ? "bg-status-error text-white border-status-error shadow-subtle"
+                        : "bg-surface text-ink-secondary border-border hover:bg-workspace"
                     }`}
                   >
-                    ✕ Reject
+                    <X className="w-3.5 h-3.5" />
+                    <span>Reject</span>
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
-                  Compliance Officer Notes / Required Corrections
+                <label className="block text-xs font-semibold text-navy mb-1.5">
+                  Compliance Officer Notes / Required Corrections *
                 </label>
                 <textarea
                   required
@@ -312,12 +367,12 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
                   placeholder="State the justification or specific policy citations for the creator..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-workspace border border-border rounded-xl p-3 text-xs text-navy focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal"
                 />
               </div>
 
-              <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-[11px] text-slate-400 leading-relaxed">
-                <span className="font-bold text-slate-300">Separation of Duties Notice:</span> Your reviewer identity (
+              <div className="p-3 bg-workspace border border-border rounded-xl text-[11px] text-ink-secondary leading-relaxed">
+                <span className="font-bold text-navy">Separation of Duties Notice:</span> Your reviewer identity (
                 {user?.full_name || user?.email}) and exact timestamp will be permanently logged in the immutable audit event trail.
               </div>
 
@@ -325,14 +380,14 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                 <button
                   type="button"
                   onClick={() => setIsDecisionModalOpen(false)}
-                  className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold"
+                  className="flex-1 py-2.5 bg-workspace hover:bg-slate-200 text-ink-secondary rounded-xl text-xs font-bold transition border border-border"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingDecision}
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20 disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-teal hover:bg-teal-hover text-white rounded-xl text-xs font-bold shadow-subtle transition disabled:opacity-50"
                 >
                   {isSubmittingDecision ? "Recording Decision..." : "Submit Official Decision"}
                 </button>

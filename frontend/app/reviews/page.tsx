@@ -5,6 +5,7 @@ import { api } from "@/services/api";
 import { ContentSubmission } from "@/types";
 import { ReviewActionModal } from "@/components/reviews/ReviewActionModal";
 import { AuditTrailTimeline } from "@/components/reviews/AuditTrailTimeline";
+import { Scale, FileText, CheckCircle, ArrowRight } from "lucide-react";
 
 export default function ReviewsPage() {
   const [pendingSubmissions, setPendingSubmissions] = useState<ContentSubmission[]>([]);
@@ -50,10 +51,16 @@ export default function ReviewsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">Human Review & Approval Queue</h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Final publication sign-off by designated brand compliance officers. AI audit assists; human reviewer decides.
+      <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-border shadow-subtle space-y-2">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-semibold">
+          <Scale className="w-3.5 h-3.5" />
+          <span>Human-in-the-Loop Governance</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-navy tracking-tight">
+          Human Review & Approval Queue
+        </h1>
+        <p className="text-sm text-ink-secondary max-w-3xl leading-relaxed">
+          Final publication sign-off by designated brand compliance officers. Automated audits propose corrections and check benchmarks; human reviewers authorize public release.
         </p>
       </div>
 
@@ -61,53 +68,61 @@ export default function ReviewsPage() {
         {/* Main Queue List */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-white">Pending Submissions ({pendingSubmissions.length})</h2>
-            <span className="text-xs text-slate-400">Sorted by submission date</span>
+            <h2 className="text-base font-bold text-navy flex items-center gap-2">
+              <FileText className="w-4 h-4 text-teal" />
+              <span>Pending Submissions ({pendingSubmissions.length})</span>
+            </h2>
+            <span className="text-xs text-ink-muted">Sorted by submission date</span>
           </div>
 
           {pendingSubmissions.length === 0 ? (
-            <div className="glass-panel rounded-2xl p-8 text-center text-slate-400 text-sm border border-slate-800">
-              🎉 All submissions reviewed! The queue is currently empty.
+            <div className="bg-surface rounded-2xl p-12 text-center text-ink-muted text-sm border border-border shadow-subtle space-y-2">
+              <CheckCircle className="w-8 h-8 text-status-success mx-auto opacity-70" />
+              <div className="font-bold text-navy text-base">Review queue is empty</div>
+              <p className="text-xs text-ink-secondary">
+                All submitted content pieces have received authorized review decisions.
+              </p>
             </div>
           ) : (
             pendingSubmissions.map((sub) => (
               <div
                 key={sub.id}
-                className="glass-panel rounded-2xl p-5 border border-slate-800 hover:border-slate-700 transition space-y-3"
+                className="bg-surface rounded-2xl p-5 border border-border hover:border-slate-300 transition shadow-subtle space-y-3"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-base font-bold text-white tracking-tight">{sub.title}</h3>
-                    <p className="text-xs text-slate-300 mt-1">{sub.description}</p>
-                    <div className="flex items-center gap-2 mt-2 text-[11px] text-slate-400 font-mono">
-                      <span>ID: {sub.id}</span>
+                    <h3 className="text-base font-bold text-navy tracking-tight">{sub.title}</h3>
+                    <p className="text-xs text-ink-secondary mt-1 leading-relaxed">{sub.description}</p>
+                    <div className="flex items-center gap-2 mt-2 text-[11px] text-ink-muted font-mono">
+                      <span>ID: {sub.id.substring(0, 8)}...</span>
                       <span>•</span>
-                      <span className="capitalize">{sub.content_type}</span>
+                      <span className="capitalize font-medium text-navy">{sub.content_type}</span>
                     </div>
                   </div>
 
                   <span
                     className={`px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wide border shrink-0 ${
                       sub.status === "pending_approval"
-                        ? "bg-indigo-950/80 text-indigo-300 border-indigo-800/80"
-                        : "bg-amber-950/80 text-amber-300 border-amber-800/80"
+                        ? "bg-blue-50 text-status-info border-blue-200"
+                        : "bg-amber-50 text-status-warning border-amber-200"
                     }`}
                   >
                     {sub.status.replace("_", " ")}
                   </span>
                 </div>
 
-                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                <div className="pt-3 border-t border-border flex items-center justify-between">
                   <a
                     href={`/audits?id=${sub.id}`}
-                    className="text-xs text-indigo-400 hover:underline font-semibold"
+                    className="text-xs text-teal hover:underline font-semibold flex items-center gap-1"
                   >
-                    Inspect AI Findings →
+                    <span>Inspect AI Findings</span>
+                    <ArrowRight className="w-3 h-3" />
                   </a>
 
                   <button
                     onClick={() => handleOpenReview(sub)}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md transition"
+                    className="bg-teal hover:bg-teal-hover text-white font-bold text-xs px-4 py-2 rounded-xl shadow-subtle transition"
                   >
                     Take Review Decision
                   </button>
@@ -118,7 +133,7 @@ export default function ReviewsPage() {
         </div>
 
         {/* Sidebar Audit Trail */}
-        <div className="glass-panel rounded-2xl p-5 border border-slate-800 h-fit">
+        <div className="bg-surface rounded-2xl p-5 border border-border shadow-subtle h-fit">
           <AuditTrailTimeline />
         </div>
       </div>

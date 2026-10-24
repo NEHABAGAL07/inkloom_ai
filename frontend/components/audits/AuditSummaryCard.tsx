@@ -2,6 +2,7 @@
 
 import React from "react";
 import { AuditSummary, OverallAuditStatus } from "@/types";
+import { ShieldCheck, AlertTriangle, XCircle, CheckCircle, Scale } from "lucide-react";
 
 interface AuditSummaryCardProps {
   summary: AuditSummary;
@@ -14,53 +15,58 @@ export function AuditSummaryCard({ summary, overallStatus, auditId }: AuditSumma
     switch (status) {
       case "compliant":
         return {
-          bg: "bg-emerald-950/70 border-emerald-800/80 text-emerald-300",
+          bg: "bg-emerald-50 border-emerald-200 text-status-success",
           text: "COMPLIANT",
-          dot: "bg-emerald-400",
+          dot: "bg-status-success",
+          icon: CheckCircle,
         };
       case "needs_review":
         return {
-          bg: "bg-amber-950/70 border-amber-800/80 text-amber-300",
+          bg: "bg-amber-50 border-amber-200 text-status-warning",
           text: "NEEDS REVIEW",
-          dot: "bg-amber-400",
+          dot: "bg-status-warning",
+          icon: AlertTriangle,
         };
       case "non_compliant":
         return {
-          bg: "bg-rose-950/70 border-rose-800/80 text-rose-300",
+          bg: "bg-red-50 border-red-200 text-status-error",
           text: "NON-COMPLIANT",
-          dot: "bg-rose-400",
+          dot: "bg-status-error",
+          icon: XCircle,
         };
       default:
         return {
-          bg: "bg-slate-800 border-slate-700 text-slate-300",
-          text: "ERROR",
+          bg: "bg-slate-100 border-border text-ink-secondary",
+          text: "UNKNOWN",
           dot: "bg-slate-400",
+          icon: AlertTriangle,
         };
     }
   };
 
   const statusConfig = getStatusBadge(overallStatus);
+  const StatusIcon = statusConfig.icon;
 
   return (
-    <div className="glass-panel rounded-2xl p-6 shadow-xl space-y-6">
+    <div className="bg-surface rounded-2xl p-6 border border-border shadow-subtle space-y-6">
       {/* Top Header Row */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-white tracking-tight">Audit Governance Synthesis</h2>
+            <h2 className="text-xl font-bold text-navy tracking-tight">Audit Governance Synthesis</h2>
             <div
-              className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${statusConfig.bg}`}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusConfig.bg}`}
             >
-              <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`}></span>
-              {statusConfig.text}
+              <StatusIcon className="w-3.5 h-3.5 shrink-0" />
+              <span>{statusConfig.text}</span>
             </div>
           </div>
-          <p className="text-xs text-slate-400 mt-1 font-mono">Run ID: {auditId}</p>
+          <p className="text-xs text-ink-muted mt-1 font-mono">Run ID: {auditId}</p>
         </div>
 
         {summary.human_review_required && (
-          <div className="flex items-center gap-2 bg-indigo-950/60 border border-indigo-700/50 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-indigo-300">
-            <span className="text-sm">⚖️</span>
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-status-warning">
+            <Scale className="w-4 h-4 shrink-0" />
             <span>Human Review Required Before Release</span>
           </div>
         )}
@@ -69,52 +75,52 @@ export function AuditSummaryCard({ summary, overallStatus, auditId }: AuditSumma
       {/* Score & Metric Breakdown Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {/* Compliance Score Tile */}
-        <div className="col-span-2 sm:col-span-3 lg:col-span-2 bg-slate-900/90 rounded-xl p-4 border border-slate-800 flex items-center justify-between">
+        <div className="col-span-2 sm:col-span-3 lg:col-span-2 bg-workspace rounded-xl p-4 border border-border flex items-center justify-between">
           <div>
-            <span className="text-xs uppercase font-semibold text-slate-400 tracking-wider">Compliance Score</span>
-            <div className="text-3xl font-extrabold text-white mt-1">
+            <span className="text-[11px] uppercase font-bold text-ink-muted tracking-wider">Compliance Score</span>
+            <div className="text-3xl font-black text-navy mt-1">
               {summary.compliance_score}
-              <span className="text-slate-500 text-lg font-normal">/100</span>
+              <span className="text-ink-muted text-lg font-normal">/100</span>
             </div>
-            <div className="text-[11px] text-slate-400 mt-1">
+            <div className="text-[11px] text-ink-secondary mt-1">
               {summary.compliance_score >= 80 ? "Passes Baseline Threshold" : "Remediation Recommended"}
             </div>
           </div>
-          <div className="w-16 h-16 rounded-full border-4 border-indigo-500/40 border-t-indigo-500 flex items-center justify-center font-bold text-sm text-indigo-300">
+          <div className="w-14 h-14 rounded-full border-4 border-teal/20 border-t-teal flex items-center justify-center font-extrabold text-sm text-teal bg-surface shadow-subtle">
             {Math.round(summary.compliance_score)}%
           </div>
         </div>
 
         {/* Severity Count Tiles */}
-        <div className="bg-slate-900/60 rounded-xl p-4 border border-rose-900/30">
-          <span className="text-[11px] uppercase font-bold text-rose-400">Critical</span>
-          <div className="text-2xl font-black text-rose-400 mt-1">{summary.critical_count}</div>
-          <div className="text-[10px] text-slate-400">Must fix</div>
+        <div className="bg-surface rounded-xl p-4 border border-red-200 shadow-subtle">
+          <span className="text-[11px] uppercase font-bold text-status-error">Critical</span>
+          <div className="text-2xl font-black text-status-error mt-1">{summary.critical_count}</div>
+          <div className="text-[10px] text-ink-muted">Must fix</div>
         </div>
 
-        <div className="bg-slate-900/60 rounded-xl p-4 border border-amber-900/30">
-          <span className="text-[11px] uppercase font-bold text-amber-400">High</span>
-          <div className="text-2xl font-black text-amber-400 mt-1">{summary.high_count}</div>
-          <div className="text-[10px] text-slate-400">Brand risk</div>
+        <div className="bg-surface rounded-xl p-4 border border-amber-200 shadow-subtle">
+          <span className="text-[11px] uppercase font-bold text-status-warning">High</span>
+          <div className="text-2xl font-black text-status-warning mt-1">{summary.high_count}</div>
+          <div className="text-[10px] text-ink-muted">Brand risk</div>
         </div>
 
-        <div className="bg-slate-900/60 rounded-xl p-4 border border-sky-900/30">
-          <span className="text-[11px] uppercase font-bold text-sky-400">Medium</span>
-          <div className="text-2xl font-black text-sky-400 mt-1">{summary.medium_count}</div>
-          <div className="text-[10px] text-slate-400">Tone/Style</div>
+        <div className="bg-surface rounded-xl p-4 border border-blue-200 shadow-subtle">
+          <span className="text-[11px] uppercase font-bold text-status-info">Medium</span>
+          <div className="text-2xl font-black text-status-info mt-1">{summary.medium_count}</div>
+          <div className="text-[10px] text-ink-muted">Tone/Style</div>
         </div>
 
-        <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
-          <span className="text-[11px] uppercase font-bold text-slate-400">Low</span>
-          <div className="text-2xl font-black text-slate-300 mt-1">{summary.low_count}</div>
-          <div className="text-[10px] text-slate-400">Minor polish</div>
+        <div className="bg-surface rounded-xl p-4 border border-border shadow-subtle">
+          <span className="text-[11px] uppercase font-bold text-ink-secondary">Low</span>
+          <div className="text-2xl font-black text-navy mt-1">{summary.low_count}</div>
+          <div className="text-[10px] text-ink-muted">Minor polish</div>
         </div>
       </div>
 
       {/* Verdict Overview */}
       {summary.verdict_overview && (
-        <div className="bg-slate-900/70 p-4 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed">
-          <span className="font-semibold text-white block mb-1">Executive Summary:</span>
+        <div className="bg-workspace p-4 rounded-xl border border-border text-xs text-navy leading-relaxed">
+          <span className="font-bold text-navy block mb-1">Executive Summary:</span>
           {summary.verdict_overview}
         </div>
       )}

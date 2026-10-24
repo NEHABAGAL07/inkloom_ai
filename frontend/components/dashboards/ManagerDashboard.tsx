@@ -4,6 +4,25 @@ import React, { useState } from "react";
 import { ContentSubmission, AnalyticsSummary, MemberInfo, AuditResult } from "@/types";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
+import {
+  Shield,
+  ShieldCheck,
+  AlertTriangle,
+  Clock,
+  CheckCircle,
+  Users,
+  FileText,
+  Plus,
+  RefreshCw,
+  ExternalLink,
+  Search,
+  Building,
+  Scale,
+  X,
+  Check,
+  AlertCircle,
+  FileCheck,
+} from "lucide-react";
 
 interface ManagerDashboardProps {
   submissions: ContentSubmission[];
@@ -12,7 +31,12 @@ interface ManagerDashboardProps {
   onRefresh: () => void;
 }
 
-export function ManagerDashboard({ submissions, analytics, members, onRefresh }: ManagerDashboardProps) {
+export function ManagerDashboard({
+  submissions,
+  analytics,
+  members,
+  onRefresh,
+}: ManagerDashboardProps) {
   const { activeOrgId, activeOrgName } = useAuth();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -37,7 +61,7 @@ export function ManagerDashboard({ submissions, analytics, members, onRefresh }:
     setInviteSuccessMsg(null);
     try {
       const inv = await api.createInvitation(activeOrgId, inviteEmail.trim(), inviteRole);
-      setInviteSuccessMsg(`Invitation sent! Join link: ${window.location.origin}${inv.invite_url}`);
+      setInviteSuccessMsg(`Invitation generated! Join link: ${window.location.origin}${inv.invite_url}`);
       setInviteEmail("");
       onRefresh();
     } catch (err: any) {
@@ -69,9 +93,14 @@ export function ManagerDashboard({ submissions, analytics, members, onRefresh }:
         submission_id: selectedSubForAudit.id,
         revision_id: selectedSubForAudit.current_revision_id,
         action,
-        comments: action === "approve" ? "Manager approved for publication." : "Manager requested visual/copy revisions.",
+        comments:
+          action === "approve"
+            ? "Manager approved for publication."
+            : "Manager requested visual/copy revisions.",
       });
-      setActionFeedback(`Submission successfully marked as '${action === "approve" ? "Approved" : "Changes Requested"}'!`);
+      setActionFeedback(
+        `Submission marked as '${action === "approve" ? "Approved" : "Changes Requested"}'!`
+      );
       setTimeout(() => {
         setIsAuditModalOpen(false);
         onRefresh();
@@ -84,242 +113,314 @@ export function ManagerDashboard({ submissions, analytics, members, onRefresh }:
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return "bg-emerald-950/80 text-emerald-300 border-emerald-800/80";
+        return {
+          bg: "bg-emerald-50 text-status-success border-emerald-200",
+          icon: CheckCircle,
+          label: "Approved",
+        };
       case "pending_approval":
       case "submitted":
-        return "bg-indigo-950/80 text-indigo-300 border-indigo-800/80";
+        return {
+          bg: "bg-amber-50 text-status-warning border-amber-200",
+          icon: Clock,
+          label: "Pending Review",
+        };
       case "changes_requested":
-        return "bg-amber-950/80 text-amber-300 border-amber-800/80";
+        return {
+          bg: "bg-amber-50 text-status-warning border-amber-200",
+          icon: AlertTriangle,
+          label: "Changes Requested",
+        };
       case "rejected":
-        return "bg-rose-950/80 text-rose-300 border-rose-800/80";
+        return {
+          bg: "bg-rose-50 text-status-error border-rose-200",
+          icon: AlertCircle,
+          label: "Rejected",
+        };
       default:
-        return "bg-slate-800 text-slate-300 border-slate-700";
+        return {
+          bg: "bg-slate-100 text-ink-secondary border-border",
+          icon: FileText,
+          label: status.replace("_", " "),
+        };
     }
   };
 
   const filteredSubmissions = submissions.filter((s) => {
-    if (pipelineFilter === "pending") return s.status === "pending_approval" || s.status === "submitted";
-    if (pipelineFilter === "visual") return s.content_type === "image" || s.content_type === "video";
+    if (pipelineFilter === "pending")
+      return s.status === "pending_approval" || s.status === "submitted";
+    if (pipelineFilter === "visual")
+      return s.content_type === "image" || s.content_type === "video";
     if (pipelineFilter === "approved") return s.status === "approved";
     return true;
   });
 
+  const pendingCount = submissions.filter(
+    (s) => s.status === "pending_approval" || s.status === "submitted"
+  ).length;
+  const approvedCount = submissions.filter((s) => s.status === "approved").length;
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Hero Welcome Banner */}
-      <div className="relative rounded-3xl overflow-hidden p-8 border border-indigo-500/20 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 shadow-2xl">
-        <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold">
-            <span>👑 Executive Manager Workspace</span>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Executive Header Banner */}
+      <div className="bg-surface border border-border rounded-xl p-6 shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-navy/10 text-navy border border-navy/20 flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-navy" />
+              Executive Brand Administration
+            </span>
+            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
+              Active Governance
+            </span>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight sm:text-4xl">
-            {activeOrgName || "Enterprise"} Brand Governance
+          <h1 className="text-2xl font-bold text-navy tracking-tight">
+            {activeOrgName || "Enterprise"} Governance Overview
           </h1>
-          <p className="text-slate-300 text-sm leading-relaxed">
-            Organization overview, cross-functional compliance rates, active employee management, and review operations across marketing and design teams.
+          <p className="text-xs text-ink-secondary mt-1 max-w-2xl leading-relaxed">
+            Monitor organizational compliance benchmarks, cross-functional review queues, and brand guideline integrity across marketing and creative teams.
           </p>
-          <div className="flex flex-wrap gap-3 pt-2">
-            <button
-              onClick={() => setIsInviteModalOpen(true)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
-            >
-              <span>➕</span> Invite Employee
-            </button>
-            <button
-              onClick={onRefresh}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
-            >
-              <span>🔄</span> Refresh Pipeline
-            </button>
-            <a
-              href="/team"
-              className="px-4 py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold rounded-xl transition-all"
-            >
-              Manage Team & Permissions
-            </a>
-            <a
-              href="/settings"
-              className="px-4 py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold rounded-xl transition-all"
-            >
-              Brand Guidelines Standard
-            </a>
-          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            onClick={() => setIsInviteModalOpen(true)}
+            className="px-3.5 py-2 bg-teal hover:bg-teal-hover text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Invite Team Member</span>
+          </button>
+          <button
+            onClick={onRefresh}
+            className="px-3.5 py-2 bg-workspace hover:bg-border text-ink-primary border border-border text-xs font-semibold rounded-lg transition flex items-center gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-ink-secondary" />
+            <span>Refresh</span>
+          </button>
+          <a
+            href="/guidelines"
+            className="px-3.5 py-2 bg-workspace hover:bg-border text-ink-primary border border-border text-xs font-semibold rounded-lg transition flex items-center gap-1.5"
+          >
+            <FileCheck className="w-3.5 h-3.5 text-teal" />
+            <span>Brand Standards</span>
+          </a>
+        </div>
+      </div>
+
+      {/* Compliance Advisory Disclaimer Notice */}
+      <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80 text-xs text-amber-900 flex items-start gap-2.5">
+        <Scale className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+        <div className="text-[11px] leading-relaxed">
+          <strong className="font-semibold text-amber-900">Advisory Role &amp; Compliance Workflow:</strong> Inkloom AI provides automated rule evaluation to assist internal brand governance and factual verification. Following approved guidelines establishes organizational conformity but <strong>does not guarantee legal immunity</strong> or eliminate regulatory risk. Final campaign publication requires human authorization.
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
-            <span>Overall Compliance</span>
-            <span className="text-emerald-400 font-bold">✓ Target 90%</span>
+        {/* Approved Content */}
+        <div className="p-5 rounded-xl bg-surface border border-border shadow-subtle space-y-1">
+          <div className="flex items-center justify-between text-xs font-medium text-ink-secondary">
+            <span>Approved Assets</span>
+            <CheckCircle className="w-4 h-4 text-status-success" />
           </div>
-          <div className="text-3xl font-black text-white mt-2">
-            {analytics?.overall_compliance_rate ?? 92.5}%
-          </div>
-          <div className="text-xs text-slate-500 mt-1">Passing corporate standards</div>
+          <div className="text-2xl font-bold text-navy mt-1">{approvedCount}</div>
+          <div className="text-[11px] text-ink-muted">Authorized for publication</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
-            <span>Pending Reviews</span>
-            <span className="text-amber-400 font-bold">Requires Action</span>
+        {/* Pending Review */}
+        <div className="p-5 rounded-xl bg-surface border border-border shadow-subtle space-y-1">
+          <div className="flex items-center justify-between text-xs font-medium text-ink-secondary">
+            <span>Pending Review</span>
+            <Clock className="w-4 h-4 text-status-warning" />
           </div>
-          <div className="text-3xl font-black text-amber-400 mt-2">
-            {submissions.filter((s) => s.status === "pending_approval" || s.status === "submitted").length}
-          </div>
-          <div className="text-xs text-slate-500 mt-1">Awaiting manager/legal sign-off</div>
+          <div className="text-2xl font-bold text-status-warning mt-1">{pendingCount}</div>
+          <div className="text-[11px] text-ink-muted">Awaiting reviewer sign-off</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+        {/* Total Submissions */}
+        <div className="p-5 rounded-xl bg-surface border border-border shadow-subtle space-y-1">
+          <div className="flex items-center justify-between text-xs font-medium text-ink-secondary">
             <span>Total Submissions</span>
-            <span className="text-indigo-400 font-bold">Workspace</span>
+            <FileText className="w-4 h-4 text-teal" />
           </div>
-          <div className="text-3xl font-black text-white mt-2">{submissions.length}</div>
-          <div className="text-xs text-slate-500 mt-1">Campaigns, visual assets & media</div>
+          <div className="text-2xl font-bold text-navy mt-1">{submissions.length}</div>
+          <div className="text-[11px] text-ink-muted">Campaigns, copy &amp; media files</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
-            <span>Active Team Members</span>
-            <span className="text-indigo-400 font-bold">Roles</span>
+        {/* Active Team Members */}
+        <div className="p-5 rounded-xl bg-surface border border-border shadow-subtle space-y-1">
+          <div className="flex items-center justify-between text-xs font-medium text-ink-secondary">
+            <span>Workspace Team</span>
+            <Users className="w-4 h-4 text-navy" />
           </div>
-          <div className="text-3xl font-black text-white mt-2">{members.length || 4}</div>
-          <div className="text-xs text-slate-500 mt-1">Designers, Legal, Marketing</div>
+          <div className="text-2xl font-bold text-navy mt-1">{members.length || 4}</div>
+          <div className="text-[11px] text-ink-muted">Legal, designers, marketing</div>
         </div>
       </div>
 
-      {/* Two Column Section: Recent Submissions + Active Team Members */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left: Organization Submissions */}
-        <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Two Column Layout: Content Pipeline & Team Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Organization Content Pipeline */}
+        <div className="lg:col-span-8 bg-surface border border-border rounded-xl p-6 shadow-subtle space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
             <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <span>📋</span> Organization Content Pipeline
+              <h2 className="text-base font-bold text-navy flex items-center gap-2">
+                <FileText className="w-4 h-4 text-teal" />
+                <span>Organization Content Pipeline</span>
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">Live view across all creative, media, and marketing submissions</p>
+              <p className="text-xs text-ink-muted mt-0.5">
+                Real-time review and audit status across all active content assets
+              </p>
             </div>
-            
+
             <div className="flex items-center gap-2">
-              <button
-                onClick={onRefresh}
-                className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+              <a
+                href="/content"
+                className="text-xs text-teal hover:text-teal-hover font-semibold flex items-center gap-1"
               >
-                🔄 Refresh
-              </button>
-              <a href="/content" className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">
-                + New Submission
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Submission</span>
               </a>
             </div>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 pt-1 border-b border-slate-800/80 pb-3">
+          {/* Pipeline Filter Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
             <button
               onClick={() => setPipelineFilter("all")}
-              className={`text-xs px-3 py-1 rounded-lg font-semibold transition ${
-                pipelineFilter === "all" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white bg-slate-950/60"
+              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition ${
+                pipelineFilter === "all"
+                  ? "bg-navy text-white font-semibold"
+                  : "text-ink-secondary hover:bg-workspace bg-surface border border-border"
               }`}
             >
               All ({submissions.length})
             </button>
             <button
               onClick={() => setPipelineFilter("pending")}
-              className={`text-xs px-3 py-1 rounded-lg font-semibold transition ${
-                pipelineFilter === "pending" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white bg-slate-950/60"
+              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition ${
+                pipelineFilter === "pending"
+                  ? "bg-navy text-white font-semibold"
+                  : "text-ink-secondary hover:bg-workspace bg-surface border border-border"
               }`}
             >
-              Pending Action ({submissions.filter((s) => s.status === "pending_approval" || s.status === "submitted").length})
+              Pending Review ({pendingCount})
             </button>
             <button
               onClick={() => setPipelineFilter("visual")}
-              className={`text-xs px-3 py-1 rounded-lg font-semibold transition ${
-                pipelineFilter === "visual" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white bg-slate-950/60"
+              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition ${
+                pipelineFilter === "visual"
+                  ? "bg-navy text-white font-semibold"
+                  : "text-ink-secondary hover:bg-workspace bg-surface border border-border"
               }`}
             >
-              Design & Media ({submissions.filter((s) => s.content_type === "image" || s.content_type === "video").length})
+              Media &amp; Visuals (
+              {
+                submissions.filter(
+                  (s) => s.content_type === "image" || s.content_type === "video"
+                ).length
+              }
+              )
             </button>
             <button
               onClick={() => setPipelineFilter("approved")}
-              className={`text-xs px-3 py-1 rounded-lg font-semibold transition ${
-                pipelineFilter === "approved" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white bg-slate-950/60"
+              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition ${
+                pipelineFilter === "approved"
+                  ? "bg-navy text-white font-semibold"
+                  : "text-ink-secondary hover:bg-workspace bg-surface border border-border"
               }`}
             >
-              Approved ({submissions.filter((s) => s.status === "approved").length})
+              Approved ({approvedCount})
             </button>
           </div>
 
-          <div className="divide-y divide-slate-800">
+          {/* Submissions List */}
+          <div className="divide-y divide-border pt-1">
             {filteredSubmissions.length > 0 ? (
-              filteredSubmissions.map((sub) => (
-                <div key={sub.id} className="py-3.5 flex items-center justify-between hover:bg-slate-800/30 px-3 rounded-xl transition-all">
-                  <div className="space-y-1 max-w-[55%]">
-                    <div className="text-sm font-bold text-white flex items-center gap-2">
-                      <span className="truncate">{sub.title}</span>
-                      <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded border shrink-0 ${
-                        sub.content_type === "image"
-                          ? "bg-fuchsia-950/80 text-fuchsia-300 border-fuchsia-800"
-                          : sub.content_type === "video"
-                          ? "bg-sky-950/80 text-sky-300 border-sky-800"
-                          : "bg-slate-800 text-slate-400 border-slate-700"
-                      }`}>
-                        {sub.content_type}
-                      </span>
+              filteredSubmissions.map((sub) => {
+                const badge = getStatusBadge(sub.status);
+                const BadgeIcon = badge.icon;
+                return (
+                  <div
+                    key={sub.id}
+                    className="py-3.5 flex items-center justify-between hover:bg-workspace/60 px-3 rounded-lg transition-colors gap-3"
+                  >
+                    <div className="space-y-1 max-w-[55%] min-w-0">
+                      <div className="text-xs font-bold text-navy flex items-center gap-2 truncate">
+                        <span className="truncate">{sub.title}</span>
+                        <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-workspace border border-border text-ink-secondary shrink-0">
+                          {sub.content_type}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-ink-muted truncate">
+                        {sub.description || "No description provided."}
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-400 line-clamp-1">{sub.description || "No description provided."}</div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold border flex items-center gap-1 ${badge.bg}`}
+                      >
+                        <BadgeIcon className="w-3 h-3" />
+                        <span>{badge.label}</span>
+                      </span>
+
+                      <button
+                        onClick={() => handleInspectAudit(sub)}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition flex items-center gap-1"
+                        title="Inspect AI rule checks and audit summary"
+                      >
+                        <ShieldCheck className="w-3 h-3 text-teal" />
+                        <span>Audit</span>
+                      </button>
+
+                      <a
+                        href={`/audits?id=${sub.id}`}
+                        className="text-xs font-medium px-2 py-1 rounded-md bg-workspace hover:bg-border text-ink-secondary border border-border transition"
+                      >
+                        Details
+                      </a>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-bold border capitalize whitespace-nowrap ${getStatusBadge(sub.status)}`}>
-                      {sub.status.replace("_", " ")}
-                    </span>
-                    <button
-                      onClick={() => handleInspectAudit(sub)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition-all flex items-center gap-1.5"
-                    >
-                      <span>🛡️</span> AI Summary
-                    </button>
-                    <a
-                      href={`/audits?id=${sub.id}`}
-                      className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all"
-                    >
-                      Diff
-                    </a>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
-              <div className="py-12 text-center text-xs text-slate-500">
+              <div className="py-12 text-center text-xs text-ink-muted">
                 No submissions found for the selected filter.
               </div>
             )}
           </div>
         </div>
 
-        {/* Right: Team Members Quick Glance */}
-        <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <span>👥</span> Workspace Team
+        {/* Right Column: Workspace Team Members */}
+        <div className="lg:col-span-4 bg-surface border border-border rounded-xl p-6 shadow-subtle space-y-4 h-fit">
+          <div className="flex items-center justify-between pb-3 border-b border-border">
+            <h2 className="text-base font-bold text-navy flex items-center gap-2">
+              <Users className="w-4 h-4 text-teal" />
+              <span>Workspace Team</span>
             </h2>
             <button
               onClick={() => setIsInviteModalOpen(true)}
-              className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+              className="text-xs text-teal hover:text-teal-hover font-semibold"
             >
               + Invite
             </button>
           </div>
 
-          <div className="space-y-3">
-            {members.map((m) => (
-              <div key={m.user_id} className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between">
-                <div className="truncate pr-2">
-                  <div className="text-xs font-bold text-white truncate">{m.full_name || m.email}</div>
-                  <div className="text-[10px] text-slate-400 truncate">{m.email}</div>
+          <div className="space-y-2.5">
+            {members.slice(0, 5).map((m) => (
+              <div
+                key={m.user_id}
+                className="p-3 rounded-lg bg-workspace border border-border flex items-center justify-between gap-2"
+              >
+                <div className="truncate min-w-0">
+                  <div className="text-xs font-bold text-navy truncate">
+                    {m.full_name || m.email}
+                  </div>
+                  <div className="text-[10px] text-ink-muted truncate">{m.email}</div>
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-950/80 border border-indigo-800 text-indigo-400 capitalize">
-                  {m.role}
+                <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-surface border border-border text-ink-secondary shrink-0">
+                  {m.role.replace("_", " ")}
                 </span>
               </div>
             ))}
@@ -328,123 +429,135 @@ export function ManagerDashboard({ submissions, analytics, members, onRefresh }:
           <div className="pt-2">
             <a
               href="/team"
-              className="block w-full py-2.5 text-center text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all"
+              className="block w-full py-2 text-center text-xs font-semibold rounded-lg bg-workspace hover:bg-border text-ink-primary border border-border transition"
             >
-              Manage Permissions & Invitations →
+              Manage Team &amp; Permissions &rarr;
             </a>
           </div>
         </div>
       </div>
 
-      {/* Manager AI Audit & Decision Modal */}
+      {/* Manager Audit Summary Modal */}
       {isAuditModalOpen && selectedSubForAudit && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-2xl max-w-2xl w-full p-6 shadow-dropdown space-y-5 max-h-[90vh] overflow-y-auto text-ink-primary">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
-                  <span>🛡️</span> AI Brand Governance Review
+                <div className="text-xs font-bold uppercase tracking-wider text-teal flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-teal" />
+                  <span>AI Brand Governance Review</span>
                 </div>
-                <h3 className="text-xl font-black text-white mt-1">{selectedSubForAudit.title}</h3>
+                <h3 className="text-lg font-bold text-navy mt-1">
+                  {selectedSubForAudit.title}
+                </h3>
               </div>
               <button
                 onClick={() => setIsAuditModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-ink-muted hover:text-ink-primary p-1 rounded-lg"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {actionFeedback && (
-              <div className="p-3.5 bg-emerald-950 border border-emerald-800 text-emerald-300 text-xs rounded-xl font-bold flex items-center gap-2">
-                <span>✅</span>
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-status-success text-xs rounded-lg font-semibold flex items-center gap-2">
+                <Check className="w-4 h-4 text-status-success" />
                 <span>{actionFeedback}</span>
               </div>
             )}
 
             {isLoadingAudit ? (
-              <div className="py-12 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
-                <span className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"></span>
-                <span>Loading AI audit findings...</span>
+              <div className="py-12 text-center text-ink-muted text-xs flex items-center justify-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin text-teal" />
+                <span>Loading audit findings...</span>
               </div>
             ) : inspectionAudit ? (
               <div className="space-y-4">
-                {/* Score & Human in loop status */}
+                {/* Score & Review Notice */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                    <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Compliance Score</div>
-                    <div className="text-3xl font-black text-emerald-400 mt-1 flex items-baseline">
+                  <div className="p-4 rounded-xl bg-workspace border border-border">
+                    <div className="text-[11px] text-ink-secondary font-semibold uppercase tracking-wider">
+                      Compliance Score
+                    </div>
+                    <div className="text-2xl font-bold text-navy mt-1">
                       {inspectionAudit.summary.compliance_score}
-                      <span className="text-sm text-slate-400 font-bold ml-1">%</span>
+                      <span className="text-sm text-ink-muted font-normal ml-1">/100</span>
                     </div>
                   </div>
-                  <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                    <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Human Authority</div>
-                    <div className="text-sm font-bold text-amber-300 mt-2 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                      <span>Sign-off Required</span>
+                  <div className="p-4 rounded-xl bg-workspace border border-border">
+                    <div className="text-[11px] text-ink-secondary font-semibold uppercase tracking-wider">
+                      Human Authority
+                    </div>
+                    <div className="text-xs font-bold text-status-warning mt-2 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-status-warning" />
+                      <span>Reviewer Sign-off Required</span>
                     </div>
                   </div>
                 </div>
 
-                {/* AI Executive Verdict */}
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-1.5">
-                  <div className="text-xs font-bold text-indigo-400 uppercase tracking-wider">AI Executive Verdict</div>
-                  <p className="text-xs text-slate-200 leading-relaxed italic">
-                    &quot;{inspectionAudit.summary.verdict_overview}&quot;
-                  </p>
-                </div>
+                {/* AI Executive Summary */}
+                {inspectionAudit.summary.verdict_overview && (
+                  <div className="p-3.5 rounded-xl bg-workspace border border-border space-y-1">
+                    <div className="text-xs font-bold text-navy uppercase tracking-wider">
+                      Executive Verdict
+                    </div>
+                    <p className="text-xs text-ink-secondary leading-relaxed">
+                      {inspectionAudit.summary.verdict_overview}
+                    </p>
+                  </div>
+                )}
 
                 {/* Findings List */}
-                <div className="space-y-2.5">
-                  <div className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                    Findings & Verification Checks ({inspectionAudit.findings.length})
+                <div className="space-y-2">
+                  <div className="text-xs font-bold text-navy uppercase tracking-wider">
+                    Findings ({inspectionAudit.findings.length})
                   </div>
                   {inspectionAudit.findings.map((f) => (
-                    <div key={f.id} className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+                    <div
+                      key={f.id}
+                      className="p-3 rounded-lg bg-workspace border border-border space-y-1"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white">{f.title}</span>
-                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
-                          f.severity === "high" || f.severity === "critical"
-                            ? "bg-rose-950 text-rose-300 border border-rose-800"
-                            : f.severity === "medium"
-                            ? "bg-amber-950 text-amber-300 border border-amber-800"
-                            : "bg-indigo-950 text-indigo-300 border border-indigo-800"
-                        }`}>
+                        <span className="text-xs font-bold text-navy">{f.title}</span>
+                        <span
+                          className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
+                            f.severity === "high" || f.severity === "critical"
+                              ? "bg-rose-50 text-status-error border border-rose-200"
+                              : f.severity === "medium"
+                              ? "bg-amber-50 text-status-warning border border-amber-200"
+                              : "bg-teal-50 text-teal-800 border border-teal-200"
+                          }`}
+                        >
                           {f.severity}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400">{f.message}</p>
-                      {f.suggested_correction && (
-                        <div className="text-xs p-2 rounded-lg bg-indigo-950/30 border border-indigo-900/40 text-indigo-200 mt-1">
-                          <strong>Remediation:</strong> {f.suggested_correction.replacement_text}
-                        </div>
-                      )}
+                      <p className="text-xs text-ink-secondary">{f.message}</p>
                     </div>
                   ))}
                 </div>
 
-                {/* Decision Actions */}
-                <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                {/* Actions */}
+                <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
                   <a
                     href={`/audits?id=${inspectionAudit.content_id}`}
-                    className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                    className="text-xs text-teal hover:text-teal-hover font-semibold flex items-center gap-1"
                   >
-                    Open in Full Audit Workspace ↗
+                    <span>Open in Full Audit Workspace</span>
+                    <ExternalLink className="w-3 h-3" />
                   </a>
 
-                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <button
                       onClick={() => handleManagerDecision("request_changes")}
-                      className="flex-1 sm:flex-none px-4 py-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 font-bold text-xs rounded-xl transition"
+                      className="flex-1 sm:flex-none px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-status-warning border border-amber-300 font-semibold text-xs rounded-lg transition"
                     >
-                      ⚠️ Request Changes
+                      Request Changes
                     </button>
                     <button
                       onClick={() => handleManagerDecision("approve")}
-                      className="flex-1 sm:flex-none px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-1.5"
+                      className="flex-1 sm:flex-none px-4 py-2 bg-teal hover:bg-teal-hover text-white font-semibold text-xs rounded-lg shadow-sm transition"
                     >
-                      <span>✅</span> Approve Asset
+                      Approve Asset
                     </button>
                   </div>
                 </div>
@@ -456,65 +569,70 @@ export function ManagerDashboard({ submissions, analytics, members, onRefresh }:
 
       {/* Quick Invite Modal */}
       {isInviteModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <span>✉️</span> Invite Team Member
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-xl max-w-md w-full p-6 shadow-dropdown space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-base font-bold text-navy flex items-center gap-2">
+                <Users className="w-4 h-4 text-teal" />
+                <span>Invite Team Member</span>
               </h3>
               <button
                 onClick={() => setIsInviteModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-ink-muted hover:text-ink-primary"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {inviteSuccessMsg && (
-              <div className="p-3 bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs rounded-xl break-all">
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-status-success text-xs rounded-lg break-all">
                 {inviteSuccessMsg}
               </div>
             )}
 
             <form onSubmit={handleSendInvite} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Employee Email</label>
+                <label className="block text-xs font-semibold text-ink-primary mb-1">
+                  Employee Email
+                </label>
                 <input
                   type="email"
                   required
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="colleague@acmecloud.com"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-workspace border border-border rounded-lg px-3 py-2 text-xs text-ink-primary focus:outline-none focus:border-teal"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Designated Role</label>
+                <label className="block text-xs font-semibold text-ink-primary mb-1">
+                  Designated Role
+                </label>
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-workspace border border-border rounded-lg px-3 py-2 text-xs text-ink-primary focus:outline-none focus:border-teal"
                 >
                   <option value="marketing">Marketing Content Creator</option>
                   <option value="designer">Senior Designer</option>
-                  <option value="compliance_officer">Legal & Compliance Reviewer</option>
+                  <option value="compliance_officer">Legal &amp; Compliance Reviewer</option>
                   <option value="admin">Workspace Co-Administrator</option>
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setIsInviteModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white bg-slate-800"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-ink-secondary hover:bg-workspace border border-border"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isInviting}
-                  className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
+                  className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-teal hover:bg-teal-hover disabled:opacity-50"
                 >
                   {isInviting ? "Sending..." : "Send Invitation"}
                 </button>

@@ -233,11 +233,11 @@ export function BrandGuidelinesManager({
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
       {/* Top Header & Publication Control Panel */}
-      <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 shadow-xl relative">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+      <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle shadow-xl relative">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center gap-1.5">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/10 border border-indigo-500/30 text-teal flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
                 Manager Workspace
               </span>
@@ -247,11 +247,11 @@ export function BrandGuidelinesManager({
                   <CheckCircle className="w-3 h-3" /> Published Active
                 </span>
               ) : initialProfile.status === "submitted" ? (
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-950/80 border border-purple-800/60 text-purple-300 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-950/80 border border-purple-800/60 text-purple-700 flex items-center gap-1">
                   <Clock className="w-3 h-3" /> Pending Legal Review
                 </span>
               ) : initialProfile.status === "approved" ? (
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-950/80 border border-cyan-800/60 text-cyan-300 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-950/80 border border-cyan-800/60 text-teal flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" /> Approved by Legal
                 </span>
               ) : initialProfile.status === "changes_requested" ? (
@@ -264,29 +264,29 @@ export function BrandGuidelinesManager({
                 </span>
               )}
 
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-workspace text-ink-secondary border border-border">
                 v{initialProfile.version}
               </span>
 
               {initialProfile.jurisdiction && (
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-900 border border-slate-700 text-slate-300 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-workspace border border-border text-ink-secondary flex items-center gap-1">
                   <Globe className="w-3 h-3 text-cyan-400" />
                   {initialProfile.jurisdiction}
                 </span>
               )}
 
               {initialProfile.industry && (
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-900 border border-slate-700 text-slate-300 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-workspace border border-border text-ink-secondary flex items-center gap-1">
                   <Building className="w-3 h-3 text-amber-400" />
                   {initialProfile.industry}
                 </span>
               )}
             </div>
 
-            <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-bold text-navy tracking-tight">
               Brand Guidelines Governance System
             </h1>
-            <p className="text-xs lg:text-sm text-slate-400 mt-1 max-w-2xl">
+            <p className="text-xs lg:text-sm text-ink-muted mt-1 max-w-2xl">
               Define the authoritative brand standards that govern all creative assets, platform placements, and automated AI compliance audits.
             </p>
           </div>
@@ -295,7 +295,7 @@ export function BrandGuidelinesManager({
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowTemplatesModal(true)}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-amber-300 border border-amber-800/40 transition flex items-center gap-1.5 shadow-sm"
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition flex items-center gap-1.5 shadow-sm"
               title="Browse and import verified statutory compliance rule templates"
             >
               <BookOpen className="w-3.5 h-3.5 text-amber-400" />
@@ -304,7 +304,7 @@ export function BrandGuidelinesManager({
 
             <button
               onClick={() => setShowConflictModal(true)}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 shadow-sm"
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-workspace hover:bg-slate-200 text-ink-primary border border-border transition flex items-center gap-1.5 shadow-sm"
               title="Run 5-tier rule hierarchy and conflict detection"
             >
               <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
@@ -313,7 +313,7 @@ export function BrandGuidelinesManager({
 
             <button
               onClick={() => setShowPreviewModal(true)}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 shadow-sm"
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-workspace hover:bg-slate-200 text-ink-primary border border-border transition flex items-center gap-1.5 shadow-sm"
               title="Preview inherited defaults and overrides"
             >
               <Eye className="w-3.5 h-3.5 text-sky-400" />
@@ -322,17 +322,17 @@ export function BrandGuidelinesManager({
 
             <button
               onClick={() => setShowVersionModal(true)}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 shadow-sm"
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-workspace hover:bg-slate-200 text-ink-primary border border-border transition flex items-center gap-1.5 shadow-sm"
               title="Inspect history of published versions"
             >
-              <History className="w-3.5 h-3.5 text-indigo-400" />
+              <History className="w-3.5 h-3.5 text-teal" />
               <span>History</span>
             </button>
 
             {hasUnsavedChanges && (
               <button
                 onClick={handleRevert}
-                className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 transition flex items-center gap-1"
+                className="px-3 py-2 rounded-xl text-xs font-semibold bg-workspace hover:bg-slate-200 text-ink-secondary hover:text-ink-primary border border-border transition flex items-center gap-1"
                 title="Discard working changes"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -345,8 +345,8 @@ export function BrandGuidelinesManager({
               disabled={isSaving}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md ${
                 hasUnsavedChanges
-                  ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30"
-                  : "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                  ? "bg-teal hover:bg-teal-hover text-white shadow-sm"
+                  : "bg-workspace hover:bg-slate-200 text-ink-primary border border-border"
               }`}
             >
               <Save className="w-3.5 h-3.5" />
@@ -356,10 +356,10 @@ export function BrandGuidelinesManager({
             {initialProfile.status !== "submitted" && (
               <button
                 onClick={() => setShowSubmitReviewModal(true)}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-950/80 hover:bg-purple-900 text-purple-200 border border-purple-700/60 transition flex items-center gap-1.5 shadow-md"
+                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 transition flex items-center gap-1.5 shadow-md"
                 title="Submit proposed changes to Legal & Compliance Officer"
               >
-                <Send className="w-3.5 h-3.5 text-purple-300" />
+                <Send className="w-3.5 h-3.5 text-purple-700" />
                 <span>Submit Review</span>
               </button>
             )}
@@ -367,17 +367,17 @@ export function BrandGuidelinesManager({
             {(isLegalOfficer || initialProfile.status === "submitted") && (
               <button
                 onClick={() => setShowLegalReviewModal(true)}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-950/80 hover:bg-cyan-900 text-cyan-200 border border-cyan-700/60 transition flex items-center gap-1.5 shadow-md"
+                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-teal/10 hover:bg-teal/20 text-teal border border-teal/30 transition flex items-center gap-1.5 shadow-md"
                 title="Review proposed rules, verify evidence citations, and decide"
               >
-                <Scale className="w-3.5 h-3.5 text-cyan-300" />
+                <Scale className="w-3.5 h-3.5 text-teal" />
                 <span>Legal Review</span>
               </button>
             )}
 
             <button
               onClick={() => setShowPublishModal(true)}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/25"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-teal hover:bg-teal-hover text-white transition flex items-center gap-1.5 shadow-sm"
             >
               <UploadCloud className="w-3.5 h-3.5" />
               <span>Publish</span>
@@ -387,10 +387,10 @@ export function BrandGuidelinesManager({
 
         {/* Governance Lifecycle Banners */}
         {initialProfile.status === "changes_requested" && (
-          <div className="mt-4 p-3.5 rounded-xl bg-rose-950/30 border border-rose-800/60 text-xs text-rose-200 flex items-start gap-3">
+          <div className="mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-3">
             <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <div className="font-bold text-rose-300 flex items-center gap-2">
+              <div className="font-bold text-rose-900 flex items-center gap-2">
                 <span>Legal Review Decision: Changes Requested</span>
                 {initialProfile.reviewed_by && (
                   <span className="text-[10px] font-normal text-rose-400">
@@ -398,7 +398,7 @@ export function BrandGuidelinesManager({
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-rose-200/80 leading-relaxed font-mono">
+              <p className="text-[11px] text-rose-800 leading-relaxed font-mono">
                 &ldquo;{initialProfile.review_rationale || "Please revise the compliance claims and resubmit for legal verification."}&rdquo;
               </p>
             </div>
@@ -406,10 +406,10 @@ export function BrandGuidelinesManager({
         )}
 
         {initialProfile.status === "approved" && (
-          <div className="mt-4 p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-800/60 text-xs text-cyan-200 flex items-start gap-3">
+          <div className="mt-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start gap-3">
             <CheckCircle className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <div className="font-bold text-cyan-300 flex items-center gap-2">
+              <div className="font-bold text-teal flex items-center gap-2">
                 <span>Legal Review Cleared: Approved for Release</span>
                 {initialProfile.reviewed_by && (
                   <span className="text-[10px] font-normal text-cyan-400">
@@ -417,7 +417,7 @@ export function BrandGuidelinesManager({
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-cyan-200/80 leading-relaxed">
+              <p className="text-[11px] text-emerald-800 leading-relaxed">
                 {initialProfile.review_rationale || "All statutory and claim-verification rules cleared."} Authorized brand managers may now publish this version.
               </p>
             </div>
@@ -425,10 +425,10 @@ export function BrandGuidelinesManager({
         )}
 
         {initialProfile.status === "submitted" && (
-          <div className="mt-4 p-3.5 rounded-xl bg-purple-950/30 border border-purple-800/60 text-xs text-purple-200 flex items-start gap-3">
+          <div className="mt-4 p-3.5 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-800 flex items-start gap-3">
             <Clock className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <div className="font-bold text-purple-300 flex items-center gap-2">
+              <div className="font-bold text-purple-700 flex items-center gap-2">
                 <span>Awaiting Legal &amp; Compliance Officer Verification</span>
                 {initialProfile.submitted_by && (
                   <span className="text-[10px] font-normal text-purple-400">
@@ -436,7 +436,7 @@ export function BrandGuidelinesManager({
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-purple-200/80 leading-relaxed">
+              <p className="text-[11px] text-purple-800 leading-relaxed">
                 {initialProfile.submission_notes ? `Scope: "${initialProfile.submission_notes}"` : "This draft is locked awaiting formal compliance officer review."}
               </p>
             </div>
@@ -444,11 +444,11 @@ export function BrandGuidelinesManager({
         )}
 
         {/* Status & Feedback Toast */}
-        <div className="pt-3 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
+        <div className="pt-3 flex flex-wrap items-center justify-between text-xs text-ink-secondary gap-2">
           <div className="flex items-center gap-4">
             <span>
               Last Published:{" "}
-              <strong className="text-slate-200 font-medium">
+              <strong className="text-ink-primary font-medium">
                 {initialProfile.published_at
                   ? new Date(initialProfile.published_at).toLocaleString()
                   : "Not yet published"}
@@ -456,7 +456,7 @@ export function BrandGuidelinesManager({
             </span>
             {initialProfile.published_by && (
               <span>
-                By: <strong className="text-slate-200 font-medium">{initialProfile.published_by}</strong>
+                By: <strong className="text-ink-primary font-medium">{initialProfile.published_by}</strong>
               </span>
             )}
           </div>
@@ -473,10 +473,10 @@ export function BrandGuidelinesManager({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Sidebar Category Navigation */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="glass-panel p-3 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 sticky top-4 space-y-4">
+          <div className="bg-surface p-3 rounded-xl border border-border shadow-subtle sticky top-4 space-y-4">
             {navSections.map((grp, gIdx) => (
               <div key={gIdx} className="space-y-1">
-                <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400 font-mono">
+                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-muted font-mono">
                   {grp.group}
                 </div>
                 {grp.items.map((item) => {
@@ -488,12 +488,12 @@ export function BrandGuidelinesManager({
                       onClick={() => setActiveSection(item.id)}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-left transition ${
                         isActive
-                          ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                          : "text-slate-300 hover:bg-slate-800/60 hover:text-white"
+                          ? "bg-teal text-white shadow-sm"
+                          : "text-ink-secondary hover:bg-slate-100 hover:text-ink-primary"
                       }`}
                     >
                       <div className="flex items-center gap-2.5 truncate">
-                        <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-white" : "text-indigo-400"}`} />
+                        <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-white" : "text-teal"}`} />
                         <span className="truncate">{item.label}</span>
                       </div>
                       {isActive && <ChevronRight className="w-3.5 h-3.5 shrink-0 text-white" />}
@@ -509,20 +509,20 @@ export function BrandGuidelinesManager({
         <div className="lg:col-span-3 space-y-6">
           {/* SECTION A1: Brand Identity */}
           {activeSection === "identity" && (
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 space-y-6">
-              <div className="border-b border-slate-800 pb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-indigo-400" />
+            <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle space-y-6">
+              <div className="border-b border-border pb-4">
+                <h2 className="text-lg font-bold text-navy flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-teal" />
                   A1. Brand Identity &amp; Corporate Purpose
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-ink-secondary mt-1">
                   Core enterprise positioning, mission statement, target market, and audience personas.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Official Brand Name <span className="text-rose-400">*</span>
                   </label>
                   <input
@@ -535,12 +535,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="e.g. Acme Cloud Systems"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Industry &amp; Business Sector
                   </label>
                   <input
@@ -553,12 +553,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="e.g. Enterprise Cloud & Infrastructure"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Brand Tagline / Slogan
                   </label>
                   <input
@@ -571,12 +571,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="e.g. Autonomous Zero-Trust Infrastructure for the AI-Native Enterprise"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Company Overview &amp; Description
                   </label>
                   <textarea
@@ -589,12 +589,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="Describe your organization's core operations, products, and market value..."
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Brand Mission Statement
                   </label>
                   <textarea
@@ -607,12 +607,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="What immediate value does your organization champion?"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Brand Vision Statement
                   </label>
                   <textarea
@@ -625,12 +625,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="Where is your brand heading over the next decade?"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Market Positioning
                   </label>
                   <input
@@ -643,12 +643,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="e.g. The premier enterprise cloud infrastructure platform combining silicon-grade isolation..."
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Primary Audience
                   </label>
                   <input
@@ -661,12 +661,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="e.g. Chief Technology Officers, Principal Platform Architects"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Secondary Audience
                   </label>
                   <input
@@ -679,13 +679,13 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="e.g. Site Reliability Engineers, DevSecOps Leads"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 {/* Values Pill Tags */}
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Core Brand Values
                   </label>
                   <div className="flex flex-wrap gap-2 mb-2">
@@ -720,7 +720,7 @@ export function BrandGuidelinesManager({
                           setNewTagInput({ ...newTagInput, val: "" });
                         }
                       }}
-                      className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500 flex-1"
+                      className="px-3 py-1.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal flex-1"
                     />
                     <button
                       type="button"
@@ -728,7 +728,7 @@ export function BrandGuidelinesManager({
                         addTag(["identity", "values"], newTagInput["val"]);
                         setNewTagInput({ ...newTagInput, val: "" });
                       }}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl text-slate-200"
+                      className="px-3 py-1.5 bg-workspace hover:bg-slate-700 text-xs font-semibold rounded-xl text-ink-primary"
                     >
                       + Add
                     </button>
@@ -736,7 +736,7 @@ export function BrandGuidelinesManager({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Website URL
                   </label>
                   <input
@@ -749,12 +749,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="https://acmecloud.com"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Brand Governance Contact Email
                   </label>
                   <input
@@ -767,7 +767,7 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="brand@acmecloud.com"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
               </div>
@@ -776,13 +776,13 @@ export function BrandGuidelinesManager({
 
           {/* SECTION A2: Voice & Communication */}
           {activeSection === "voice" && (
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 space-y-6">
-              <div className="border-b border-slate-800 pb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-indigo-400" />
+            <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle space-y-6">
+              <div className="border-b border-border pb-4">
+                <h2 className="text-lg font-bold text-navy flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-teal" />
                   A2. Brand Voice, Tone &amp; Communication Standards
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-ink-secondary mt-1">
                   Configure tonal parameters, formality levels, forbidden vocabulary, and approved messaging copy.
                 </p>
               </div>
@@ -790,7 +790,7 @@ export function BrandGuidelinesManager({
               <div className="space-y-4">
                 {/* Brand Tone Selectable Badges */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-2">
                     Primary Brand Tones (Select all that apply)
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -824,7 +824,7 @@ export function BrandGuidelinesManager({
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
                             isSelected
                               ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30"
-                              : "bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700"
+                              : "bg-workspace text-ink-muted border-border hover:border-border"
                           }`}
                         >
                           {tone}
@@ -836,7 +836,7 @@ export function BrandGuidelinesManager({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                       Formality Level
                     </label>
                     <select
@@ -847,7 +847,7 @@ export function BrandGuidelinesManager({
                           voice: { ...data.voice, formality_level: e.target.value },
                         })
                       }
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                     >
                       <option value="casual">Casual (Friendly, colloquial)</option>
                       <option value="conversational">Conversational (Accessible, direct)</option>
@@ -858,7 +858,7 @@ export function BrandGuidelinesManager({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                       Sentence Length Preference
                     </label>
                     <select
@@ -872,7 +872,7 @@ export function BrandGuidelinesManager({
                           },
                         })
                       }
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                     >
                       <option value="concise">Concise (Under 18 words per sentence)</option>
                       <option value="balanced">Balanced (15-25 words)</option>
@@ -881,7 +881,7 @@ export function BrandGuidelinesManager({
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                       Communication Style &amp; Guidelines
                     </label>
                     <textarea
@@ -894,20 +894,20 @@ export function BrandGuidelinesManager({
                         })
                       }
                       placeholder="e.g. Clear, technical precision backed by empirical benchmarks rather than marketing hype..."
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                     />
                   </div>
                 </div>
 
                 {/* Words to Avoid (Crucial for AI Engine Terminology checker) */}
-                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-3">
+                <div className="p-4 rounded-xl bg-workspace/60 border border-border space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
                         <AlertTriangle className="w-3.5 h-3.5" />
                         <span>Words &amp; Phrases to Avoid (Enforced by AI Engine)</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
+                      <p className="text-[11px] text-ink-muted mt-0.5">
                         The AI audit engine flags any creative asset containing these terms as non-compliant.
                       </p>
                     </div>
@@ -946,7 +946,7 @@ export function BrandGuidelinesManager({
                           setNewTagInput({ ...newTagInput, avoid: "" });
                         }
                       }}
-                      className="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 flex-1"
+                      className="px-3 py-1.5 bg-workspace border border-border rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 flex-1"
                     />
                     <button
                       type="button"
@@ -963,19 +963,19 @@ export function BrandGuidelinesManager({
 
                 {/* Approved Copy Examples */}
                 <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-300">
+                  <label className="block text-xs font-semibold text-ink-secondary">
                     Approved Brand Messaging Examples
                   </label>
                   {data.voice?.approved_copy_examples?.map((ex, idx) => (
                     <div
                       key={idx}
-                      className="p-3 bg-slate-950 border border-slate-800/80 rounded-xl flex items-start justify-between gap-3"
+                      className="p-3 bg-workspace border border-border rounded-xl flex items-start justify-between gap-3"
                     >
                       <div>
                         <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
                           {ex.context}
                         </span>
-                        <p className="text-xs text-slate-200 mt-1 italic">&ldquo;{ex.text}&rdquo;</p>
+                        <p className="text-xs text-ink-primary mt-1 italic">&ldquo;{ex.text}&rdquo;</p>
                       </div>
                       <button
                         type="button"
@@ -987,7 +987,7 @@ export function BrandGuidelinesManager({
                             voice: { ...data.voice, approved_copy_examples: updated },
                           });
                         }}
-                        className="text-slate-500 hover:text-rose-400"
+                        className="text-ink-muted hover:text-rose-400"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1000,14 +1000,14 @@ export function BrandGuidelinesManager({
 
           {/* SECTION A3: Brand Colour System */}
           {activeSection === "colors" && (
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle space-y-6">
+              <div className="flex items-center justify-between border-b border-border pb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-indigo-400" />
+                  <h2 className="text-lg font-bold text-navy flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-teal" />
                     A3. Brand Colour System &amp; Palette Manager
                   </h2>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-ink-secondary mt-1">
                     Manage mandatory, secondary, accent, and semantic color definitions with live WCAG AA/AAA contrast checks.
                   </p>
                 </div>
@@ -1043,7 +1043,7 @@ export function BrandGuidelinesManager({
                 {data.colors?.palette?.map((c, idx) => (
                   <div
                     key={c.id || idx}
-                    className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-3 relative group"
+                    className="p-4 rounded-xl bg-workspace/80 border border-border space-y-3 relative group"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -1074,13 +1074,13 @@ export function BrandGuidelinesManager({
                                 colors: { ...data.colors, palette: updated },
                               });
                             }}
-                            className="text-xs font-bold text-white bg-transparent border-b border-transparent hover:border-slate-700 focus:border-indigo-500 focus:outline-none"
+                            className="text-xs font-bold text-white bg-transparent border-b border-transparent hover:border-border focus:border-indigo-500 focus:outline-none"
                           />
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="font-mono text-[11px] text-slate-300 font-semibold uppercase">
+                            <span className="font-mono text-[11px] text-ink-secondary font-semibold uppercase">
                               {c.hex}
                             </span>
-                            <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                            <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-workspace text-ink-muted">
                               {c.role}
                             </span>
                           </div>
@@ -1097,7 +1097,7 @@ export function BrandGuidelinesManager({
                             colors: { ...data.colors, palette: updated },
                           });
                         }}
-                        className="text-slate-500 hover:text-rose-400 transition"
+                        className="text-ink-muted hover:text-rose-400 transition"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1105,7 +1105,7 @@ export function BrandGuidelinesManager({
 
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Role</label>
+                        <label className="text-[10px] text-ink-muted block mb-0.5">Role</label>
                         <select
                           value={c.role}
                           onChange={(e) => {
@@ -1116,7 +1116,7 @@ export function BrandGuidelinesManager({
                               colors: { ...data.colors, palette: updated },
                             });
                           }}
-                          className="w-full px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300"
+                          className="w-full px-2 py-1 bg-workspace border border-border rounded-lg text-xs text-ink-secondary"
                         >
                           <option value="primary">Primary</option>
                           <option value="secondary">Secondary</option>
@@ -1129,7 +1129,7 @@ export function BrandGuidelinesManager({
                       </div>
 
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Status</label>
+                        <label className="text-[10px] text-ink-muted block mb-0.5">Status</label>
                         <select
                           value={c.status}
                           onChange={(e) => {
@@ -1140,7 +1140,7 @@ export function BrandGuidelinesManager({
                               colors: { ...data.colors, palette: updated },
                             });
                           }}
-                          className="w-full px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300"
+                          className="w-full px-2 py-1 bg-workspace border border-border rounded-lg text-xs text-ink-secondary"
                         >
                           <option value="mandatory">Mandatory</option>
                           <option value="preferred">Preferred</option>
@@ -1162,7 +1162,7 @@ export function BrandGuidelinesManager({
                           });
                         }}
                         placeholder="Usage rules / Intent..."
-                        className="w-full px-2.5 py-1.5 bg-slate-900/60 border border-slate-800/80 rounded-lg text-[11px] text-slate-300 placeholder-slate-600 focus:outline-none"
+                        className="w-full px-2.5 py-1.5 bg-workspace/60 border border-border rounded-lg text-[11px] text-ink-secondary placeholder-slate-600 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1173,20 +1173,20 @@ export function BrandGuidelinesManager({
 
           {/* SECTION A4: Typography Guidelines */}
           {activeSection === "typography" && (
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 space-y-6">
-              <div className="border-b border-slate-800 pb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Type className="w-4 h-4 text-indigo-400" />
+            <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle space-y-6">
+              <div className="border-b border-border pb-4">
+                <h2 className="text-lg font-bold text-navy flex items-center gap-2">
+                  <Type className="w-4 h-4 text-teal" />
                   A4. Typography System &amp; Presets
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-ink-secondary mt-1">
                   Define brand typefaces, weights, line-height hierarchies, and interactive live preview specimens.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Primary Font Family
                   </label>
                   <input
@@ -1199,12 +1199,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="e.g. Inter"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Secondary Font Family
                   </label>
                   <input
@@ -1217,12 +1217,12 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="e.g. Roboto"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
                     Display / Headline Font
                   </label>
                   <input
@@ -1235,14 +1235,14 @@ export function BrandGuidelinesManager({
                       })
                     }
                     placeholder="e.g. Outfit"
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary focus:outline-none focus:border-teal"
                   />
                 </div>
               </div>
 
               {/* Live Typography Preview Specimen */}
-              <div className="p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-4">
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="p-5 rounded-xl bg-workspace border border-border space-y-4">
+                <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">
                   Live Typography Specimen
                 </div>
                 <div className="space-y-3">
@@ -1250,7 +1250,7 @@ export function BrandGuidelinesManager({
                     style={{
                       fontFamily: data.typography?.display_font || "sans-serif",
                     }}
-                    className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight"
+                    className="text-2xl lg:text-3xl font-extrabold text-ink-primary tracking-tight"
                   >
                     H1 Headline Specimen: Autonomous Cloud Fabric
                   </div>
@@ -1258,7 +1258,7 @@ export function BrandGuidelinesManager({
                     style={{
                       fontFamily: data.typography?.primary_font || "sans-serif",
                     }}
-                    className="text-sm text-slate-300 leading-relaxed max-w-2xl"
+                    className="text-sm text-ink-secondary leading-relaxed max-w-2xl"
                   >
                     Body text specimen rendering: Enterprise microservices achieve verified 99.999% SLA throughput using deterministic packet queues across sovereign cloud data centers.
                   </div>
@@ -1267,12 +1267,12 @@ export function BrandGuidelinesManager({
 
               {/* Hierarchy Presets Table */}
               <div className="space-y-2">
-                <div className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <div className="text-xs font-bold text-ink-secondary uppercase tracking-wider">
                   Configured Presets (H1, H2, Body, CTA)
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left text-slate-300">
-                    <thead className="bg-slate-900 text-slate-400 uppercase text-[10px]">
+                  <table className="w-full text-xs text-left text-ink-secondary">
+                    <thead className="bg-workspace text-ink-muted uppercase text-[10px]">
                       <tr>
                         <th className="p-2.5 rounded-l-lg">Preset</th>
                         <th className="p-2.5">Font Family</th>
@@ -1284,13 +1284,13 @@ export function BrandGuidelinesManager({
                     </thead>
                     <tbody className="divide-y divide-slate-800">
                       {data.typography?.presets?.map((p, idx) => (
-                        <tr key={idx} className="hover:bg-slate-900/40">
+                        <tr key={idx} className="hover:bg-workspace/40">
                           <td className="p-2.5 font-bold text-white">{p.name}</td>
                           <td className="p-2.5 font-mono text-[11px]">{p.font_family}</td>
                           <td className="p-2.5 font-mono text-[11px]">{p.font_size}</td>
                           <td className="p-2.5 font-mono text-[11px]">{p.line_height}</td>
                           <td className="p-2.5 font-mono text-[11px]">{p.font_weight}</td>
-                          <td className="p-2.5 text-slate-400 text-[11px]">{p.intended_usage}</td>
+                          <td className="p-2.5 text-ink-muted text-[11px]">{p.intended_usage}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1302,13 +1302,13 @@ export function BrandGuidelinesManager({
 
           {/* SECTION A5: Logo Guidelines */}
           {activeSection === "logos" && (
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 space-y-6">
-              <div className="border-b border-slate-800 pb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4 text-indigo-400" />
+            <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle space-y-6">
+              <div className="border-b border-border pb-4">
+                <h2 className="text-lg font-bold text-navy flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-teal" />
                   A5. Logo Guidelines &amp; Clear Space Standards
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-ink-secondary mt-1">
                   Manage primary wordmarks, monograms, clear-space minimums, and prohibited modifications.
                 </p>
               </div>
@@ -1317,16 +1317,16 @@ export function BrandGuidelinesManager({
                 {data.logos?.variants?.map((logo, idx) => (
                   <div
                     key={logo.id || idx}
-                    className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                    className="p-4 rounded-xl bg-workspace border border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
                   >
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-white">{logo.name}</span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800/60">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-950 text-teal border border-indigo-800/60">
                           {logo.type}
                         </span>
                       </div>
-                      <div className="mt-1 text-xs text-slate-400 space-y-0.5">
+                      <div className="mt-1 text-xs text-ink-secondary space-y-0.5">
                         <p>
                           <strong>Clear Space:</strong> {logo.clear_space_formula}
                         </p>
@@ -1339,11 +1339,11 @@ export function BrandGuidelinesManager({
                       </div>
                     </div>
 
-                    <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl text-center">
-                      <div className="w-28 h-10 flex items-center justify-center font-bold tracking-tight text-white border border-dashed border-slate-700 rounded bg-slate-950">
+                    <div className="p-3 bg-workspace border border-border rounded-xl text-center">
+                      <div className="w-28 h-10 flex items-center justify-center font-bold tracking-tight text-white border border-dashed border-border rounded bg-workspace">
                         {logo.type === "icon" ? "ICON" : "WORDMARK"}
                       </div>
-                      <span className="text-[10px] text-slate-500 mt-1 block">Approved Asset</span>
+                      <span className="text-[10px] text-ink-muted mt-1 block">Approved Asset</span>
                     </div>
                   </div>
                 ))}
@@ -1353,14 +1353,14 @@ export function BrandGuidelinesManager({
 
           {/* SECTION A8: Do's and Don'ts */}
           {activeSection === "dodonts" && (
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle space-y-6">
+              <div className="flex items-center justify-between border-b border-border pb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-navy flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     A8. Brand Do&apos;s and Don&apos;ts (AI Rule Engine)
                   </h2>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-ink-secondary mt-1">
                     Structured rules evaluated during automated creative audits with Critical, High, Medium, and Low severity weighting.
                   </p>
                 </div>
@@ -1390,7 +1390,7 @@ export function BrandGuidelinesManager({
                 {data.dos_and_donts?.map((rule, idx) => (
                   <div
                     key={rule.id || idx}
-                    className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 relative"
+                    className="p-4 rounded-xl bg-workspace border border-border space-y-2 relative"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -1403,7 +1403,7 @@ export function BrandGuidelinesManager({
                               updated[idx].title = e.target.value;
                               setData({ ...data, dos_and_donts: updated });
                             }}
-                            className="w-full text-xs font-bold text-white bg-transparent border-b border-slate-800 focus:border-indigo-500 focus:outline-none"
+                            className="w-full text-xs font-bold text-white bg-transparent border-b border-border focus:border-indigo-500 focus:outline-none"
                             placeholder="Rule Title"
                           />
                         </div>
@@ -1415,7 +1415,7 @@ export function BrandGuidelinesManager({
                               updated[idx].priority = e.target.value as any;
                               setData({ ...data, dos_and_donts: updated });
                             }}
-                            className="px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs font-bold capitalize text-slate-300"
+                            className="px-2 py-1 bg-workspace border border-border rounded-lg text-xs font-bold capitalize text-ink-secondary"
                           >
                             <option value="critical">Critical</option>
                             <option value="high">High</option>
@@ -1430,7 +1430,7 @@ export function BrandGuidelinesManager({
                               updated[idx].type = e.target.value as any;
                               setData({ ...data, dos_and_donts: updated });
                             }}
-                            className="px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs capitalize text-slate-300"
+                            className="px-2 py-1 bg-workspace border border-border rounded-lg text-xs capitalize text-ink-secondary"
                           >
                             <option value="mandatory">Mandatory</option>
                             <option value="recommended">Recommended</option>
@@ -1448,7 +1448,7 @@ export function BrandGuidelinesManager({
                           updated.splice(idx, 1);
                           setData({ ...data, dos_and_donts: updated });
                         }}
-                        className="text-slate-500 hover:text-rose-400 transition"
+                        className="text-ink-muted hover:text-rose-400 transition"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1462,7 +1462,7 @@ export function BrandGuidelinesManager({
                         updated[idx].description = e.target.value;
                         setData({ ...data, dos_and_donts: updated });
                       }}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800/80 rounded-lg text-xs text-slate-300 placeholder-slate-600 focus:outline-none"
+                      className="w-full px-2.5 py-1.5 bg-workspace border border-border rounded-lg text-xs text-ink-secondary placeholder-slate-600 focus:outline-none"
                       placeholder="Detailed rule explanation for designers and AI engine..."
                     />
                   </div>
@@ -1473,13 +1473,13 @@ export function BrandGuidelinesManager({
 
           {/* SECTION A9: Compliance & Disclaimers */}
           {activeSection === "compliance" && (
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 space-y-6">
-              <div className="border-b border-slate-800 pb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle space-y-6">
+              <div className="border-b border-border pb-4">
+                <h2 className="text-lg font-bold text-navy flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-400" />
                   A9. Mandatory Compliance, Disclaimers &amp; Legal Notices
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-ink-secondary mt-1">
                   Mandatory regulatory disclaimers, trademark usage notices, and quantitative benchmark citations.
                 </p>
               </div>
@@ -1488,7 +1488,7 @@ export function BrandGuidelinesManager({
                 {data.compliance?.map((comp, idx) => (
                   <div
                     key={comp.id || idx}
-                    className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 relative"
+                    className="p-4 rounded-xl bg-workspace border border-border space-y-2 relative"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
@@ -1497,7 +1497,7 @@ export function BrandGuidelinesManager({
                           {comp.requirement_level}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-400 uppercase font-mono">{comp.category}</span>
+                      <span className="text-[10px] text-ink-muted uppercase font-mono">{comp.category}</span>
                     </div>
                     <textarea
                       rows={2}
@@ -1507,7 +1507,7 @@ export function BrandGuidelinesManager({
                         updated[idx].rule_text = e.target.value;
                         setData({ ...data, compliance: updated });
                       }}
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200"
+                      className="w-full px-2.5 py-1.5 bg-workspace border border-border rounded-lg text-xs text-ink-primary"
                     />
                   </div>
                 ))}
@@ -1517,13 +1517,13 @@ export function BrandGuidelinesManager({
 
           {/* SECTION A10: Asset Library */}
           {activeSection === "assets" && (
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 space-y-6">
-              <div className="border-b border-slate-800 pb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <UploadCloud className="w-4 h-4 text-indigo-400" />
+            <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle space-y-6">
+              <div className="border-b border-border pb-4">
+                <h2 className="text-lg font-bold text-navy flex items-center gap-2">
+                  <UploadCloud className="w-4 h-4 text-teal" />
                   A10. Brand Asset Library &amp; Certifications
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-ink-secondary mt-1">
                   Repository of approved SVG wordmarks, reference architectures, design templates, and brand books.
                 </p>
               </div>
@@ -1532,28 +1532,28 @@ export function BrandGuidelinesManager({
                 {data.assets_library?.map((asset, idx) => (
                   <div
                     key={asset.id || idx}
-                    className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3 flex flex-col justify-between"
+                    className="p-4 rounded-xl bg-workspace border border-border space-y-3 flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-teal bg-indigo-950 px-2 py-0.5 rounded">
                           {asset.type}
                         </span>
                         <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                           <CheckCircle className="w-3 h-3" /> Approved
                         </span>
                       </div>
-                      <h4 className="text-xs font-bold text-white mt-2">{asset.name}</h4>
-                      <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{asset.description}</p>
+                      <h4 className="text-xs font-bold text-ink-primary mt-2">{asset.name}</h4>
+                      <p className="text-[11px] text-ink-muted mt-1 line-clamp-2">{asset.description}</p>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500 font-mono">{asset.campaign}</span>
+                    <div className="pt-2 border-t border-border flex items-center justify-between text-[11px]">
+                      <span className="text-ink-muted font-mono">{asset.campaign}</span>
                       <a
                         href={asset.file_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+                        className="text-teal hover:text-indigo-300 font-semibold flex items-center gap-1"
                       >
                         <span>View</span>
                         <ExternalLink className="w-3 h-3" />
@@ -1567,15 +1567,15 @@ export function BrandGuidelinesManager({
 
           {/* SECTION B1: Social Media Graphics & Posters */}
           {activeSection === "media_social" && (
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 space-y-6">
-              <div className="border-b border-slate-800 pb-4">
+            <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle space-y-6">
+              <div className="border-b border-border pb-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Share2 className="w-4 h-4 text-indigo-400" />
+                  <h2 className="text-lg font-bold text-navy flex items-center gap-2">
+                    <Share2 className="w-4 h-4 text-teal" />
                     B1. Social Media Graphics &amp; Posters
                   </h2>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">Inherit Brand Defaults:</span>
+                    <span className="text-xs text-ink-secondary">Inherit Brand Defaults:</span>
                     <input
                       type="checkbox"
                       checked={data.media_guidelines?.social_media?.inherit_brand_defaults ?? true}
@@ -1588,7 +1588,7 @@ export function BrandGuidelinesManager({
                     />
                   </div>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-ink-secondary mt-1">
                   Specific dimension presets, safe margins, and text density rules for social campaign collaterals.
                 </p>
               </div>
@@ -1597,19 +1597,19 @@ export function BrandGuidelinesManager({
                 {data.media_guidelines?.social_media?.platforms?.map((p, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2"
+                    className="p-4 rounded-xl bg-workspace border border-border space-y-2"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-white">{p.platform}</span>
-                        <span className="text-[10px] text-slate-400 font-semibold px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                        <span className="text-[10px] text-ink-muted font-semibold px-2 py-0.5 rounded bg-workspace border border-border">
                           {p.placement}
                         </span>
                       </div>
-                      <span className="text-xs font-mono text-indigo-400 font-bold">{p.dimensions} ({p.aspect_ratio})</span>
+                      <span className="text-xs font-mono text-teal font-bold">{p.dimensions} ({p.aspect_ratio})</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+                    <div className="grid grid-cols-2 gap-2 text-[11px] text-ink-secondary">
                       <div>
                         <strong>Safe Margin:</strong> {p.safe_areas}
                       </div>
@@ -1639,24 +1639,24 @@ export function BrandGuidelinesManager({
             "media_web",
             "media_custom",
           ].includes(activeSection) && (
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 bg-[#0B0F19]/90 space-y-6">
-              <div className="border-b border-slate-800 pb-4">
+            <div className="bg-surface p-6 rounded-xl border border-border shadow-subtle space-y-6">
+              <div className="border-b border-border pb-4">
                 <h2 className="text-lg font-bold text-white capitalize">
                   {activeSection.replace("media_", "Media Specification: ").replace("_", " ")}
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-ink-secondary mt-1">
                   Configured rules inherit from the general brand standards unless an explicit override is supplied.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+              <div className="p-4 rounded-xl bg-workspace border border-border space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-300 font-semibold">Section Status:</span>
+                  <span className="text-ink-secondary font-semibold">Section Status:</span>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
                     Active &amp; Enforced
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-ink-secondary leading-relaxed">
                   Settings in this category are fully structured and linked to the automated AI governance engine. Use &ldquo;Preview Rules&rdquo; in the top bar to inspect inherited values and verify conflict checks.
                 </p>
               </div>

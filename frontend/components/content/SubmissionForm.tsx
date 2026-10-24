@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { FileUpload } from "./FileUpload";
 import { api } from "@/services/api";
+import { Sparkles, Shield, AlertCircle, FileText, Check } from "lucide-react";
 
 interface SubmissionFormProps {
   onAuditStarted?: (submissionId: string) => void;
@@ -53,15 +54,16 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-4 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs">
-          {error}
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-status-error text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       {/* Title & Description */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-navy mb-1.5">
             Content Campaign Title *
           </label>
           <input
@@ -69,34 +71,34 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-workspace border border-border rounded-xl px-4 py-2.5 text-sm text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal"
             placeholder="e.g. Q4 Global Product Announcement"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-navy mb-1.5">
             Context / Target Audience
           </label>
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-workspace border border-border rounded-xl px-4 py-2.5 text-sm text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal"
             placeholder="e.g. Enterprise B2B Buyers, Social Media, PR"
           />
         </div>
       </div>
 
       {/* Input Mode Toggle */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+      <div className="flex items-center gap-2 border-b border-border pb-3">
         <button
           type="button"
           onClick={() => setMode("text")}
           className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
             mode === "text"
-              ? "bg-indigo-600 text-white shadow-sm"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+              ? "bg-navy text-white shadow-subtle"
+              : "text-ink-secondary hover:text-navy hover:bg-workspace"
           }`}
         >
           ✍️ Direct Text Entry
@@ -106,8 +108,8 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
           onClick={() => setMode("file")}
           className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
             mode === "file"
-              ? "bg-indigo-600 text-white shadow-sm"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+              ? "bg-navy text-white shadow-subtle"
+              : "text-ink-secondary hover:text-navy hover:bg-workspace"
           }`}
         >
           📁 Document / Media File
@@ -118,17 +120,17 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
       {mode === "text" ? (
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className="text-xs font-semibold text-navy">
               Content Draft Text *
             </label>
-            <span className="text-xs text-slate-500 font-mono">{wordCount} words</span>
+            <span className="text-xs text-ink-muted font-mono">{wordCount} words</span>
           </div>
           <textarea
             required
             rows={8}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-2xl p-4 text-sm text-slate-100 font-sans focus:outline-none focus:border-indigo-500 leading-relaxed"
+            className="w-full bg-workspace border border-border rounded-xl p-4 text-sm text-navy font-sans focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal leading-relaxed"
             placeholder="Paste draft copy, marketing announcement, or script here..."
           />
         </div>
@@ -137,32 +139,32 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
       )}
 
       {/* Guidelines Applied Badge Row */}
-      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 pt-2">
-        <span className="font-semibold text-slate-300">Active Governance Rules:</span>
-        <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[11px]">
-          ✓ Tone & Voice 2026
+      <div className="flex flex-wrap items-center gap-2 text-xs text-ink-secondary pt-2">
+        <span className="font-semibold text-navy">Active Governance Rules:</span>
+        <span className="px-2.5 py-1 rounded-md bg-teal/10 border border-teal/20 text-teal text-[11px] font-medium flex items-center gap-1">
+          <Check className="w-3 h-3" /> Tone & Voice 2026
         </span>
-        <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[11px]">
-          ✓ Terminology Registry
+        <span className="px-2.5 py-1 rounded-md bg-teal/10 border border-teal/20 text-teal text-[11px] font-medium flex items-center gap-1">
+          <Check className="w-3 h-3" /> Terminology Registry
         </span>
-        <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[11px]">
-          ✓ Certified Claims Verification
+        <span className="px-2.5 py-1 rounded-md bg-teal/10 border border-teal/20 text-teal text-[11px] font-medium flex items-center gap-1">
+          <Check className="w-3 h-3" /> Certified Claims Verification
         </span>
       </div>
 
       {/* Submit Button */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
         <button
           type="button"
           onClick={() => setText("")}
-          className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200"
+          className="px-4 py-2.5 rounded-xl text-xs font-semibold text-ink-muted hover:text-navy transition"
         >
           Clear
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 disabled:opacity-50"
+          className="bg-teal hover:bg-teal-hover text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-subtle transition flex items-center gap-2 disabled:opacity-50"
         >
           {isSubmitting ? (
             <>
@@ -171,7 +173,8 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
             </>
           ) : (
             <>
-              <span>🛡️ Run AI Brand Audit</span>
+              <Shield className="w-4 h-4" />
+              <span>Run AI Brand Audit</span>
             </>
           )}
         </button>

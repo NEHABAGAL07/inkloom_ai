@@ -7,6 +7,7 @@ import { AuditResult, ContentSubmission } from "@/types";
 import { AuditSummaryCard } from "@/components/audits/AuditSummaryCard";
 import { FindingsFilter } from "@/components/audits/FindingsFilter";
 import { FindingCard } from "@/components/audits/FindingCard";
+import { ShieldCheck, ArrowRight, FileText } from "lucide-react";
 
 function AuditsContent() {
   const searchParams = useSearchParams();
@@ -61,9 +62,9 @@ function AuditsContent() {
 
   if (loading || !auditResult) {
     return (
-      <div className="flex items-center justify-center h-64 text-slate-400 text-sm">
-        <span className="w-5 h-5 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin mr-3"></span>
-        Loading governance audit results...
+      <div className="flex flex-col items-center justify-center h-64 text-ink-muted text-sm space-y-3">
+        <div className="w-8 h-8 rounded-full border-2 border-teal border-t-transparent animate-spin"></div>
+        <p className="font-semibold text-navy">Loading governance audit results...</p>
       </div>
     );
   }
@@ -80,23 +81,27 @@ function AuditsContent() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header & Content Piece Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Audit Findings & Remediation</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Inspecting <strong className="text-indigo-300">{activeSub?.title || auditResult.content_id}</strong> against active enterprise guidelines.
+      <div className="bg-surface rounded-2xl p-6 border border-border shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Audit Findings & Remediation</span>
+          </div>
+          <h1 className="text-2xl font-extrabold text-navy tracking-tight">Audit Findings & Remediation</h1>
+          <p className="text-xs text-ink-secondary">
+            Inspecting <strong className="text-navy">{activeSub?.title || auditResult.content_id}</strong> against active enterprise guidelines.
           </p>
         </div>
 
         {/* Content Piece Switcher Dropdown */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {submissions.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-semibold hidden md:inline">Inspect Asset:</span>
+              <span className="text-xs text-ink-muted font-semibold hidden md:inline">Inspect Asset:</span>
               <select
                 value={selectedContentId}
                 onChange={(e) => setSelectedContentId(e.target.value)}
-                className="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-3 py-2 max-w-[240px] truncate focus:outline-none focus:border-indigo-500"
+                className="bg-workspace border border-border text-xs text-navy rounded-xl px-3 py-2 max-w-[240px] truncate focus:outline-none focus:border-teal"
               >
                 {submissions.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -109,9 +114,10 @@ function AuditsContent() {
 
           <a
             href="/reviews"
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md transition whitespace-nowrap"
+            className="bg-teal hover:bg-teal-hover text-white font-bold text-xs px-4 py-2 rounded-xl shadow-subtle transition whitespace-nowrap flex items-center gap-1.5"
           >
-            Reviewer Queue →
+            <span>Reviewer Queue</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </a>
         </div>
       </div>
@@ -135,7 +141,7 @@ function AuditsContent() {
       {/* Findings List */}
       <div className="space-y-4">
         {filteredFindings.length === 0 ? (
-          <div className="text-center py-12 glass-panel rounded-2xl border border-slate-800 text-slate-400 text-sm">
+          <div className="text-center py-16 bg-surface rounded-2xl border border-border text-ink-muted text-sm shadow-subtle">
             No findings match the selected filter criteria.
           </div>
         ) : (
@@ -150,7 +156,7 @@ function AuditsContent() {
 
 export default function AuditsPage() {
   return (
-    <Suspense fallback={<div className="text-slate-400 p-8 text-xs">Loading audit dashboard...</div>}>
+    <Suspense fallback={<div className="text-ink-muted p-8 text-xs">Loading audit dashboard...</div>}>
       <AuditsContent />
     </Suspense>
   );

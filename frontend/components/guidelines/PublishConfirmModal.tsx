@@ -82,47 +82,47 @@ export function PublishConfirmModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#0B0F19] border border-slate-800 rounded-2xl w-full max-w-xl p-6 shadow-2xl relative text-slate-200">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-surface border border-border rounded-2xl w-full max-w-xl p-6 shadow-xl relative text-ink-primary">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition"
+          className="absolute top-4 right-4 text-ink-muted hover:text-navy transition p-1"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+        <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-wider mb-1">
           <Sparkles className="w-4 h-4" />
           <span>Governance Publication Flow</span>
         </div>
-        <h2 className="text-xl font-black text-white tracking-tight">Publish Brand Guidelines</h2>
-        <p className="text-xs text-slate-400 mt-1">
+        <h2 className="text-xl font-extrabold text-navy tracking-tight">Publish Brand Guidelines</h2>
+        <p className="text-xs text-ink-secondary mt-1 leading-relaxed">
           Publishing creates an immutable version snapshot, makes standards visible to employees, and supplies the new rules to the AI audit engine.
         </p>
 
         {error && (
-          <div className="mt-4 p-3 rounded-xl bg-rose-950/50 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+          <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-status-error text-xs flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Pre-flight Validation Checklist */}
-        <div className="mt-5 bg-slate-900/80 border border-slate-800/80 rounded-xl p-4 space-y-2">
-          <div className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+        <div className="mt-5 bg-workspace border border-border rounded-xl p-4 space-y-2">
+          <div className="text-xs font-bold text-navy uppercase tracking-wider mb-2">
             Publication Readiness Checklist
           </div>
           {checks.map((c, i) => (
             <div key={i} className="flex items-center justify-between text-xs">
-              <span className={c.valid ? "text-slate-200" : "text-slate-400"}>
-                {c.title} {c.required && <span className="text-rose-400">*</span>}
+              <span className={c.valid ? "text-navy" : "text-ink-muted"}>
+                {c.title} {c.required && <span className="text-status-error">*</span>}
               </span>
               {c.valid ? (
-                <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                <span className="inline-flex items-center gap-1 text-status-success font-semibold">
                   <CheckCircle className="w-3.5 h-3.5" /> Ready
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-amber-400 font-semibold">
+                <span className="inline-flex items-center gap-1 text-status-warning font-semibold">
                   <AlertTriangle className="w-3.5 h-3.5" /> {c.required ? "Required" : "Optional"}
                 </span>
               )}
@@ -133,16 +133,16 @@ export function PublishConfirmModal({
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-navy mb-1.5">
                 Current Version
               </label>
-              <div className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-mono text-slate-400">
+              <div className="px-3 py-2 bg-workspace border border-border rounded-xl text-xs font-mono text-ink-secondary">
                 v{currentVersion}
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                New Published Version <span className="text-rose-400">*</span>
+              <label className="block text-xs font-semibold text-navy mb-1.5">
+                New Published Version <span className="text-status-error">*</span>
               </label>
               <input
                 type="text"
@@ -150,13 +150,13 @@ export function PublishConfirmModal({
                 value={version}
                 onChange={(e) => setVersion(e.target.value)}
                 placeholder="e.g. 2026.2.0"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2 bg-workspace border border-border rounded-xl text-xs font-mono text-navy focus:outline-none focus:border-teal"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-navy mb-1.5">
               Release Notes / Summary of Changes
             </label>
             <textarea
@@ -164,35 +164,35 @@ export function PublishConfirmModal({
               value={changelog}
               onChange={(e) => setChangelog(e.target.value)}
               placeholder="e.g. Updated primary color contrast rules, refined anti-FUD messaging policies, added LinkedIn banner placement specifications..."
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="w-full px-3 py-2 bg-workspace border border-border rounded-xl text-xs text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal leading-relaxed"
             />
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 flex items-start gap-2.5">
+          <div className="p-3 rounded-xl bg-workspace border border-border text-xs text-ink-secondary flex items-start gap-2.5">
             <input
               type="checkbox"
               id="compliance-confirm"
               checked={complianceConfirmed}
               onChange={(e) => setComplianceConfirmed(e.target.checked)}
-              className="mt-0.5 rounded border-slate-700 text-indigo-600 focus:ring-0 focus:outline-none"
+              className="mt-0.5 rounded border-border text-teal focus:ring-0 focus:outline-none"
             />
-            <label htmlFor="compliance-confirm" className="cursor-pointer text-[11px] leading-relaxed text-slate-300">
-              <strong>Compliance Governance Affirmation:</strong> I confirm that any legal claims, advertising terms, or statutory disclaimers in this version adhere to verified organizational compliance policies. I understand that publication immediately binds subsequent AI audits to these standards.
+            <label htmlFor="compliance-confirm" className="cursor-pointer text-[11px] leading-relaxed text-ink-secondary">
+              <strong className="text-navy">Compliance Governance Affirmation:</strong> I confirm that any legal claims, advertising terms, or statutory disclaimers in this version adhere to verified organizational compliance policies. I understand that publication immediately binds subsequent AI audits to these standards.
             </label>
           </div>
 
-          <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-800">
+          <div className="pt-2 flex items-center justify-end gap-3 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
+              className="px-4 py-2 bg-workspace hover:bg-slate-200 text-ink-secondary text-xs font-semibold rounded-xl border border-border transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !allRequiredValid || !version.trim() || !complianceConfirmed}
-              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-lg shadow-indigo-600/20"
+              className="px-5 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-subtle"
             >
               {isSubmitting ? "Publishing..." : "Confirm & Publish"}
               <ArrowRight className="w-3.5 h-3.5" />

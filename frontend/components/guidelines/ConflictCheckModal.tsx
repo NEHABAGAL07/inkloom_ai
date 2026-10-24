@@ -37,29 +37,29 @@ export function ConflictCheckModal({ onClose }: ConflictCheckModalProps) {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#0B0F19] border border-slate-800 rounded-2xl w-full max-w-3xl p-6 shadow-2xl relative text-slate-200 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-surface border border-border rounded-2xl w-full max-w-3xl p-6 shadow-xl relative text-ink-primary max-h-[90vh] flex flex-col">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition"
+          className="absolute top-4 right-4 text-ink-muted hover:text-navy transition p-1"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+        <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-wider mb-1">
           <Layers className="w-4 h-4" />
           <span>Governance Priority Hierarchy</span>
         </div>
-        <h2 className="text-xl font-black text-white tracking-tight">
+        <h2 className="text-xl font-extrabold text-navy tracking-tight">
           Rule Conflict &amp; Priority Evaluation
         </h2>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-ink-secondary mt-1 leading-relaxed">
           Evaluates guideline definitions against the documented 5-tier legal hierarchy. A lower-priority brand preference cannot override an applicable mandatory legal requirement.
         </p>
 
         {error && (
-          <div className="mt-4 p-3 rounded-xl bg-rose-950/50 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400" />
+          <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-status-error text-xs flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -67,8 +67,8 @@ export function ConflictCheckModal({ onClose }: ConflictCheckModalProps) {
         <div className="mt-5 flex-1 overflow-y-auto space-y-5 pr-1">
           {/* Priority Hierarchy Breakdown */}
           <div>
-            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 text-indigo-400" />
+            <h3 className="text-xs font-bold text-navy uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-teal" />
               Organizational Priority Levels
             </h3>
             <div className="space-y-1.5">
@@ -81,18 +81,18 @@ export function ConflictCheckModal({ onClose }: ConflictCheckModalProps) {
               ].map((lvl) => (
                 <div
                   key={lvl.level}
-                  className="flex items-start justify-between gap-3 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs"
+                  className="flex items-start justify-between gap-3 p-3 rounded-xl bg-workspace border border-border text-xs"
                 >
                   <div className="flex items-start gap-2.5">
-                    <span className="w-5 h-5 rounded-md bg-indigo-950 border border-indigo-800 font-mono font-bold text-[11px] text-indigo-300 flex items-center justify-center shrink-0">
+                    <span className="w-5 h-5 rounded-md bg-teal/10 border border-teal/20 font-mono font-bold text-[11px] text-teal flex items-center justify-center shrink-0">
                       {lvl.level}
                     </span>
                     <div>
-                      <strong className="text-white block font-semibold">{lvl.name}</strong>
-                      <span className="text-[11px] text-slate-400 leading-tight">{lvl.desc}</span>
+                      <strong className="text-navy block font-semibold">{lvl.name}</strong>
+                      <span className="text-[11px] text-ink-muted leading-tight">{lvl.desc}</span>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 shrink-0">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-surface border border-border text-navy shrink-0">
                     {lvl.tag}
                   </span>
                 </div>
@@ -102,14 +102,14 @@ export function ConflictCheckModal({ onClose }: ConflictCheckModalProps) {
 
           {/* Detected Conflicts */}
           <div>
-            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+            <h3 className="text-xs font-bold text-navy uppercase tracking-wider mb-2 flex items-center justify-between">
               <span>Detected Rule Conflicts &amp; Escalations</span>
               {result && (
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                     result.total_conflicts === 0
-                      ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                      : "bg-amber-950 text-amber-400 border border-amber-800"
+                      ? "bg-emerald-50 text-status-success border-emerald-200"
+                      : "bg-amber-50 text-status-warning border-amber-200"
                   }`}
                 >
                   {result.total_conflicts === 0 ? "No Conflicts Detected" : `${result.total_conflicts} Conflict(s) Identified`}
@@ -118,14 +118,14 @@ export function ConflictCheckModal({ onClose }: ConflictCheckModalProps) {
             </h3>
 
             {loading ? (
-              <div className="p-8 text-center text-xs text-slate-500">
+              <div className="p-8 text-center text-xs text-ink-muted">
                 Running conflict evaluation against statutory rules...
               </div>
             ) : !result || result.conflicts.length === 0 ? (
-              <div className="p-6 text-center bg-slate-900/40 rounded-xl border border-slate-800 space-y-2">
-                <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto" />
-                <p className="text-xs font-bold text-white">Full Governance Alignment</p>
-                <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+              <div className="p-6 text-center bg-workspace rounded-xl border border-border space-y-2">
+                <CheckCircle className="w-8 h-8 text-status-success mx-auto" />
+                <p className="text-xs font-bold text-navy">Full Governance Alignment</p>
+                <p className="text-[11px] text-ink-secondary max-w-sm mx-auto">
                   No contradictions found between brand preferences and mandatory legal or accessibility standards.
                 </p>
               </div>
@@ -134,40 +134,40 @@ export function ConflictCheckModal({ onClose }: ConflictCheckModalProps) {
                 {result.conflicts.map((c, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-xl bg-amber-950/20 border border-amber-800/40 space-y-2.5"
+                    className="p-4 rounded-xl bg-amber-50/50 border border-amber-200 space-y-2.5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                          <strong className="text-xs text-amber-200 font-bold">{c.rule_name}</strong>
-                          <ArrowRight className="w-3 h-3 text-slate-500" />
-                          <span className="text-xs text-slate-300 font-medium">{c.conflicting_with}</span>
+                          <AlertTriangle className="w-4 h-4 text-status-warning shrink-0" />
+                          <strong className="text-xs text-navy font-bold">{c.rule_name}</strong>
+                          <ArrowRight className="w-3 h-3 text-ink-muted" />
+                          <span className="text-xs text-ink-secondary font-medium">{c.conflicting_with}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-1.5 text-[10px]">
-                          <span className="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-800 text-emerald-400 font-bold">
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-status-success font-bold">
                             Governing: {c.priority_high}
                           </span>
-                          <span className="text-slate-500">supersedes</span>
-                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">
+                          <span className="text-ink-muted">supersedes</span>
+                          <span className="px-2 py-0.5 rounded bg-surface border border-border text-ink-muted">
                             {c.priority_low}
                           </span>
                         </div>
                       </div>
 
                       {c.escalate_to_legal && (
-                        <span className="px-2 py-1 rounded text-[10px] font-bold bg-rose-950/80 border border-rose-800 text-rose-300 uppercase shrink-0">
-                          Legal Escalation Required
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 border border-red-200 text-status-error uppercase shrink-0">
+                          Legal Escalation
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
+                    <p className="text-xs text-ink-secondary leading-relaxed bg-surface p-2.5 rounded-lg border border-border">
                       {c.explanation}
                     </p>
 
-                    <div className="text-[11px] text-emerald-400 flex items-start gap-1.5 pt-1">
-                      <strong className="text-slate-400 font-semibold shrink-0">Suggested Remediation:</strong>
+                    <div className="text-[11px] text-status-success flex items-start gap-1.5 pt-1">
+                      <strong className="text-navy font-semibold shrink-0">Suggested Remediation:</strong>
                       <span>{c.remediation_suggestion}</span>
                     </div>
                   </div>
@@ -177,17 +177,17 @@ export function ConflictCheckModal({ onClose }: ConflictCheckModalProps) {
           </div>
 
           {/* Legal Compliance Disclaimer */}
-          <div className="p-3 bg-slate-900/50 border border-slate-800 rounded-xl text-[11px] text-slate-400 leading-relaxed">
-            <strong className="text-slate-300 block mb-0.5">Decision-Support Notice:</strong>
+          <div className="p-3.5 bg-workspace border border-border rounded-xl text-[11px] text-ink-secondary leading-relaxed">
+            <strong className="text-navy block mb-0.5">Decision-Support Notice:</strong>
             {result?.compliance_disclaimer ||
               "Inkloom AI conflict detection assists organizational decision-making by applying documented governance priority hierarchies. It does not replace qualified legal review."}
           </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-800 mt-4 flex justify-end">
+        <div className="pt-4 border-t border-border mt-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
+            className="px-5 py-2 bg-workspace hover:bg-slate-200 text-ink-secondary text-xs font-semibold rounded-xl border border-border transition"
           >
             Close
           </button>
