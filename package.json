@@ -1,0 +1,14 @@
+{
+  "name": "inkloom-ai-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm --prefix frontend run build",
+    "dev": "npm --prefix frontend run dev",
+    "start": "npm --prefix frontend start",
+    "lint": "npm --prefix frontend run lint"
+  }
+}

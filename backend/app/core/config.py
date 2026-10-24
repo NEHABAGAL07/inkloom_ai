@@ -18,12 +18,21 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "https://inkloom-ai.vercel.app",
+        "https://inkloom.vercel.app",
     ]
 
     @field_validator("CORS_ORIGINS", mode="before")
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
+        if isinstance(v, str):
+            v_trimmed = v.strip()
+            if v_trimmed.startswith("[") and v_trimmed.endswith("]"):
+                import json
+                try:
+                    return json.loads(v_trimmed)
+                except Exception:
+                    pass
+            return [i.strip() for i in v_trimmed.split(",") if i.strip()]
         elif isinstance(v, list):
             return v
         return []

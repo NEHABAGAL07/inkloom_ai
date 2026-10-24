@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: inkloom-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: AI_ENGINE_MODE
+        value: deterministic
+      - key: CORS_ORIGINS
+        value: "https://inkloom-ai.vercel.app,http://localhost:3000"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: inkloom-postgres
+          property: connectionString
+
+databases:
+  - name: inkloom-postgres
+    databaseName: inkloom_ai
+    user: inkloom_user
+    plan: free
