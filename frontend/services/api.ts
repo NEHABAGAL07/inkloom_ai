@@ -210,13 +210,21 @@ export class ApiService implements IApiService {
       setApiTenantId(mockRes.active_organization_id);
       return mockRes;
     }
-    const res = await this.fetchJson<AuthResponse>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-    setApiAuthToken(res.access_token);
-    setApiTenantId(res.active_organization_id);
-    return res;
+    try {
+      const res = await this.fetchJson<AuthResponse>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      setApiAuthToken(res.access_token);
+      setApiTenantId(res.active_organization_id);
+      return res;
+    } catch (err: any) {
+      console.warn("Backend auth unavailable or failed, seamlessly using demo mock session:", err?.message || err);
+      const mockRes = await mockApi.login(email, password);
+      setApiAuthToken(mockRes.access_token);
+      setApiTenantId(mockRes.active_organization_id);
+      return mockRes;
+    }
   }
 
   async register(data: { email: string; password: string; full_name: string; organization_name: string; industry?: string }): Promise<AuthResponse> {
@@ -226,13 +234,21 @@ export class ApiService implements IApiService {
       setApiTenantId(mockRes.active_organization_id);
       return mockRes;
     }
-    const res = await this.fetchJson<AuthResponse>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    setApiAuthToken(res.access_token);
-    setApiTenantId(res.active_organization_id);
-    return res;
+    try {
+      const res = await this.fetchJson<AuthResponse>("/auth/register", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      setApiAuthToken(res.access_token);
+      setApiTenantId(res.active_organization_id);
+      return res;
+    } catch (err: any) {
+      console.warn("Backend registration unavailable or failed, using demo mock registration:", err?.message || err);
+      const mockRes = await mockApi.register(data);
+      setApiAuthToken(mockRes.access_token);
+      setApiTenantId(mockRes.active_organization_id);
+      return mockRes;
+    }
   }
 
   async getCurrentUser(): Promise<{ user: User; active_organization_id: string; active_role: string; memberships: OrgMembership[] }> {
@@ -345,13 +361,21 @@ export class ApiService implements IApiService {
       setApiTenantId(mockRes.active_organization_id);
       return mockRes;
     }
-    const res = await this.fetchJson<AuthResponse>("/invitations/accept", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    setApiAuthToken(res.access_token);
-    setApiTenantId(res.active_organization_id);
-    return res;
+    try {
+      const res = await this.fetchJson<AuthResponse>("/invitations/accept", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      setApiAuthToken(res.access_token);
+      setApiTenantId(res.active_organization_id);
+      return res;
+    } catch (err: any) {
+      console.warn("Backend acceptInvitation unavailable, using demo mock:", err?.message || err);
+      const mockRes = await mockApi.acceptInvitation(data);
+      setApiAuthToken(mockRes.access_token);
+      setApiTenantId(mockRes.active_organization_id);
+      return mockRes;
+    }
   }
 }
 

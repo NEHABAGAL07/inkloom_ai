@@ -445,10 +445,11 @@ export class MockApiService implements IApiService {
 
   // --- Multi-Tenant Mock Implementations ---
   async login(email: string, password?: string): Promise<AuthResponse> {
-    const isNova = email.toLowerCase().includes("novabio");
-    const isDesigner = email.toLowerCase().includes("designer");
-    const isMarketing = email.toLowerCase().includes("marketing");
-    const isCompliance = email.toLowerCase().includes("compliance");
+    const cleanEmail = email.toLowerCase().trim();
+    const isNova = cleanEmail.includes("novabio");
+    const isDesigner = cleanEmail.includes("designer") || cleanEmail.includes("creative");
+    const isMarketing = cleanEmail.includes("marketing") || cleanEmail.includes("creator") || cleanEmail.includes("employee");
+    const isCompliance = cleanEmail.includes("compliance") || cleanEmail.includes("legal") || cleanEmail.includes("reviewer");
 
     const orgId = isNova ? "org_novabio_health" : "org_acme_cloud";
     const orgName = isNova ? "NovaBio Health Sciences" : "Acme Cloud Systems";
@@ -459,13 +460,31 @@ export class MockApiService implements IApiService {
     else if (isMarketing) role = "marketing";
     else if (isCompliance) role = "compliance_officer";
 
+    // Known Persona Full Names
+    const PERSONA_NAMES: Record<string, string> = {
+      "admin@acmecloud.com": "Alex Mercer (Manager)",
+      "compliance@acmecloud.com": "Elena Rostova (Legal & Compliance)",
+      "designer@acmecloud.com": "Leo Vance (Senior Designer)",
+      "marketing@acmecloud.com": "Maya Lin (Marketing Lead)",
+      "admin@novabio.com": "Dr. Rachel Hayes (Biotech Admin)",
+      "compliance@novabio.com": "Marcus Thorne (FDA Regulatory)",
+      "employee@acmecloud.com": "Staff Member (Marketing)",
+    };
+
+    const fullName =
+      PERSONA_NAMES[cleanEmail] ||
+      cleanEmail
+        .split("@")[0]
+        .replace(/[._-]/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+
     return {
       access_token: `mock_jwt_token_${Date.now()}`,
       token_type: "bearer",
       user: {
-        id: `user_${email.replace(/[^a-zA-Z0-9]/g, "_")}`,
-        email,
-        full_name: email.split("@")[0].replace(".", " ").toUpperCase(),
+        id: `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "_")}`,
+        email: cleanEmail,
+        full_name: fullName,
       },
       active_organization_id: orgId,
       active_role: role,

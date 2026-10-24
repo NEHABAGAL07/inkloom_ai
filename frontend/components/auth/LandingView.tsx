@@ -193,6 +193,45 @@ export function LandingView() {
           {/* TAB 1: LOGIN */}
           {activeTab === "login" && (
             <form onSubmit={handleLogin} className="space-y-4">
+              <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 mb-3">
+                <div className="text-[11px] text-slate-400 font-semibold mb-1.5 flex items-center justify-between">
+                  <span>Fast Pre-fill:</span>
+                  <a href="/login" className="text-indigo-400 hover:text-indigo-300 text-[11px]">
+                    Dedicated Portal ↗
+                  </a>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => { setEmail("marketing@acmecloud.com"); setPassword("password123"); }}
+                    className="text-[10px] px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 border border-amber-800/50 text-amber-300 transition"
+                  >
+                    📢 Marketing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setEmail("designer@acmecloud.com"); setPassword("password123"); }}
+                    className="text-[10px] px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 border border-fuchsia-800/50 text-fuchsia-300 transition"
+                  >
+                    🎨 Designer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setEmail("compliance@acmecloud.com"); setPassword("password123"); }}
+                    className="text-[10px] px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 border border-emerald-800/50 text-emerald-300 transition"
+                  >
+                    ⚖️ Legal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setEmail("admin@acmecloud.com"); setPassword("password123"); }}
+                    className="text-[10px] px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 border border-indigo-800/50 text-indigo-300 transition"
+                  >
+                    👔 Admin
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Work Email</label>
                 <input

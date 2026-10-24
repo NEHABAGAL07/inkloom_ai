@@ -72,6 +72,8 @@ export interface ApprovedAsset {
   file_url?: string;
   specifications: Record<string, any>;
   is_active: boolean;
+  is_approved?: boolean;
+  created_at?: string;
 }
 
 export interface AnalyticsSummary {

@@ -130,6 +130,12 @@ export function Sidebar() {
         <p className="text-[11px] leading-relaxed text-slate-400">
           AI checks tone, terminology & verified facts. Only human compliance officers authorize public release.
         </p>
+        <a
+          href="/login"
+          className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 hover:text-indigo-400 transition"
+        >
+          <span>🔑</span> Switch User / Login Portal
+        </a>
       </div>
     </aside>
   );
