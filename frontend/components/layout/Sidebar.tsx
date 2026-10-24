@@ -21,17 +21,17 @@ export function Sidebar() {
       case "admin":
         return [
           { name: "Executive Dashboard", href: "/", icon: "📊" },
+          { name: "Brand Guidelines", href: "/settings", icon: "⚙️" },
           { name: "Submit Content", href: "/content", icon: "✍️" },
           { name: "Audit Results", href: "/audits", icon: "🛡️" },
           { name: "Review Queue", href: "/reviews", icon: "📋", badge: 3 },
           { name: "Governance Analytics", href: "/analytics", icon: "📈" },
-          { name: "Brand Guidelines", href: "/settings", icon: "⚙️" },
           { name: "Team & Permissions", href: "/team", icon: "👥" },
         ];
       case "designer":
         return [
           { name: "Creative Workspace", href: "/", icon: "🎨" },
-          { name: "Brand Kit & Assets", href: "/settings", icon: "🖼️" },
+          { name: "Brand Guidelines & Kit", href: "/settings", icon: "📖" },
           { name: "Media Audit & Upload", href: "/content", icon: "📤" },
           { name: "Visual Audit Results", href: "/audits", icon: "🛡️" },
           { name: "Review Feedback", href: "/reviews", icon: "💬" },
@@ -40,9 +40,9 @@ export function Sidebar() {
       case "reviewer":
         return [
           { name: "Compliance Triage", href: "/", icon: "⚖️" },
+          { name: "Brand Guidelines", href: "/settings", icon: "📜" },
           { name: "Review Queue", href: "/reviews", icon: "📋", badge: 3 },
           { name: "Audit Findings Explorer", href: "/audits", icon: "🛡️" },
-          { name: "Approved Claims & Rules", href: "/settings", icon: "📜" },
           { name: "Risk Analytics", href: "/analytics", icon: "📈" },
         ];
       case "marketing":
@@ -50,6 +50,7 @@ export function Sidebar() {
       default:
         return [
           { name: "Campaign Workspace", href: "/", icon: "📢" },
+          { name: "Brand Guidelines", href: "/settings", icon: "📖" },
           { name: "Submit Content Studio", href: "/content", icon: "✍️" },
           { name: "AI Audit Findings", href: "/audits", icon: "🛡️" },
           { name: "Content Review Status", href: "/reviews", icon: "📋" },

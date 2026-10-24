@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Boolean, Integer, ForeignKey, JSON
+from sqlalchemy import Column, String, Text, Boolean, Integer, ForeignKey, JSON, DateTime
 from sqlalchemy.orm import relationship
 from app.models.base_model import TimestampedModel
 
@@ -12,8 +12,32 @@ class BrandGuideline(TimestampedModel):
     version = Column(String(50), default="1.0.0", nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
 
+    # Workflow & Publication status: 'draft', 'published', 'changes_pending'
+    status = Column(String(50), default="draft", nullable=False)
+    published_at = Column(DateTime(timezone=True), nullable=True)
+    published_by = Column(String(255), nullable=True)
+
+    # Structured Brand Guidelines Payload (Identity, Voice, Color, Typography, Logos, Layout, Rules, Media, Compliance)
+    draft_data = Column(JSON, nullable=True)
+    published_data = Column(JSON, nullable=True)
+
     organization = relationship("Organization", back_populates="guidelines")
     rules = relationship("GuidelineRule", back_populates="guideline", cascade="all, delete-orphan")
+    versions = relationship("BrandGuidelineVersion", back_populates="guideline", cascade="all, delete-orphan", order_by="desc(BrandGuidelineVersion.created_at)")
+
+
+class BrandGuidelineVersion(TimestampedModel):
+    __tablename__ = "brand_guideline_versions"
+
+    guideline_id = Column(String(36), ForeignKey("brand_guidelines.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    version = Column(String(50), nullable=False)
+    changelog = Column(Text, nullable=True)
+    published_by = Column(String(255), nullable=False)
+    published_at = Column(DateTime(timezone=True), nullable=False)
+    snapshot_data = Column(JSON, nullable=False)
+
+    guideline = relationship("BrandGuideline", back_populates="versions")
 
 
 class GuidelineRule(TimestampedModel):

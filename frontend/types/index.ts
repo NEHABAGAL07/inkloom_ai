@@ -49,8 +49,288 @@ export interface BrandGuideline {
   name: string;
   description?: string;
   version: string;
+  status?: "draft" | "published" | "changes_pending";
+  published_at?: string;
+  published_by?: string;
   is_active: boolean;
+  draft_data?: BrandGuidelineData;
+  published_data?: BrandGuidelineData;
   rules?: GuidelineRule[];
+}
+
+export interface BrandGuidelineProfile {
+  id: string;
+  organization_id: string;
+  name: string;
+  description?: string;
+  version: string;
+  status: "draft" | "published" | "changes_pending";
+  is_active: boolean;
+  published_at?: string;
+  published_by?: string;
+  is_manager: boolean;
+  draft_data?: BrandGuidelineData;
+  published_data?: BrandGuidelineData;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BrandColor {
+  id: string;
+  name: string;
+  hex: string;
+  rgb?: string;
+  role: "primary" | "secondary" | "accent" | "background" | "text" | "neutral" | "semantic";
+  usage_intent: string;
+  restrictions?: string;
+  status: "mandatory" | "preferred" | "restricted";
+}
+
+export interface TypographyPreset {
+  name: string;
+  font_family: string;
+  font_weight: string;
+  font_size: string;
+  line_height: string;
+  letter_spacing?: string;
+  text_case?: string;
+  intended_usage: string;
+}
+
+export interface LogoVariant {
+  id: string;
+  name: string;
+  type: "primary" | "secondary" | "icon" | "monochrome" | "light_bg" | "dark_bg" | "alternate";
+  image_url: string;
+  min_width_px: number;
+  min_height_px: number;
+  clear_space_formula: string;
+  preferred_placement?: string;
+  approved_backgrounds?: string;
+  permitted_modifications?: string;
+  prohibited_modifications?: string;
+}
+
+export interface BrandDoDont {
+  id: string;
+  title: string;
+  description: string;
+  type: "mandatory" | "recommended" | "prohibited" | "common_mistake" | "special_exception";
+  priority: "critical" | "high" | "medium" | "low";
+}
+
+export interface BrandComplianceRule {
+  id: string;
+  title: string;
+  category: "disclaimer" | "copyright" | "trademark" | "claim_restriction" | "regulatory" | "accessibility" | "usage_rights";
+  rule_text: string;
+  requirement_level: "mandatory" | "conditional" | "advisory";
+}
+
+export interface BrandAssetItem {
+  id: string;
+  name: string;
+  type: "logo" | "photo" | "illustration" | "template" | "reference_design" | "video" | "product_image" | "document";
+  file_url: string;
+  description: string;
+  usage_restrictions?: string;
+  campaign?: string;
+  approval_status: "approved" | "pending" | "deprecated";
+}
+
+export interface PlatformPlacementSpec {
+  platform: string;
+  placement: string;
+  dimensions: string;
+  aspect_ratio: string;
+  safe_areas?: string;
+  text_density_limit?: string;
+  headline_size?: string;
+  body_size?: string;
+  cta_rules?: string;
+  logo_placement?: string;
+  export_format?: string;
+}
+
+export interface MediaCategoryConfig {
+  enabled: boolean;
+  description: string;
+  inherit_brand_defaults: boolean;
+  overrides: Record<string, any>;
+  [key: string]: any;
+}
+
+export interface BrandGuidelineData {
+  identity: {
+    brand_name: string;
+    tagline: string;
+    description: string;
+    industry: string;
+    mission: string;
+    vision: string;
+    values: string[];
+    positioning: string;
+    target_market: string;
+    primary_audience: string;
+    secondary_audience: string;
+    personality: string[];
+    differentiators: string[];
+    preferred_language: string;
+    supported_languages: string[];
+    website_url: string;
+    social_links: { platform: string; url: string }[];
+    contact_email: string;
+  };
+  voice: {
+    brand_tone: string[];
+    formality_level: string;
+    personality_traits: string[];
+    communication_style: string;
+    preferred_vocabulary: string[];
+    words_to_use: string[];
+    words_to_avoid: string[];
+    writing_style: string;
+    sentence_length_preference: string;
+    technical_terminology: string;
+    humor_preference: string;
+    emotional_tone: string;
+    cta_style: string;
+    headline_preferences: string;
+    caption_rules: string;
+    grammar_conventions: string;
+    inclusive_communication: string;
+    approved_copy_examples: { context: string; text: string }[];
+    prohibited_copy_examples: { context: string; text: string; reason: string }[];
+  };
+  colors: {
+    palette: BrandColor[];
+    contrast_rules: {
+      min_ratio_normal: number;
+      min_ratio_large: number;
+      notes: string;
+    };
+  };
+  typography: {
+    primary_font: string;
+    secondary_font: string;
+    display_font?: string;
+    monospace_font?: string;
+    approved_weights: string[];
+    fallback_fonts: string[];
+    restrictions: string;
+    licensing_notes: string;
+    presets: TypographyPreset[];
+  };
+  logos: {
+    variants: LogoVariant[];
+    partner_rules: string;
+    co_branding_rules: string;
+  };
+  visual_identity: {
+    overall_style: string;
+    photography_aesthetic: string;
+    illustration_style: string;
+    graphic_design_style: string;
+    iconography_style: string;
+    shapes_and_patterns: string;
+    background_treatment: string;
+    textures: string;
+    use_of_gradients: string;
+    visual_density: string;
+    composition: string;
+    negative_space: string;
+    image_treatment: string;
+    color_grading: string;
+    preferred_styles_examples: string[];
+    prohibited_styles_examples: string[];
+  };
+  layout_spacing: {
+    alignment: string;
+    grid_system: string;
+    spacing_principles: string;
+    padding_guidelines: string;
+    border_divider_usage: string;
+    corner_radius: string;
+    shadow_usage: string;
+    content_hierarchy: string;
+    logo_to_content_spacing: string;
+    safe_area_principles: string;
+  };
+  dos_and_donts: BrandDoDont[];
+  compliance: BrandComplianceRule[];
+  assets_library: BrandAssetItem[];
+  media_guidelines: {
+    social_media: MediaCategoryConfig & {
+      platforms: PlatformPlacementSpec[];
+      mandatory_rules: string[];
+      prohibited_elements: string[];
+    };
+    photography: MediaCategoryConfig & {
+      lighting: string;
+      composition: string;
+      framing: string;
+      color_grading: string;
+      retouching_restrictions: string;
+      product_visibility: string;
+      model_direction: string;
+      required_resolutions: string;
+      output_formats: string;
+    };
+    video: MediaCategoryConfig & {
+      video_styles: string[];
+      aspect_ratios: string[];
+      resolutions: string[];
+      frame_rates: string[];
+      duration_recommendations: string;
+      opening_hook_rules: string;
+      logo_appearance_timing: string;
+      subtitles_placement: string;
+      music_restrictions: string;
+      end_card_cta: string;
+      export_formats: string;
+    };
+    print: MediaCategoryConfig & {
+      dpi: number;
+      color_mode: string;
+      bleed: string;
+      safe_margin: string;
+      paper_finishes: string[];
+      export_format: string;
+    };
+    web_ads: MediaCategoryConfig & {
+      standard_sizes: string[];
+      max_file_size_kb: number;
+      animation_rules: string;
+      mobile_adaptations: string;
+    };
+    custom_media: {
+      id: string;
+      name: string;
+      enabled: boolean;
+      description: string;
+      fields: { key: string; label: string; value: string }[];
+      mandatory_rules: string[];
+    }[];
+  };
+}
+
+export interface BrandGuidelineVersionInfo {
+  id: string;
+  guideline_id: string;
+  organization_id: string;
+  version: string;
+  changelog?: string;
+  published_by: string;
+  published_at: string;
+  snapshot_data: BrandGuidelineData;
+}
+
+export interface EffectiveSettings {
+  media_type: string;
+  effective_settings: Record<string, any>;
+  inherited_keys: string[];
+  overridden_keys: string[];
+  conflicts: { field: string; severity: string; message: string }[];
 }
 
 export interface GuidelineRule {

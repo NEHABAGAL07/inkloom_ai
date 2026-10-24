@@ -73,32 +73,43 @@ class AuditOrchestrator:
             submission.status = WorkflowState.AUDITING.value
             db.commit()
 
-        # Query active organization guidelines
+        # Query active organization guidelines and authoritative published profile
         guidelines_records = (
             db.query(BrandGuideline)
             .filter(
                 BrandGuideline.organization_id == submission.organization_id,
                 BrandGuideline.is_active == True,
             )
+            .order_by(BrandGuideline.created_at.desc())
             .all()
         )
         active_guidelines_data = []
-        for g in guidelines_records:
-            for r in g.rules:
-                active_guidelines_data.append({
-                    "id": r.id,
-                    "category": r.category,
-                    "rule_name": r.rule_name,
-                    "rule_definition": r.rule_definition,
-                })
+        guideline_version = "1.0.0"
+        guideline_profile = None
 
-        # Run AI Audit Pass
+        if guidelines_records:
+            primary_guideline = guidelines_records[0]
+            guideline_version = primary_guideline.version
+            guideline_profile = primary_guideline.published_data or primary_guideline.draft_data
+
+            for g in guidelines_records:
+                for r in g.rules:
+                    active_guidelines_data.append({
+                        "id": r.id,
+                        "category": r.category,
+                        "rule_name": r.rule_name,
+                        "rule_definition": r.rule_definition,
+                    })
+
+        # Run AI Audit Pass evaluating against published brand guidelines
         audit_result: AuditResult = AIAuditEngine.run_audit(
             content_text=content_text or submission.title,
             content_id=submission.id,
             revision_id=target_revision.id if target_revision else None,
             active_guidelines=active_guidelines_data,
             media_type=media_type,
+            guideline_version=guideline_version,
+            guideline_profile=guideline_profile,
         )
 
         # Persist AuditRun

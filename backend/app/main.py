@@ -37,8 +37,36 @@ def on_startup():
     """Create database tables on startup if using SQLite for zero-friction local development."""
     if settings.DATABASE_URL.startswith("sqlite"):
         Base.metadata.create_all(bind=engine)
+        # Safe column migration for existing sqlite db files
+        try:
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                cursor = conn.execute(text("PRAGMA table_info(brand_guidelines)"))
+                cols = [row[1] for row in cursor.fetchall()]
+                if cols:
+                    if "status" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN status VARCHAR(50) DEFAULT 'published' NOT NULL"))
+                    if "published_at" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN published_at DATETIME"))
+                    if "published_by" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN published_by VARCHAR(255)"))
+                    if "draft_data" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN draft_data JSON"))
+                    if "published_data" not in cols:
+                        conn.execute(text("ALTER TABLE brand_guidelines ADD COLUMN published_data JSON"))
+                    conn.commit()
+        except Exception as e:
+            print("Notice: SQLite migration check:", e)
+
         from app.database.seed import seed_initial_data
         seed_initial_data()
+
+
+# Initialize SQLite tables and migrations on load
+try:
+    on_startup()
+except Exception as e:
+    pass
 
 
 # Exception handler for generic internal errors to avoid leaking trace details

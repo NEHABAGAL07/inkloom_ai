@@ -14,6 +14,10 @@ import {
   ContentSubmission,
   ReviewDecision,
   BrandGuideline,
+  BrandGuidelineProfile,
+  BrandGuidelineData,
+  BrandGuidelineVersionInfo,
+  EffectiveSettings,
   ApprovedAsset,
   AnalyticsSummary,
   User,
@@ -189,6 +193,68 @@ export class ApiService implements IApiService {
       });
     } catch {
       return mockApi.createGuideline(data);
+    }
+  }
+
+  async getGuidelineProfile(): Promise<BrandGuidelineProfile> {
+    if (USE_MOCK) return mockApi.getGuidelineProfile();
+    try {
+      return await this.fetchJson<BrandGuidelineProfile>("/guidelines/profile");
+    } catch {
+      return mockApi.getGuidelineProfile();
+    }
+  }
+
+  async saveDraftGuideline(draftData: BrandGuidelineData, name?: string, description?: string): Promise<BrandGuidelineProfile> {
+    if (USE_MOCK) return mockApi.saveDraftGuideline(draftData, name, description);
+    try {
+      return await this.fetchJson<BrandGuidelineProfile>("/guidelines/draft", {
+        method: "PUT",
+        body: JSON.stringify({ draft_data: draftData, name, description }),
+      });
+    } catch {
+      return mockApi.saveDraftGuideline(draftData, name, description);
+    }
+  }
+
+  async publishGuideline(version: string, changelog?: string): Promise<BrandGuidelineProfile> {
+    if (USE_MOCK) return mockApi.publishGuideline(version, changelog);
+    try {
+      return await this.fetchJson<BrandGuidelineProfile>("/guidelines/publish", {
+        method: "POST",
+        body: JSON.stringify({ version, changelog }),
+      });
+    } catch {
+      return mockApi.publishGuideline(version, changelog);
+    }
+  }
+
+  async getGuidelineVersions(): Promise<BrandGuidelineVersionInfo[]> {
+    if (USE_MOCK) return mockApi.getGuidelineVersions();
+    try {
+      return await this.fetchJson<BrandGuidelineVersionInfo[]>("/guidelines/versions");
+    } catch {
+      return mockApi.getGuidelineVersions();
+    }
+  }
+
+  async restoreGuidelineVersion(versionId: string): Promise<BrandGuidelineProfile> {
+    if (USE_MOCK) return mockApi.restoreGuidelineVersion(versionId);
+    try {
+      return await this.fetchJson<BrandGuidelineProfile>(`/guidelines/versions/${versionId}/restore`, {
+        method: "POST",
+      });
+    } catch {
+      return mockApi.restoreGuidelineVersion(versionId);
+    }
+  }
+
+  async getEffectiveSettings(mediaType: string): Promise<EffectiveSettings> {
+    if (USE_MOCK) return mockApi.getEffectiveSettings(mediaType);
+    try {
+      return await this.fetchJson<EffectiveSettings>(`/guidelines/effective?media_type=${encodeURIComponent(mediaType)}`);
+    } catch {
+      return mockApi.getEffectiveSettings(mediaType);
     }
   }
 

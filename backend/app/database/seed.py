@@ -12,6 +12,7 @@ from app.models import (
     Membership,
     Invitation,
     BrandGuideline,
+    BrandGuidelineVersion,
     GuidelineRule,
     ApprovedAsset,
     ContentSubmission,
@@ -22,12 +23,251 @@ from app.models import (
 )
 
 
+ACME_MASTER_BRAND_DATA = {
+    "identity": {
+        "brand_name": "Acme Cloud Systems",
+        "tagline": "Autonomous Zero-Trust Infrastructure for the AI-Native Enterprise",
+        "description": "Acme Cloud Systems provides high-performance, mathematically verifiable hybrid cloud compute and automated zero-trust security infrastructure for regulated global enterprises.",
+        "industry": "Enterprise Cloud & Infrastructure",
+        "mission": "Empowering resilient, sovereign computing that scales fearlessly across global multi-cloud boundaries.",
+        "vision": "To be the undisputed foundation of mission-critical AI workloads and zero-trust cloud fabrics worldwide.",
+        "values": ["Zero-Trust Rigor", "Transparent Reliability", "Developer Empowerment", "Sustainable Scale"],
+        "positioning": "The premier enterprise cloud infrastructure platform combining silicon-grade isolation with effortless developer velocity.",
+        "target_market": "Global Fortune 500, High-Frequency Fintech, Healthcare & Defense Technology",
+        "primary_audience": "Chief Technology Officers, VP Infrastructure, Principal Platform Architects",
+        "secondary_audience": "Site Reliability Engineers, DevSecOps Leads, Cloud Security Auditors",
+        "personality": ["Authoritative", "Empowering", "Consultative", "Precise", "Sophisticated"],
+        "differentiators": ["Sub-50ms Global Core Latency", "Verified Multi-Region Isolation", "Zero Proprietary Lock-In"],
+        "preferred_language": "English (US)",
+        "supported_languages": ["English (US)", "English (UK)", "German", "Japanese"],
+        "website_url": "https://acmecloud.com",
+        "social_links": [
+            {"platform": "LinkedIn", "url": "https://linkedin.com/company/acme-cloud"},
+            {"platform": "X", "url": "https://x.com/acmecloud"},
+        ],
+        "contact_email": "brand@acmecloud.com",
+    },
+    "voice": {
+        "brand_tone": ["Authoritative", "Consultative", "Engineering-Grade", "Empowering"],
+        "formality_level": "professional",
+        "personality_traits": ["Direct", "Evidence-Based", "Calm", "No-Hype"],
+        "communication_style": "Clear, technical precision backed by empirical benchmarks rather than marketing hype.",
+        "preferred_vocabulary": ["zero-trust fabric", "verified uptime", "deterministic throughput", "resilient compute", "low-latency mesh"],
+        "words_to_use": ["verifiable", "deterministic", "engineered", "resilient", "autonomous", "proven"],
+        "words_to_avoid": ["Inkloom Cloud Suite", "CloudSpeed", "HyperScale", "magic", "miracle", "foolproof", "destroying competition", "guaranteed 100% reduction"],
+        "writing_style": "Active voice, concise sentences, evidence-first claims.",
+        "sentence_length_preference": "concise",
+        "technical_terminology": "Always define three-letter acronyms on first mention (e.g. Virtual Private Cloud (VPC)).",
+        "humor_preference": "none",
+        "emotional_tone": "Reassuring, confident, consultative.",
+        "cta_style": "Actionable and descriptive, e.g. 'Deploy Zero-Trust Cluster' rather than generic 'Click Here'.",
+        "headline_preferences": "Clear benefit-driven value statements under 10 words.",
+        "caption_rules": "Describe technical architecture or benchmark conditions clearly.",
+        "grammar_conventions": "Oxford comma required. Sentence case for UI actions and title case for major headings.",
+        "inclusive_communication": "Use gender-neutral pronouns. Avoid legacy master/slave terminology in favor of primary/replica.",
+        "approved_copy_examples": [
+            {"context": "Homepage Headline", "text": "Engineered for 99.999% Verified Resilience Under Peak Distributed Workloads."},
+            {"context": "Product Feature Copy", "text": "Deploy microsecond packet routing across 42 sovereign cloud zones without vendor lock-in."},
+        ],
+        "prohibited_copy_examples": [
+            {"context": "Urgency Sales Copy", "text": "Hurry up before your competitors crush you!", "reason": "Violates anti-FUD policy."},
+            {"context": "Unverified Quantitative Claim", "text": "Guaranteed 100% reduction in all infrastructure costs.", "reason": "Absolute claims violate legal disclosure rules."},
+        ],
+    },
+    "colors": {
+        "palette": [
+            {"id": "col_pri", "name": "Acme Midnight Slate", "hex": "#0F172A", "rgb": "rgb(15, 23, 42)", "role": "primary", "usage_intent": "Core brand background and high-contrast typography", "restrictions": "Mandatory base for enterprise documentation and primary layouts", "status": "mandatory"},
+            {"id": "col_ind", "name": "Electric Indigo", "hex": "#6366F1", "rgb": "rgb(99, 102, 241)", "role": "accent", "usage_intent": "Primary interactive elements, call-to-actions, and focus indicators", "restrictions": "Must maintain 4.5:1 contrast against dark backgrounds", "status": "mandatory"},
+            {"id": "col_sky", "name": "Sovereign Sky", "hex": "#0284C7", "rgb": "rgb(2, 132, 199)", "role": "secondary", "usage_intent": "Data visualization, infrastructure status, and secondary links", "restrictions": "Do not use for body paragraph text", "status": "preferred"},
+            {"id": "col_eme", "name": "Verified Emerald", "hex": "#10B981", "rgb": "rgb(16, 185, 129)", "role": "semantic", "usage_intent": "Passed audit benchmarks, 99.99% uptime badges, and verified status", "restrictions": "Reserved strictly for positive system confirmations", "status": "mandatory"},
+            {"id": "col_amb", "name": "Caution Amber", "hex": "#F59E0B", "rgb": "rgb(245, 158, 11)", "role": "semantic", "usage_intent": "High-latency alerts, pending audits, and reviewer triage flags", "restrictions": "Use only for advisory notices", "status": "preferred"},
+            {"id": "col_ros", "name": "Critical Rose", "hex": "#EF4444", "rgb": "rgb(239, 68, 68)", "role": "semantic", "usage_intent": "Governance violations, broken safe-area margins, and non-compliance", "restrictions": "Never use as a decorative accent", "status": "mandatory"},
+            {"id": "col_neu", "name": "Neutral Steel", "hex": "#94A3B8", "rgb": "rgb(148, 163, 184)", "role": "neutral", "usage_intent": "Borders, placeholder copy, secondary captions, and structural lines", "restrictions": "Ensure secondary text readability", "status": "preferred"},
+        ],
+        "contrast_rules": {
+            "min_ratio_normal": 4.5,
+            "min_ratio_large": 3.0,
+            "notes": "All client-facing assets must strictly comply with WCAG 2.1 Level AA standards.",
+        },
+    },
+    "typography": {
+        "primary_font": "Inter",
+        "secondary_font": "Roboto",
+        "display_font": "Outfit",
+        "monospace_font": "JetBrains Mono",
+        "approved_weights": ["Regular (400)", "Medium (500)", "Semi-Bold (600)", "Bold (700)", "Extra-Bold (800)"],
+        "fallback_fonts": ["system-ui", "-apple-system", "sans-serif"],
+        "restrictions": "Never substitute serif or script typefaces. Decorative drop-shadows on typography are strictly prohibited.",
+        "licensing_notes": "All approved typefaces are licensed under open SIL OFL or enterprise commercial multi-seat licenses.",
+        "presets": [
+            {"name": "H1", "font_family": "Outfit", "font_weight": "800", "font_size": "36px", "line_height": "44px", "letter_spacing": "-0.02em", "text_case": "none", "intended_usage": "Primary hero banners and executive presentation titles"},
+            {"name": "H2", "font_family": "Outfit", "font_weight": "700", "font_size": "28px", "line_height": "36px", "letter_spacing": "-0.01em", "text_case": "none", "intended_usage": "Section headings and modal titles"},
+            {"name": "H3", "font_family": "Inter", "font_weight": "600", "font_size": "20px", "line_height": "28px", "letter_spacing": "-0.005em", "text_case": "none", "intended_usage": "Card titles, subsection dividers"},
+            {"name": "Body", "font_family": "Inter", "font_weight": "400", "font_size": "15px", "line_height": "24px", "letter_spacing": "0em", "text_case": "none", "intended_usage": "Standard paragraphs, documentation, and product descriptions"},
+            {"name": "Small", "font_family": "Inter", "font_weight": "500", "font_size": "13px", "line_height": "18px", "letter_spacing": "0em", "text_case": "none", "intended_usage": "Table rows, metadata tags, and sidebar items"},
+            {"name": "Caption", "font_family": "Inter", "font_weight": "400", "font_size": "12px", "line_height": "16px", "letter_spacing": "0.01em", "text_case": "none", "intended_usage": "Image captions, footnotes, and timestamps"},
+            {"name": "CTA", "font_family": "Inter", "font_weight": "700", "font_size": "14px", "line_height": "20px", "letter_spacing": "0.02em", "text_case": "none", "intended_usage": "Interactive buttons, links, and high-visibility actions"},
+            {"name": "Legal", "font_family": "Inter", "font_weight": "400", "font_size": "11px", "line_height": "15px", "letter_spacing": "0em", "text_case": "none", "intended_usage": "Disclaimers, copyright notices, and patent disclosures"},
+        ],
+    },
+    "logos": {
+        "variants": [
+            {"id": "logo_pri", "name": "Primary Acme Wordmark", "type": "primary", "image_url": "https://assets.acmecloud.com/logos/acme-primary.svg", "min_width_px": 140, "min_height_px": 32, "clear_space_formula": "Minimum padding equal to height of letter 'A' or 24px on all sides", "preferred_placement": "Top-left or centered upper-third", "approved_backgrounds": "Dark slate (#0F172A) or clean neutral white (#FFFFFF)", "permitted_modifications": "Monochrome white or black exports only", "prohibited_modifications": "No drop shadows, stretching, distortion, or background gradients behind wordmark"},
+            {"id": "logo_ico", "name": "Acme Sovereign Icon / Monogram", "type": "icon", "image_url": "https://assets.acmecloud.com/logos/acme-icon.svg", "min_width_px": 32, "min_height_px": 32, "clear_space_formula": "12px all sides", "preferred_placement": "App favicons, profile avatars, and compact toolbars", "approved_backgrounds": "Universal", "permitted_modifications": "Color fill in Electric Indigo or White", "prohibited_modifications": "No rotation or partial occlusion"},
+        ],
+        "partner_rules": "Partner logos must be separated by a 1px solid vertical divider (#475569) with at least 32px horizontal spacing.",
+        "co_branding_rules": "Acme wordmark must always have equal or prominent visual weight in joint press releases.",
+    },
+    "visual_identity": {
+        "overall_style": "Clean, modern, cyber-architectural, high-fidelity dark aesthetic with focused vibrant accents.",
+        "photography_aesthetic": "Real engineering teams, clean server architecture, authentic collaborative workspaces. Avoid generic stock photos.",
+        "illustration_style": "Isometric vector diagrams, precise infrastructure schematics, clean geometric topology.",
+        "graphic_design_style": "Editorial layout with generous negative space, crisp border dividers, and subtle glassmorphic panels.",
+        "iconography_style": "Monoline 2px stroke icons with rounded caps (Lucide / Heroicons style).",
+        "shapes_and_patterns": "Subtle 24px dot grids and isometric circuit nodes.",
+        "background_treatment": "Deep dark slate with subtle radial lighting vignettes.",
+        "textures": "Subtle mesh gradients and fine mathematical noise.",
+        "use_of_gradients": "Restrained linear gradients between Indigo (#6366F1) and Sky (#0284C7).",
+        "visual_density": "balanced",
+        "composition": "Left-anchored content with balanced right-side schematic visuals.",
+        "negative_space": "Maintain minimum 30% negative space on all major marketing collaterals.",
+        "image_treatment": "Natural contrast, slightly cool color temperature, authentic lighting.",
+        "color_grading": "Cool tone balance (5200K - 5600K) with deep shadow retention.",
+        "preferred_styles_examples": ["Isometric network topology diagrams", "Candid engineering war-room photos"],
+        "prohibited_styles_examples": ["Cartoon caricatures", "Cheesy handshake stock photography", "Neon lens flares"],
+    },
+    "layout_spacing": {
+        "alignment": "left",
+        "grid_system": "8pt grid system with 12-column responsive layout",
+        "spacing_principles": "Multiples of 8px (8, 16, 24, 32, 48, 64px) for all margins and padding.",
+        "padding_guidelines": "Cards require 24px internal padding; modals require 32px padding.",
+        "border_divider_usage": "1px solid border (#1E293B) with subtle opacity.",
+        "corner_radius": "12px for standard cards and containers; 8px for buttons; 9999px for status pills.",
+        "shadow_usage": "Subtle elevation shadows: 0 10px 25px -5px rgba(0, 0, 0, 0.4).",
+        "content_hierarchy": "Eyebrow tag -> Main Title -> Subtitle -> Supporting Body -> Action Group.",
+        "logo_to_content_spacing": "Minimum 32px separation between logo and nearest headline or visual element.",
+        "safe_area_principles": "Never place text within 24px of any canvas edge.",
+    },
+    "dos_and_donts": [
+        {"id": "rule_1", "title": "Always Validate Quantitative Claims", "description": "Every latency or uptime percentage must cite certified benchmarks and testing methodology.", "type": "mandatory", "priority": "critical"},
+        {"id": "rule_2", "title": "Maintain Wordmark Safe Area Margin", "description": "Ensure at least 24px margin padding around all four sides of the primary logo.", "type": "mandatory", "priority": "high"},
+        {"id": "rule_3", "title": "No Fear, Uncertainty, or Doubt (Anti-FUD)", "description": "Never use fear-inducing sales tactics or aggressive competitor bashing.", "type": "prohibited", "priority": "high"},
+        {"id": "rule_4", "title": "Adhere to Approved Color Palettes", "description": "Do not introduce arbitrary unapproved neon or pastel hues outside official brand specifications.", "type": "prohibited", "priority": "medium"},
+        {"id": "rule_5", "title": "Consistent Call-to-Action Terminology", "description": "Use descriptive action verbs (e.g. 'Deploy Sovereign Mesh') instead of vague 'Click Here'.", "type": "recommended", "priority": "low"},
+        {"id": "rule_6", "title": "Avoid Generic Stock Imagery", "description": "Do not use stereotypical stock photos of suited businessmen shaking hands.", "type": "common_mistake", "priority": "medium"},
+    ],
+    "compliance": [
+        {"id": "comp_1", "title": "Quantitative Benchmark Disclaimer", "category": "disclaimer", "rule_text": "Performance statistics verified under standardized enterprise lab benchmarks (Q1 2026). Individual enterprise latency results may vary based on topological proximity.", "requirement_level": "mandatory"},
+        {"id": "comp_2", "title": "Registered Trademark Notice", "category": "trademark", "rule_text": "Acme Cloud Systems™, Acme Core Fabric™, and Sovereign Mesh™ are registered trademarks of Acme Cloud Systems Inc.", "requirement_level": "mandatory"},
+        {"id": "comp_3", "title": "Availability & SLA Disclosures", "category": "regulatory", "rule_text": "99.999% SLA availability applies strictly to sovereign multi-region clusters backed by enterprise support agreements.", "requirement_level": "conditional"},
+        {"id": "comp_4", "title": "Accessibility WCAG Standard", "category": "accessibility", "rule_text": "All public facing visual media, banners, and digital ads must achieve minimum WCAG 2.1 AA 4.5:1 contrast ratio.", "requirement_level": "mandatory"},
+    ],
+    "assets_library": [
+        {"id": "ass_1", "name": "Primary Dark Theme Wordmark", "type": "logo", "file_url": "https://assets.acmecloud.com/logos/acme-primary.svg", "description": "Vector SVG format wordmark for dark backgrounds.", "usage_restrictions": "Do not distort or stretch.", "campaign": "Global Corporate", "approval_status": "approved"},
+        {"id": "ass_2", "name": "Sovereign Cloud Mesh Architecture Diagram", "type": "reference_design", "file_url": "https://assets.acmecloud.com/graphics/mesh-topo.png", "description": "Approved isometric topology diagram for technical presentations.", "usage_restrictions": "Authorized for customer facing architecture briefings.", "campaign": "Core Fabric 2026", "approval_status": "approved"},
+        {"id": "ass_3", "name": "Brand Guidelines PDF Specification v2026.1", "type": "document", "file_url": "https://assets.acmecloud.com/docs/acme-brand-book-2026.pdf", "description": "Complete PDF brand guidelines and design system reference.", "usage_restrictions": "Internal and certified agency distribution.", "campaign": "Enterprise Governance", "approval_status": "approved"},
+    ],
+    "media_guidelines": {
+        "social_media": {
+            "enabled": True,
+            "description": "Governance rules for LinkedIn, X (Twitter), Facebook, and YouTube social campaign banners.",
+            "inherit_brand_defaults": True,
+            "overrides": {"primary_color": "#0F172A", "cta_style": "High-contrast action banner"},
+            "platforms": [
+                {"platform": "LinkedIn", "placement": "Feed Banner", "dimensions": "1200x627", "aspect_ratio": "1.91:1", "safe_areas": "40px margin on all sides", "text_density_limit": "Maximum 20% canvas text area", "headline_size": "28px Outfit Bold", "body_size": "15px Inter Regular", "cta_rules": "Bottom-right pill button with 4.5:1 contrast", "logo_placement": "Top-left 32px offset", "export_format": "PNG (Lossless)"},
+                {"platform": "X (Twitter)", "placement": "In-Stream Card", "dimensions": "1600x900", "aspect_ratio": "16:9", "safe_areas": "30px margins", "text_density_limit": "Concise text under 15 words", "headline_size": "32px Outfit Bold", "body_size": "16px Inter", "cta_rules": "Visible action prompt", "logo_placement": "Top-left or Bottom-right", "export_format": "PNG / JPG"},
+                {"platform": "YouTube", "placement": "Video Thumbnail", "dimensions": "1280x720", "aspect_ratio": "16:9", "safe_areas": "Avoid bottom-right timestamp zone (160x50px)", "text_density_limit": "Under 6 words in high-contrast display type", "headline_size": "48px Outfit Black", "body_size": "N/A", "cta_rules": "Visual focal point", "logo_placement": "Top-left", "export_format": "PNG / JPG"},
+            ],
+            "mandatory_rules": ["Include primary Acme wordmark with 24px clear space", "WCAG AA contrast on all overlaid copy"],
+            "prohibited_elements": ["Generic unbranded stock photos", "Unapproved color gradients"],
+        },
+        "photography": {
+            "enabled": True,
+            "description": "Visual standards for professional photoshoot production, employee portraits, and facility imagery.",
+            "inherit_brand_defaults": True,
+            "overrides": {},
+            "lighting": "Natural diffused lighting with cool directional rim accents.",
+            "composition": "Rule of thirds; intentional negative space for headline overlay.",
+            "framing": "Medium close-up for portraits; wide-angle schematic depth for data centers.",
+            "color_grading": "Cool neutral palette (5400K) preserving natural skin tones and deep slate shadows.",
+            "retouching_restrictions": "Minor blemish cleanup permitted; altering physical features or heavy AI smoothing is prohibited.",
+            "product_visibility": "Enterprise hardware must show genuine industrial design without exaggerated 3D glows.",
+            "model_direction": "Authentic, focused, collaborative demeanor.",
+            "required_resolutions": "Minimum 300 DPI for print, minimum 4K (3840x2160) for digital master archives.",
+            "output_formats": "TIFF / Adobe RGB 1998 for master archives; WebP / PNG for digital.",
+        },
+        "video": {
+            "enabled": True,
+            "description": "Motion graphics, product demos, webinar recordings, and promotional video reels.",
+            "inherit_brand_defaults": True,
+            "overrides": {},
+            "video_styles": ["Cinematic Realism", "Technical Product Walkthrough", "Executive Keynote"],
+            "aspect_ratios": ["16:9 (Landscape)", "9:16 (Vertical Reel)", "1:1 (Square)"],
+            "resolutions": ["1080p (1920x1080)", "4K (3840x2160)"],
+            "frame_rates": ["24 fps (Cinematic)", "30 fps (Web)", "60 fps (Product Screencasts)"],
+            "duration_recommendations": "Social clips: 15-45s; Product demos: 90-180s; Keynotes: 15-30min.",
+            "opening_hook_rules": "Brand identity or compelling customer problem statement within first 3 seconds.",
+            "logo_appearance_timing": "Opening bug (lower left) or dedicated 1.5s motion intro.",
+            "subtitles_placement": "Centered lower-third with 10% black translucent backing box for readability.",
+            "music_restrictions": "Modern ambient electronic or subtle orchestral. Prohibit aggressive trap or cheerful ukelele tracks.",
+            "end_card_cta": "Clear URL (acmecloud.com) with approved logo and certified disclaimer.",
+            "export_formats": "MP4 (H.264 / AAC) at 15-25 Mbps bitrate.",
+        },
+        "print": {
+            "enabled": True,
+            "description": "Standards for physical exhibition booths, brochures, print ads, and whitepapers.",
+            "inherit_brand_defaults": True,
+            "overrides": {},
+            "dpi": 300,
+            "color_mode": "CMYK & Pantone Matching System (PMS)",
+            "bleed": "3mm (0.125 in) all sides",
+            "safe_margin": "5mm (0.2 in) inside trim line",
+            "paper_finishes": ["Matte Coated 120gsm (Brochures)", "Heavy Silk 300gsm (Business Collaterals)"],
+            "export_format": "PDF/X-1a:2001 with embedded fonts and crop marks",
+        },
+        "web_ads": {
+            "enabled": True,
+            "description": "Google Display Network, programmatic banners, and digital marketing placements.",
+            "inherit_brand_defaults": True,
+            "overrides": {},
+            "standard_sizes": ["300x250 (Medium Rectangle)", "728x90 (Leaderboard)", "160x600 (Skyscraper)", "300x600 (Half Page)"],
+            "max_file_size_kb": 150,
+            "animation_rules": "Maximum 15 seconds animation loop. No rapid strobing or deceptive click triggers.",
+            "mobile_adaptations": "Responsive scaling with minimum 14px font size on mobile screens.",
+        },
+        "custom_media": [],
+    },
+}
+
+
 def seed_initial_data():
     db = SessionLocal()
     try:
         # Check if already seeded
         existing_acme = db.query(Organization).filter(Organization.slug == "acme-cloud").first()
         if existing_acme:
+            acme_g = db.query(BrandGuideline).filter(BrandGuideline.organization_id == existing_acme.id).first()
+            if acme_g and not acme_g.published_data:
+                acme_g.status = "published"
+                acme_g.published_data = ACME_MASTER_BRAND_DATA
+                acme_g.draft_data = ACME_MASTER_BRAND_DATA
+                acme_g.published_by = "Alex Mercer (Manager)"
+                acme_g.published_at = datetime.now(timezone.utc)
+                v = db.query(BrandGuidelineVersion).filter(BrandGuidelineVersion.guideline_id == acme_g.id).first()
+                if not v:
+                    db.add(
+                        BrandGuidelineVersion(
+                            id="ver_acme_master_2026_1",
+                            guideline_id=acme_g.id,
+                            organization_id=existing_acme.id,
+                            version="2026.1.0",
+                            changelog="Initial publication of Acme Cloud Master Brand Standards 2026.",
+                            published_by="Alex Mercer (Manager)",
+                            published_at=datetime.now(timezone.utc),
+                            snapshot_data=ACME_MASTER_BRAND_DATA,
+                        )
+                    )
+                db.commit()
             return
 
         demo_pwd_hash = hash_password("password123")
@@ -138,10 +378,28 @@ def seed_initial_data():
             name="Acme Cloud Master Brand Standard 2026",
             description="Official corporate guidelines governing tone, terminology, typography, and certified performance claims.",
             version="2026.1.0",
+            status="published",
+            published_at=datetime.now(timezone.utc),
+            published_by="Alex Mercer (Manager)",
+            draft_data=ACME_MASTER_BRAND_DATA,
+            published_data=ACME_MASTER_BRAND_DATA,
             is_active=True,
         )
         db.add(acme_guideline)
         db.flush()
+
+        db.add(
+            BrandGuidelineVersion(
+                id="ver_acme_master_2026_1",
+                guideline_id=acme_guideline.id,
+                organization_id=acme_org.id,
+                version="2026.1.0",
+                changelog="Initial publication of Acme Cloud Master Brand Standards 2026.",
+                published_by="Alex Mercer (Manager)",
+                published_at=datetime.now(timezone.utc),
+                snapshot_data=ACME_MASTER_BRAND_DATA,
+            )
+        )
 
         db.add_all([
             GuidelineRule(

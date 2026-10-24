@@ -1,7 +1,7 @@
 from app.models.base_model import TimestampedModel
 from app.models.organization import Organization, Membership
 from app.models.user import User
-from app.models.guideline import BrandGuideline, GuidelineRule
+from app.models.guideline import BrandGuideline, GuidelineRule, BrandGuidelineVersion
 from app.models.asset import ApprovedAsset
 from app.models.submission import ContentSubmission
 from app.models.revision import ContentRevision
@@ -18,6 +18,7 @@ __all__ = [
     "Invitation",
     "User",
     "BrandGuideline",
+    "BrandGuidelineVersion",
     "GuidelineRule",
     "ApprovedAsset",
     "ContentSubmission",
