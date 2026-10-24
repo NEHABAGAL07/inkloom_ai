@@ -16,7 +16,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: { email: string; password: string; full_name: string; organization_name: string; industry?: string }) => Promise<void>;
   acceptInvite: (token: string, full_name: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   switchOrganization: (orgId: string) => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -140,17 +140,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setActiveOrgId(null);
-    setActiveOrgName(null);
-    setActiveRole(null);
-    setMemberships([]);
-    setOrganizations([]);
-    setApiAuthToken(null);
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("inkloom_token");
-      localStorage.removeItem("inkloom_tenant_id");
+  const logout = async () => {
+    try {
+      await api.logout();
+    } catch (err) {
+      console.warn("Server session revocation failed or unavailable:", err);
+    } finally {
+      setUser(null);
+      setActiveOrgId(null);
+      setActiveOrgName(null);
+      setActiveRole(null);
+      setMemberships([]);
+      setOrganizations([]);
+      setApiAuthToken(null);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("inkloom_token");
+        localStorage.removeItem("inkloom_tenant_id");
+        sessionStorage.clear();
+      }
     }
   };
 

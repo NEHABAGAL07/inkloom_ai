@@ -132,119 +132,136 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def is_token_revoked(token: str, db: Session) -> bool:
+    """Checks whether a token hash exists in the revoked tokens store."""
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    from app.models.revoked_token import RevokedToken
+    return db.query(RevokedToken).filter(RevokedToken.token_hash == token_hash).first() is not None
+
+
+def revoke_token(
+    token: str,
+    db: Session,
+    user_id: Optional[str] = None,
+    reason: str = "user_logout",
+) -> bool:
+    """Revokes a JWT token by recording its SHA-256 hash in the database."""
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    from app.models.revoked_token import RevokedToken
+
+    existing = db.query(RevokedToken).filter(RevokedToken.token_hash == token_hash).first()
+    if existing:
+        return True
+
+    payload = decode_access_token(token)
+    if payload and "exp" in payload:
+        expires_at = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+    else:
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    revoked = RevokedToken(
+        token_hash=token_hash,
+        user_id=user_id or (payload.get("sub") if payload else None),
+        expires_at=expires_at,
+        reason=reason,
+    )
+    db.add(revoked)
+    db.commit()
+    return True
+
+
 # ---------------------------------------------------------
 # Multi-Tenant Auth Dependency with Server-Side DB Validation
 # ---------------------------------------------------------
 def get_current_auth_context(
     x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-Id"),
-    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
-    x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
     authorization: Optional[str] = Header(None, alias="Authorization"),
     db: Session = Depends(get_db),
 ) -> AuthContext:
     """
     Extracts multi-tenant context and user credentials.
-    If Bearer token is provided:
-      1. Verifies cryptographic JWT signature.
-      2. Validates user existence in database.
-      3. Validates that user has an active Membership in the target organization.
-      4. Assigns the real server-side role from the database.
-    If no token is provided:
-      Falls back gracefully to test/dev context for backwards compatibility.
+    1. Verifies cryptographic JWT signature and expiry.
+    2. Validates that the token has not been revoked (e.g., via sign-out).
+    3. Validates user existence and active status in database.
+    4. Validates that user has an active Membership in the target organization.
+    5. Assigns the real server-side role from the database.
+    Rejects direct unauthenticated requests with 401 Unauthorized.
     """
     from app.models.user import User
     from app.models.organization import Membership, Organization
 
-    # 1. Bearer Token Authentication
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization[7:].strip()
-        payload = decode_access_token(token)
-        if not payload or "sub" not in payload:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired authentication token.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        user_id = payload["sub"]
-        user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User account not found or deactivated.",
-            )
-
-        # Determine target tenant
-        target_org_id = x_tenant_id or payload.get("org_id")
-        if target_org_id:
-            membership = (
-                db.query(Membership)
-                .filter(Membership.user_id == user.id, Membership.organization_id == target_org_id)
-                .first()
-            )
-            if not membership:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Access denied: You are not a registered member of organization '{target_org_id}'.",
-                )
-            tenant_id = target_org_id
-            resolved_role_str = membership.role
-        else:
-            # Pick first available organization
-            membership = db.query(Membership).filter(Membership.user_id == user.id).first()
-            if not membership:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="User does not have an active membership in any organization.",
-                )
-            tenant_id = membership.organization_id
-            resolved_role_str = membership.role
-
-        try:
-            role = UserRole(resolved_role_str.lower())
-        except ValueError:
-            role = UserRole.MARKETING
-
-        return AuthContext(
-            user_id=user.id,
-            organization_id=tenant_id,
-            roles=[role],
-            email=user.email,
-            full_name=user.full_name,
-            is_authenticated=True,
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication credentials were not provided.",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # 2. Development & Unit Test Fallback (when no Bearer token passed)
-    tenant_id = x_tenant_id or "org_default_inkloom"
-    user_id = x_user_id or "user_local_dev"
+    token = authorization[7:].strip()
+    payload = decode_access_token(token)
+    if not payload or "sub" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired authentication token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-    # If user and tenant exist in DB, lookup actual membership role
-    membership = (
-        db.query(Membership)
-        .filter(Membership.user_id == user_id, Membership.organization_id == tenant_id)
-        .first()
-    )
+    # Check if token was revoked via logout
+    if is_token_revoked(token, db):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication token has been revoked. Please sign in again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-    if membership:
-        try:
-            role = UserRole(membership.role.lower())
-        except ValueError:
-            role = UserRole.COMPLIANCE_OFFICER
+    user_id = payload["sub"]
+    user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account not found or deactivated.",
+        )
+
+    # Determine target tenant: verify user is authorized for this organization
+    target_org_id = x_tenant_id or payload.get("org_id")
+    if target_org_id:
+        membership = (
+            db.query(Membership)
+            .filter(Membership.user_id == user.id, Membership.organization_id == target_org_id)
+            .first()
+        )
+        if not membership:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied: You are not a registered member of organization '{target_org_id}'.",
+            )
+        tenant_id = target_org_id
+        resolved_role_str = membership.role
     else:
-        role = UserRole.COMPLIANCE_OFFICER
-        if x_user_role:
-            try:
-                role = UserRole(x_user_role.lower())
-            except ValueError:
-                role = UserRole.CREATOR
+        # Pick first available organization
+        membership = db.query(Membership).filter(Membership.user_id == user.id).first()
+        if not membership:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have an active membership in any organization.",
+            )
+        tenant_id = membership.organization_id
+        resolved_role_str = membership.role
+
+    try:
+        role = UserRole(resolved_role_str.lower())
+    except ValueError:
+        role = UserRole.MARKETING
 
     return AuthContext(
-        user_id=user_id,
+        user_id=user.id,
         organization_id=tenant_id,
         roles=[role],
-        email=f"{user_id}@example.internal",
+        email=user.email,
+        full_name=user.full_name,
         is_authenticated=True,
     )
+
 
 
 def require_roles(*allowed_roles: UserRole):

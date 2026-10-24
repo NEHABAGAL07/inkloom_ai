@@ -268,6 +268,14 @@ export class ApiService implements IApiService {
     }
   }
 
+  async logout(): Promise<{ message: string; revoked: boolean }> {
+    if (USE_MOCK) return mockApi.logout();
+    return await this.fetchJson<{ message: string; revoked: boolean }>("/auth/logout", {
+      method: "POST",
+    });
+  }
+
+
   // --- Organizations ---
   async getOrganizations(): Promise<Organization[]> {
     if (USE_MOCK) return mockApi.getOrganizations();

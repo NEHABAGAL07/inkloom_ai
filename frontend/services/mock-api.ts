@@ -62,6 +62,7 @@ export interface IApiService {
   revokeInvitation(orgId: string, inviteId: string): Promise<void>;
   inspectInvitation(token: string): Promise<PublicInvitation>;
   acceptInvitation(data: { token: string; full_name: string; password: string }): Promise<AuthResponse>;
+  logout(): Promise<{ message: string; revoked: boolean }>;
 }
 
 // In-memory deterministic mock state
@@ -896,6 +897,10 @@ export class MockApiService implements IApiService {
         },
       ],
     };
+  }
+
+  async logout(): Promise<{ message: string; revoked: boolean }> {
+    return { message: "Mock logout successful", revoked: true };
   }
 }
 

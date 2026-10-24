@@ -1,7 +1,7 @@
 import re
 import uuid
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Response
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -9,6 +9,9 @@ from app.core.security import (
     hash_password,
     verify_password,
     create_access_token,
+    decode_access_token,
+    revoke_token,
+    is_token_revoked,
     get_current_auth_context,
     AuthContext,
     UserRole,
@@ -293,3 +296,55 @@ def get_current_user_profile(
         active_role=active_role,
         memberships=org_list,
     )
+
+
+@router.post("/logout")
+def logout(
+    response: Response,
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+    db: Session = Depends(get_db),
+):
+    """
+    Securely invalidates the server-side session by revoking the JWT access token.
+    Records a logout audit event in the database and clears authentication cookies.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication token required for logout.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = authorization[7:].strip()
+    payload = decode_access_token(token)
+    if not payload or "sub" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired authentication token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload.get("sub")
+    org_id = payload.get("org_id") or "org_default_inkloom"
+
+    # Revoke token so it cannot be reused
+    revoke_token(token, db, user_id=user_id, reason="user_logout")
+
+    # Record Audit Event
+    event = AuditEvent(
+        organization_id=org_id,
+        actor_id=user_id,
+        entity_type="session",
+        entity_id=user_id,
+        event_type="user_logged_out",
+        details={"user_id": user_id, "email": payload.get("email")},
+    )
+    db.add(event)
+    db.commit()
+
+    # Clear authentication cookies if any
+    response.delete_cookie(key="inkloom_token", path="/")
+    response.delete_cookie(key="inkloom_session", path="/")
+
+    return {"message": "Session invalidated successfully.", "revoked": True}
+

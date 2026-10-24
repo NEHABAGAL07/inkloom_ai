@@ -10,6 +10,7 @@ from app.models.review import ReviewDecision
 from app.models.audit_event import AuditEvent
 
 from app.models.invitation import Invitation
+from app.models.revoked_token import RevokedToken
 
 __all__ = [
     "TimestampedModel",
@@ -26,4 +27,6 @@ __all__ = [
     "AuditFinding",
     "ReviewDecision",
     "AuditEvent",
+    "RevokedToken",
 ]
+
