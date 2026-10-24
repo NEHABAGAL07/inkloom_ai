@@ -4,8 +4,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-<<<<<<< HEAD
-=======
 build/
 develop-eggs/
 dist/
@@ -25,20 +23,14 @@ share/python-wheels/
 MANIFEST
 
 # Virtual environments
-venv/
-.venv/
->>>>>>> d0681a9 (1st)
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+.venv
 .venv/
-*.egg-info/
-.installed.cfg
-*.egg
-build/
-dist/
+backend/.venv
 
 # Testing & Coverage
 .pytest_cache/
