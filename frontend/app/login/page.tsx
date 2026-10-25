@@ -17,7 +17,61 @@ import {
   EyeOff,
   ChevronLeft,
   ExternalLink,
+  Sparkles,
+  Palette,
+  FileText,
+  Scale,
+  Loader2,
 } from "lucide-react";
+
+interface QuickDept {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+  badge: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+}
+
+const QUICK_DEPARTMENTS: QuickDept[] = [
+  {
+    id: "admin",
+    name: "Alex Mercer",
+    role: "Brand Admin",
+    email: "admin@acmecloud.com",
+    badge: "bg-navy/10 text-navy border-navy/20 dark:bg-slate-800 dark:text-slate-200",
+    icon: Shield,
+    color: "border-slate-300 dark:border-slate-700 hover:border-navy text-navy dark:text-slate-200",
+  },
+  {
+    id: "designer",
+    name: "Leo Vance",
+    role: "Brand Designer",
+    email: "designer@acmecloud.com",
+    badge: "bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300",
+    icon: Palette,
+    color: "border-purple-200 dark:border-purple-800/60 hover:border-purple-500 text-purple-700 dark:text-purple-300",
+  },
+  {
+    id: "marketing",
+    name: "Maya Lin",
+    role: "Marketing Lead",
+    email: "marketing@acmecloud.com",
+    badge: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300",
+    icon: FileText,
+    color: "border-amber-200 dark:border-amber-800/60 hover:border-amber-500 text-amber-700 dark:text-amber-300",
+  },
+  {
+    id: "compliance",
+    name: "Elena Rostova",
+    role: "Legal & Regulatory",
+    email: "compliance@acmecloud.com",
+    badge: "bg-teal/10 text-teal border-teal/20 dark:bg-teal-950/40 dark:text-teal-300",
+    icon: Scale,
+    color: "border-teal/30 hover:border-teal text-teal",
+  },
+];
 
 function LoginContent() {
   const { login, isAuthenticated } = useAuth();
@@ -32,6 +86,7 @@ function LoginContent() {
   const [rememberMe, setRememberMe] = useState(true);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [signingInDept, setSigningInDept] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
@@ -41,6 +96,20 @@ function LoginContent() {
       router.push(redirectUrl);
     }
   }, [isAuthenticated, redirectUrl, router]);
+
+  const handleQuickDeptLogin = async (deptEmail: string, deptId: string) => {
+    setSigningInDept(deptId);
+    setErrorMessage(null);
+    try {
+      await login(deptEmail, "password123", true);
+      router.push(redirectUrl);
+    } catch (err: any) {
+      setErrorMessage(
+        err?.message || `Failed to sign in as ${deptId}. Please ensure backend is running.`
+      );
+      setSigningInDept(null);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +188,7 @@ function LoginContent() {
                 Sign in to your workspace
               </h1>
               <p className="text-xs text-ink-secondary mt-1">
-                Enter your work credentials to access your brand governance dashboard.
+                Choose an enterprise department for instant access, or sign in with credentials.
               </p>
             </div>
 
@@ -130,6 +199,59 @@ function LoginContent() {
                 <span>{errorMessage}</span>
               </div>
             )}
+
+            {/* 1-Click Department Switcher Grid */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-teal flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>One-Click Department Login</span>
+                </span>
+                <span className="text-[10px] text-ink-muted">Pre-authenticated</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {QUICK_DEPARTMENTS.map((dept) => {
+                  const Icon = dept.icon;
+                  const isCurrent = signingInDept === dept.id;
+                  return (
+                    <button
+                      key={dept.id}
+                      type="button"
+                      disabled={!!signingInDept || isLoading}
+                      onClick={() => handleQuickDeptLogin(dept.email, dept.id)}
+                      className={`p-3 rounded-xl border text-left transition-all duration-150 flex flex-col justify-between group hover:shadow-subtle disabled:opacity-50 bg-workspace/70 hover:bg-workspace ${dept.color}`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded border ${dept.badge}`}>
+                          {dept.role}
+                        </span>
+                        {isCurrent ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-teal" />
+                        ) : (
+                          <Icon className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition" />
+                        )}
+                      </div>
+                      <div className="mt-2.5">
+                        <div className="text-xs font-bold truncate group-hover:text-teal transition">
+                          {dept.name}
+                        </div>
+                        <div className="text-[10px] text-ink-muted truncate font-mono">
+                          {dept.email}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Divider with "OR" */}
+            <div className="relative flex items-center justify-center pt-1">
+              <div className="border-t border-border w-full"></div>
+              <span className="bg-surface px-3 text-[10px] uppercase font-bold text-ink-muted tracking-wider absolute">
+                or use credentials
+              </span>
+            </div>
 
             {/* Form */}
             <form onSubmit={handleLogin} className="space-y-4">

@@ -23,6 +23,7 @@ import {
   AlertCircle,
   FileCheck,
   Eye,
+  Lock,
 } from "lucide-react";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
@@ -40,7 +41,7 @@ export function ManagerDashboard({
   members,
   onRefresh,
 }: ManagerDashboardProps) {
-  const { activeOrgId, activeOrgName } = useAuth();
+  const { activeOrgId, activeOrgName, user } = useAuth();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("marketing");
@@ -112,8 +113,34 @@ export function ManagerDashboard({
     }
   };
 
+  const isAuthorOfSub = Boolean(
+    selectedSubForAudit &&
+      user &&
+      ((selectedSubForAudit.creator_id && selectedSubForAudit.creator_id === user.id) ||
+        (selectedSubForAudit.author_id && selectedSubForAudit.author_id === user.id) ||
+        (selectedSubForAudit.author_email &&
+          user.email &&
+          selectedSubForAudit.author_email.toLowerCase() === user.email.toLowerCase()) ||
+        (selectedSubForAudit.created_by && selectedSubForAudit.created_by === user.id))
+  );
+
+  const isAuthorOfViewing = Boolean(
+    viewingSub &&
+      user &&
+      ((viewingSub.creator_id && viewingSub.creator_id === user.id) ||
+        (viewingSub.author_id && viewingSub.author_id === user.id) ||
+        (viewingSub.author_email &&
+          user.email &&
+          viewingSub.author_email.toLowerCase() === user.email.toLowerCase()) ||
+        (viewingSub.created_by && viewingSub.created_by === user.id))
+  );
+
   const handleManagerDecision = async (action: "approve" | "request_changes") => {
     if (!selectedSubForAudit) return;
+    if (action === "approve" && isAuthorOfSub) {
+      alert("Separation of duties violation: Creators cannot authorize their own submissions. Please request review from another manager or compliance officer.");
+      return;
+    }
     try {
       await api.submitReviewDecision({
         submission_id: selectedSubForAudit.id,
@@ -629,10 +656,17 @@ export function ManagerDashboard({
                       Request Changes
                     </button>
                     <button
+                      disabled={isAuthorOfSub}
                       onClick={() => handleManagerDecision("approve")}
-                      className="flex-1 sm:flex-none px-4 py-2 bg-teal hover:bg-teal-hover text-white font-semibold text-xs rounded-lg shadow-sm transition"
+                      title={isAuthorOfSub ? "Self-approval disabled under separation of duties" : ""}
+                      className={`flex-1 sm:flex-none px-4 py-2 font-semibold text-xs rounded-lg shadow-sm transition flex items-center justify-center gap-1.5 ${
+                        isAuthorOfSub
+                          ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-300"
+                          : "bg-teal hover:bg-teal-hover text-white"
+                      }`}
                     >
-                      Approve Asset
+                      {isAuthorOfSub ? <Lock className="w-3.5 h-3.5" /> : null}
+                      <span>{isAuthorOfSub ? "Authorize (Self Locked)" : "Approve Asset"}</span>
                     </button>
                   </div>
                 </div>
@@ -722,7 +756,7 @@ export function ManagerDashboard({
         isOpen={isViewerOpen}
         onClose={() => setIsViewerOpen(false)}
         submission={viewingSub}
-        canAuthorize={true}
+        canAuthorize={!isAuthorOfViewing}
       />
     </div>
   );

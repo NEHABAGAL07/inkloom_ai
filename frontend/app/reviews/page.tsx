@@ -7,9 +7,11 @@ import { ReviewActionModal } from "@/components/reviews/ReviewActionModal";
 import { AuditTrailTimeline } from "@/components/reviews/AuditTrailTimeline";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
+import { useAuth } from "@/services/auth-context";
 import { Scale, FileText, CheckCircle, ArrowRight, Eye } from "lucide-react";
 
 export default function ReviewsPage() {
+  const { user } = useAuth();
   const [pendingSubmissions, setPendingSubmissions] = useState<ContentSubmission[]>([]);
   const [selectedSub, setSelectedSub] = useState<ContentSubmission | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -191,23 +193,45 @@ export default function ReviewsPage() {
       )}
 
       {/* Review Action Modal */}
-      {selectedSub && (
-        <ReviewActionModal
-          isOpen={modalOpen}
-          submissionTitle={selectedSub.title}
-          submissionId={selectedSub.id}
-          onClose={() => setModalOpen(false)}
-          onSubmitDecision={handleDecisionSubmit}
-        />
-      )}
+      {selectedSub && (() => {
+        const isAuthor = Boolean(
+          user &&
+          ((selectedSub.creator_id && selectedSub.creator_id === user.id) ||
+            (selectedSub.author_id && selectedSub.author_id === user.id) ||
+            (selectedSub.author_email && user.email && selectedSub.author_email.toLowerCase() === user.email.toLowerCase()) ||
+            (selectedSub.created_by && selectedSub.created_by === user.id))
+        );
+        return (
+          <ReviewActionModal
+            isOpen={modalOpen}
+            submissionTitle={selectedSub.title}
+            submissionId={selectedSub.id}
+            isAuthor={isAuthor}
+            onClose={() => setModalOpen(false)}
+            onSubmitDecision={handleDecisionSubmit}
+          />
+        );
+      })()}
 
       {/* Design Asset Viewer Modal */}
-      <DesignAssetViewerModal
-        isOpen={isViewerOpen}
-        onClose={() => setIsViewerOpen(false)}
-        submission={viewingSub}
-        canAuthorize={true}
-      />
+      {(() => {
+        const isAuthorForViewer = Boolean(
+          viewingSub &&
+          user &&
+          ((viewingSub.creator_id && viewingSub.creator_id === user.id) ||
+            (viewingSub.author_id && viewingSub.author_id === user.id) ||
+            (viewingSub.author_email && user.email && viewingSub.author_email.toLowerCase() === user.email.toLowerCase()) ||
+            (viewingSub.created_by && viewingSub.created_by === user.id))
+        );
+        return (
+          <DesignAssetViewerModal
+            isOpen={isViewerOpen}
+            onClose={() => setIsViewerOpen(false)}
+            submission={viewingSub}
+            canAuthorize={!isAuthorForViewer}
+          />
+        );
+      })()}
     </div>
   );
 }

@@ -16,6 +16,9 @@ import {
   RefreshCw,
   Sliders,
   Check,
+  Copy,
+  Type,
+  Info,
 } from "lucide-react";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
@@ -32,6 +35,15 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditFeedback, setAuditFeedback] = useState<string | null>(null);
   const [updatingSubId, setUpdatingSubId] = useState<string | null>(null);
+  const [copiedColor, setCopiedColor] = useState<string | null>(null);
+
+  const copyToClipboard = (hex: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(hex);
+      setCopiedColor(hex);
+      setTimeout(() => setCopiedColor(null), 2000);
+    }
+  };
 
   // Active AI Audit state for inspection
   const [activeAudit, setActiveAudit] = useState<AuditResult | null>(null);
@@ -229,55 +241,94 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
         </div>
       </div>
 
-      {/* Brand Kit Asset Library Cards */}
-      <div className="bg-surface border border-border rounded-2xl p-6 shadow-subtle space-y-4">
+      {/* Deterministic Advisory Analysis Banner */}
+      <div className="bg-teal/5 border border-teal/20 rounded-2xl p-4 flex items-start gap-3.5 shadow-subtle">
+        <Info className="w-5 h-5 text-teal shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <div className="text-xs font-bold text-navy flex items-center gap-2">
+            <span>Deterministic Advisory Visual Governance</span>
+            <span className="text-[10px] font-semibold text-teal px-2 py-0.5 rounded-full bg-teal/10 border border-teal/20">
+              Advisory Analysis Only • No Synthetic Generation
+            </span>
+          </div>
+          <p className="text-xs text-ink-secondary leading-relaxed">
+            Inkloom AI performs deterministic color clustering, contrast ratio verification (WCAG 2.2 AA), wordmark clear-space checks, and metadata extraction.
+            It does <strong>not</strong> synthesize artificial images, modify creative artwork, or fabricate media. All visual assets are creator-submitted and require human compliance authorization before release.
+          </p>
+        </div>
+      </div>
+
+      {/* Brand Visual & Voice Standards Panel */}
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-subtle space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border">
           <div>
             <h2 className="text-sm font-bold text-navy flex items-center gap-2">
               <Layers className="w-4 h-4 text-teal" />
-              <span>Approved Brand Assets & Color Tokens</span>
+              <span>Brand Visual, Typography &amp; Voice Standards</span>
             </h2>
-            <p className="text-xs text-ink-muted mt-0.5">Authoritative elements certified for enterprise campaigns</p>
+            <p className="text-xs text-ink-muted mt-0.5">Authoritative design guidelines, color tokens, and tone rules certified for enterprise campaigns</p>
           </div>
           <span className="text-[11px] text-teal font-semibold bg-teal/10 border border-teal/20 px-2.5 py-1 rounded-full w-fit">
             WCAG 2.2 AA Verified
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Logo Card */}
           <div className="p-4 rounded-xl bg-workspace border border-border flex flex-col justify-between space-y-4">
             <div>
               <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Primary Wordmark</div>
               <div className="text-sm font-bold text-navy mt-1">Official High-Res SVG Logo</div>
-              <div className="mt-4 p-4 rounded-xl bg-surface border border-border flex items-center justify-center">
+              <div className="mt-3 p-4 rounded-xl bg-surface border border-border flex items-center justify-center">
                 <span className="text-xl font-black tracking-widest text-navy">INKLOOM</span>
               </div>
             </div>
-            <div className="text-[11px] text-ink-muted flex justify-between items-center pt-2 border-t border-border">
-              <span>Clear Space: Min 24px</span>
-              <span className="text-teal font-bold">Vector SVG</span>
+            <div className="text-[11px] text-ink-muted space-y-1 pt-2 border-t border-border">
+              <div className="flex justify-between">
+                <span>Clear Space:</span>
+                <span className="font-semibold text-navy">Min 24px perimeter</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Aspect Ratio:</span>
+                <span className="font-semibold text-teal">Vector SVG (No skew)</span>
+              </div>
             </div>
           </div>
 
-          {/* Color Palette Card */}
-          <div className="p-4 rounded-xl bg-workspace border border-border flex flex-col justify-between space-y-4">
+          {/* Color Tokens Card with Click-to-Copy */}
+          <div className="p-4 rounded-xl bg-workspace border border-border flex flex-col justify-between space-y-3">
             <div>
-              <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Color Tokens</div>
-              <div className="text-sm font-bold text-navy mt-1">2026 Executive Palette</div>
-              <div className="grid grid-cols-3 gap-2 mt-4">
-                <div className="space-y-1 text-center">
-                  <div className="h-10 rounded-lg bg-[#14263D] border border-border"></div>
-                  <span className="text-[10px] font-mono text-ink-secondary">#14263D</span>
-                </div>
-                <div className="space-y-1 text-center">
-                  <div className="h-10 rounded-lg bg-[#0F766E] border border-border"></div>
-                  <span className="text-[10px] font-mono text-ink-secondary">#0F766E</span>
-                </div>
-                <div className="space-y-1 text-center">
-                  <div className="h-10 rounded-lg bg-[#15803D] border border-border"></div>
-                  <span className="text-[10px] font-mono text-ink-secondary">#15803D</span>
-                </div>
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Color Tokens</div>
+                {copiedColor && (
+                  <span className="text-[10px] text-status-success font-bold animate-in fade-in">
+                    Copied {copiedColor}!
+                  </span>
+                )}
+              </div>
+              <div className="text-sm font-bold text-navy mt-1">Authoritative Palette (Click to Copy)</div>
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                {[
+                  { hex: "#0D9488", label: "Teal Primary", bg: "bg-[#0D9488]" },
+                  { hex: "#0F766E", label: "Deep Teal", bg: "bg-[#0F766E]" },
+                  { hex: "#0F172A", label: "Navy Midnight", bg: "bg-[#0F172A]" },
+                  { hex: "#14263D", label: "Slate Navy", bg: "bg-[#14263D]" },
+                  { hex: "#15803D", label: "Emerald Success", bg: "bg-[#15803D]" },
+                  { hex: "#64748B", label: "Slate Muted", bg: "bg-[#64748B]" },
+                ].map((col) => (
+                  <button
+                    key={col.hex}
+                    type="button"
+                    onClick={() => copyToClipboard(col.hex)}
+                    className="p-1.5 rounded-lg bg-surface border border-border hover:border-teal text-center transition group flex flex-col items-center"
+                    title={`Click to copy ${col.label} (${col.hex})`}
+                  >
+                    <div className={`w-full h-6 rounded-md ${col.bg} border border-black/10`} />
+                    <span className="text-[9px] font-mono text-ink-secondary mt-1 group-hover:text-teal font-semibold">
+                      {col.hex}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
             <div className="text-[11px] text-ink-muted flex justify-between items-center pt-2 border-t border-border">
@@ -286,18 +337,55 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
             </div>
           </div>
 
-          {/* Certified Disclosures */}
-          <div className="p-4 rounded-xl bg-workspace border border-border flex flex-col justify-between space-y-4">
+          {/* Typography Hierarchy */}
+          <div className="p-4 rounded-xl bg-workspace border border-border flex flex-col justify-between space-y-3">
             <div>
-              <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Mandatory Boilerplate</div>
-              <div className="text-sm font-bold text-navy mt-1">Certified Compliance Notice</div>
-              <div className="mt-4 p-3 rounded-xl bg-surface border border-border text-xs text-ink-secondary italic leading-relaxed">
-                &quot;Certified SOC 2 Type II and ISO 27001 compliant enterprise infrastructure.&quot;
+              <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Typography Scale</div>
+              <div className="text-sm font-bold text-navy mt-1">Outfit / Inter Sans Scale</div>
+              <div className="mt-3 space-y-2 text-xs">
+                <div className="p-2 rounded-lg bg-surface border border-border">
+                  <div className="text-[10px] text-ink-muted">Display / Hero (32px / 2rem)</div>
+                  <div className="font-extrabold text-navy tracking-tight text-sm">Enterprise Governance</div>
+                </div>
+                <div className="p-2 rounded-lg bg-surface border border-border">
+                  <div className="text-[10px] text-ink-muted">Section Headings (18px / 1.125rem)</div>
+                  <div className="font-bold text-navy text-xs">Compliance Audit Evidence</div>
+                </div>
+                <div className="p-2 rounded-lg bg-surface border border-border">
+                  <div className="text-[10px] text-ink-muted">Body Copy (14px / 0.875rem)</div>
+                  <div className="text-ink-secondary text-[11px] leading-relaxed">Relaxed leading, 4.5:1 min contrast</div>
+                </div>
               </div>
             </div>
             <div className="text-[11px] text-ink-muted flex justify-between items-center pt-2 border-t border-border">
-              <span>Mandatory Disclosure</span>
-              <span className="text-teal font-bold">Verified</span>
+              <span>Font Hierarchy:</span>
+              <span className="text-teal font-bold">Inter / Outfit</span>
+            </div>
+          </div>
+
+          {/* Anti-FUD & Tone Guidelines */}
+          <div className="p-4 rounded-xl bg-workspace border border-border flex flex-col justify-between space-y-3">
+            <div>
+              <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Voice &amp; Tone Rules</div>
+              <div className="text-sm font-bold text-navy mt-1">Anti-FUD &amp; Factual Clarity</div>
+              <div className="mt-3 space-y-2 text-xs">
+                <div className="p-2.5 rounded-lg bg-surface border border-border space-y-1">
+                  <span className="text-[10px] font-bold text-status-success uppercase block">✓ Permitted Voice</span>
+                  <p className="text-[11px] text-ink-secondary leading-relaxed">
+                    Objective, factual statements with verified benchmark citations and statutory notices.
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-surface border border-border space-y-1">
+                  <span className="text-[10px] font-bold text-status-error uppercase block">✗ Prohibited (Anti-FUD)</span>
+                  <p className="text-[11px] text-ink-secondary leading-relaxed">
+                    Fear, uncertainty, doubt (FUD), unbacked superlatives (&quot;100% unbreakable&quot;), or uncertified claims.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="text-[11px] text-ink-muted flex justify-between items-center pt-2 border-t border-border">
+              <span>Mandatory Disclosure:</span>
+              <span className="text-teal font-bold">SOC2 / ISO 27001</span>
             </div>
           </div>
         </div>

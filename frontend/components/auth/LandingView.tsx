@@ -56,22 +56,6 @@ const DEPARTMENT_PERSONAS: DepartmentPersona[] = [
     ],
   },
   {
-    id: "marketing",
-    name: "Maya Lin",
-    email: "marketing@acmecloud.com",
-    role: "marketing",
-    roleTitle: "Marketing Lead",
-    department: "Marketing Department",
-    badgeStyle: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-    description: "Content strategist submitting marketing copy, campaign headlines, and press materials for governance checks.",
-    responsibilities: [
-      "Content Submission & Document Ingestion",
-      "Real-Time Pre-Publication AI Audits",
-      "Tone & Anti-FUD Copy Alignment",
-      "Revision & Resubmission Workflow",
-    ],
-  },
-  {
     id: "designer",
     name: "Leo Vance",
     email: "designer@acmecloud.com",
@@ -85,6 +69,22 @@ const DEPARTMENT_PERSONAS: DepartmentPersona[] = [
       "Logo Clear-space & Palette Tokens",
       "Designer Feedback Checklists",
       "Media Asset Compliance Reviews",
+    ],
+  },
+  {
+    id: "marketing",
+    name: "Maya Lin",
+    email: "marketing@acmecloud.com",
+    role: "marketing",
+    roleTitle: "Marketing Lead",
+    department: "Marketing Department",
+    badgeStyle: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
+    description: "Content strategist submitting marketing copy, campaign headlines, and press materials for governance checks.",
+    responsibilities: [
+      "Content Submission & Document Ingestion",
+      "Real-Time Pre-Publication AI Audits",
+      "Tone & Anti-FUD Copy Alignment",
+      "Revision & Resubmission Workflow",
     ],
   },
   {
@@ -306,7 +306,16 @@ export function LandingView() {
                       </>
                     ) : (
                       <>
-                        <span>Sign In as {dept.roleTitle.split(" ")[0]}</span>
+                        <span>
+                          Sign In as{" "}
+                          {dept.role === "admin"
+                            ? "Admin"
+                            : dept.role === "designer"
+                            ? "Designer"
+                            : dept.role === "marketing"
+                            ? "Marketing"
+                            : "Legal"}
+                        </span>
                         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition" />
                       </>
                     )}
