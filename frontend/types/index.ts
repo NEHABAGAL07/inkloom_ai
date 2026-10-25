@@ -5,6 +5,9 @@ export interface ContentSubmission {
   organization_id: string;
   creator_id?: string;
   creator_name?: string;
+  author_id?: string;
+  author_email?: string;
+  created_by?: string;
   title: string;
   description?: string;
   content_type: "text" | "document" | "image" | "video";

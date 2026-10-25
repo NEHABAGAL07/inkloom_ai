@@ -17,6 +17,7 @@ import {
   X,
   MessageSquare,
   Eye,
+  Lock,
 } from "lucide-react";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
@@ -93,9 +94,32 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
     }
   };
 
+  // Separation of duties: Creator cannot authorize their own submission
+  const isAuthor = Boolean(
+    selectedSubmission &&
+      user &&
+      ((selectedSubmission.creator_id && selectedSubmission.creator_id === user.id) ||
+        (selectedSubmission.author_id && selectedSubmission.author_id === user.id) ||
+        (selectedSubmission.author_email &&
+          user.email &&
+          selectedSubmission.author_email.toLowerCase() === user.email.toLowerCase()) ||
+        (selectedSubmission.created_by && selectedSubmission.created_by === user.id))
+  );
+
   const handleSubmitDecision = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSubmission) return;
+
+    if (decisionAction === "approve" && isAuthor) {
+      alert("Separation of Duties violation: Content creators cannot authorize their own submissions. Please have an independent compliance officer review this submission.");
+      return;
+    }
+
+    if ((decisionAction === "reject" || decisionAction === "request_changes") && !comments.trim()) {
+      alert("Mandatory justification: Please specify the statutory, trademark, or regulatory rule requiring revision.");
+      return;
+    }
+
     setIsSubmittingDecision(true);
     try {
       await api.submitReviewDecision({
@@ -286,14 +310,25 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                     <span>Open Design Asset ↗</span>
                   </button>
                   <button
+                    disabled={isAuthor}
                     onClick={() => {
+                      if (isAuthor) return;
                       setDecisionAction("approve");
                       setIsDecisionModalOpen(true);
                     }}
-                    className="px-3.5 py-2 bg-status-success hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-subtle transition flex items-center gap-1.5"
+                    title={
+                      isAuthor
+                        ? "Separation of Duties: Creators cannot authorize their own submissions."
+                        : "Authorize content for production release"
+                    }
+                    className={`px-3.5 py-2 text-xs font-bold rounded-xl shadow-subtle transition flex items-center gap-1.5 ${
+                      isAuthor
+                        ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-300"
+                        : "bg-status-success hover:bg-emerald-800 text-white"
+                    }`}
                   >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Authorize</span>
+                    {isAuthor ? <Lock className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                    <span>{isAuthor ? "Authorize (Self Locked)" : "Authorize"}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -307,6 +342,19 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                   </button>
                 </div>
               </div>
+
+              {/* Separation of Duties Warning if Author */}
+              {isAuthor && (
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs space-y-1">
+                  <div className="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-300">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Separation of Duties Enforced (Self-Approval Prohibited)</span>
+                  </div>
+                  <p className="text-amber-800 dark:text-amber-200/80 leading-relaxed pl-6">
+                    You are recorded as the creator or submitter of this asset. In accordance with enterprise governance and statutory compliance rules, creators cannot authorize their own content. An independent compliance officer must conduct the final authorization.
+                  </p>
+                </div>
+              )}
 
               {/* Audit Findings List */}
               <div className="space-y-3">
@@ -421,15 +469,19 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
+                    disabled={isAuthor}
                     onClick={() => setDecisionAction("approve")}
+                    title={isAuthor ? "Self-approval is prohibited under separation of duties" : ""}
                     className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
-                      decisionAction === "approve"
+                      isAuthor
+                        ? "bg-slate-200 dark:bg-slate-800 text-slate-400 border-slate-300 cursor-not-allowed"
+                        : decisionAction === "approve"
                         ? "bg-status-success text-white border-status-success shadow-subtle"
                         : "bg-surface text-ink-secondary border-border hover:bg-workspace"
                     }`}
                   >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Approve</span>
+                    {isAuthor ? <Lock className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                    <span>{isAuthor ? "Locked (Author)" : "Approve"}</span>
                   </button>
                   <button
                     type="button"
@@ -459,15 +511,25 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5">
-                  Compliance Officer Notes / Required Corrections *
+                <label className="block text-xs font-semibold text-navy mb-1.5 flex items-center justify-between">
+                  <span>
+                    Compliance Officer Notes &amp; Required Corrections{" "}
+                    {decisionAction !== "approve" ? "(Mandatory Justification) *" : "*"}
+                  </span>
+                  {decisionAction !== "approve" && (
+                    <span className="text-[10px] text-amber-600 font-medium">Policy citation required</span>
+                  )}
                 </label>
                 <textarea
                   required
                   rows={3}
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
-                  placeholder="State the justification or specific policy citations for the creator..."
+                  placeholder={
+                    decisionAction === "approve"
+                      ? "State statutory sign-off notes or compliance approval reference..."
+                      : "Mandatory: State specific policy, trademark, or regulatory violations and required revisions..."
+                  }
                   className="w-full bg-workspace border border-border rounded-xl p-3 text-xs text-navy focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal"
                 />
               </div>
@@ -505,8 +567,9 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
           onClose={() => setIsAssetViewerOpen(false)}
           submission={selectedSubmission}
           auditResult={auditResult}
-          canAuthorize={true}
+          canAuthorize={!isAuthor}
           onAuthorize={() => {
+            if (isAuthor) return;
             setDecisionAction("approve");
             setIsDecisionModalOpen(true);
           }}

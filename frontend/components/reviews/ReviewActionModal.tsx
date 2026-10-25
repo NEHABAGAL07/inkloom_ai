@@ -2,12 +2,13 @@
 
 import React, { useState } from "react";
 import { ReviewAction } from "@/types";
-import { Scale, Check, AlertTriangle, X } from "lucide-react";
+import { Scale, Check, AlertTriangle, X, Lock } from "lucide-react";
 
 interface ReviewActionModalProps {
   isOpen: boolean;
   submissionTitle: string;
   submissionId: string;
+  isAuthor?: boolean;
   onClose: () => void;
   onSubmitDecision: (action: "approve" | "reject" | "request_changes", comments: string) => Promise<void>;
 }
@@ -16,10 +17,13 @@ export function ReviewActionModal({
   isOpen,
   submissionTitle,
   submissionId,
+  isAuthor = false,
   onClose,
   onSubmitDecision,
 }: ReviewActionModalProps) {
-  const [selectedAction, setSelectedAction] = useState<"approve" | "reject" | "request_changes">("approve");
+  const [selectedAction, setSelectedAction] = useState<"approve" | "reject" | "request_changes">(
+    isAuthor ? "request_changes" : "approve"
+  );
   const [comments, setComments] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,6 +31,14 @@ export function ReviewActionModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedAction === "approve" && isAuthor) {
+      alert("Separation of duties violation: Creators cannot authorize their own submissions.");
+      return;
+    }
+    if ((selectedAction === "reject" || selectedAction === "request_changes") && !comments.trim()) {
+      alert("Mandatory justification: Please specify the policy violation or required revision.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       await onSubmitDecision(selectedAction, comments);
@@ -55,6 +67,18 @@ export function ReviewActionModal({
           </button>
         </div>
 
+        {isAuthor && (
+          <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-300">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Separation of Duties Notice</span>
+            </div>
+            <p className="text-amber-800 dark:text-amber-200/80 leading-relaxed">
+              You are the author of this submission. Self-authorization is disabled to satisfy enterprise compliance policies.
+            </p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Action Choice Pills */}
           <div>
@@ -62,15 +86,19 @@ export function ReviewActionModal({
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
+                disabled={isAuthor}
                 onClick={() => setSelectedAction("approve")}
+                title={isAuthor ? "Self-approval is disabled under separation of duties" : ""}
                 className={`py-2 px-3 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 ${
-                  selectedAction === "approve"
+                  isAuthor
+                    ? "bg-slate-200 dark:bg-slate-800 text-slate-400 border-slate-300 cursor-not-allowed"
+                    : selectedAction === "approve"
                     ? "bg-status-success text-white border-status-success shadow-subtle"
                     : "bg-surface border-border text-ink-secondary hover:bg-workspace"
                 }`}
               >
-                <Check className="w-3.5 h-3.5" />
-                <span>Approve</span>
+                {isAuthor ? <Lock className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                <span>{isAuthor ? "Self Locked" : "Approve"}</span>
               </button>
               <button
                 type="button"
@@ -101,15 +129,25 @@ export function ReviewActionModal({
 
           {/* Reviewer Comments */}
           <div>
-            <label className="block text-xs font-semibold text-navy mb-1.5">
-              Reviewer Justification / Creator Guidance *
+            <label className="block text-xs font-semibold text-navy mb-1.5 flex items-center justify-between">
+              <span>
+                Reviewer Justification / Creator Guidance{" "}
+                {selectedAction !== "approve" ? "(Mandatory) *" : "*"}
+              </span>
+              {selectedAction !== "approve" && (
+                <span className="text-[10px] text-amber-600 font-medium">Policy citation required</span>
+              )}
             </label>
             <textarea
               required
               rows={4}
               value={comments}
               onChange={(e) => setComments(e.target.value)}
-              placeholder="State clear reasons or required rule modifications for the submitter..."
+              placeholder={
+                selectedAction === "approve"
+                  ? "State statutory sign-off notes or compliance approval reference..."
+                  : "State specific policy, trademark, or regulatory violations and required revisions..."
+              }
               className="w-full bg-workspace border border-border rounded-xl p-3 text-xs text-navy focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal leading-relaxed"
             />
           </div>

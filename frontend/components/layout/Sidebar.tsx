@@ -29,33 +29,72 @@ export function Sidebar() {
   const pathname = usePathname();
   const { activeOrgName, activeRole } = useAuth();
 
-  // Consistent enterprise navigation items
-  const navItems: NavItem[] = [
-    { name: "Governance Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Brand Guidelines", href: "/guidelines", icon: BookOpen },
-    { name: "Submit Content", href: "/content", icon: Send },
-    { name: "Audit Results", href: "/audits", icon: ShieldCheck },
-    { name: "Review Queue", href: "/reviews", icon: ClipboardCheck },
-    { name: "Governance Analytics", href: "/analytics", icon: BarChart3 },
-    { name: "Team & Permissions", href: "/team", icon: Users },
-  ];
-
   const getRoleLabel = (role: string | null) => {
     switch (role) {
       case "admin":
         return "Brand Admin";
       case "compliance_officer":
       case "legal":
-        return "Compliance Officer";
+        return "Legal & Compliance";
       case "designer":
-        return "Designer";
+        return "Brand Designer";
       case "marketing":
       case "creator":
-        return "Marketing";
+        return "Marketing Lead";
       default:
         return role || "Member";
     }
   };
+
+  // Role-aware navigation tailored to specific workspace responsibilities
+  const getNavItems = (): NavItem[] => {
+    const isLegal =
+      activeRole === "compliance_officer" || activeRole === "legal" || activeRole === "reviewer";
+    const isMarketing = activeRole === "marketing" || activeRole === "creator";
+    const isDesigner = activeRole === "designer";
+    const isAdmin = activeRole === "admin";
+
+    if (isMarketing) {
+      return [
+        { name: "Marketing Station", href: "/", icon: LayoutDashboard },
+        { name: "Submit Content & Drafts", href: "/content", icon: Send },
+        { name: "My Audit Results", href: "/audits", icon: ShieldCheck },
+        { name: "Brand Voice & Rules", href: "/guidelines", icon: BookOpen },
+      ];
+    }
+
+    if (isDesigner) {
+      return [
+        { name: "Design Studio", href: "/", icon: LayoutDashboard },
+        { name: "Visual Brand Standards", href: "/guidelines", icon: BookOpen },
+        { name: "Asset Gallery & Audits", href: "/audits", icon: ShieldCheck },
+        { name: "Review Feedback", href: "/reviews", icon: ClipboardCheck },
+      ];
+    }
+
+    if (isLegal) {
+      return [
+        { name: "Compliance Station", href: "/", icon: LayoutDashboard },
+        { name: "Review & Approval Queue", href: "/reviews", icon: ClipboardCheck },
+        { name: "Audit Evidence Ledger", href: "/audits", icon: ShieldCheck },
+        { name: "Statutory Guidelines", href: "/guidelines", icon: BookOpen },
+        { name: "Compliance Analytics", href: "/analytics", icon: BarChart3 },
+      ];
+    }
+
+    // Default / Admin full executive suite
+    return [
+      { name: "Executive Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Brand Guidelines & Rules", href: "/guidelines", icon: BookOpen },
+      { name: "Governance Analytics", href: "/analytics", icon: BarChart3 },
+      { name: "Approval Review Queue", href: "/reviews", icon: ClipboardCheck },
+      { name: "Audit Results Ledger", href: "/audits", icon: ShieldCheck },
+      { name: "Submit Content", href: "/content", icon: Send },
+      { name: "Team & Permissions", href: "/team", icon: Users },
+    ];
+  };
+
+  const navItems = getNavItems();
 
   return (
     <aside className="w-64 bg-[#0B1728] dark:bg-[#0F172A] border-r border-[#1E3A5F]/40 dark:border-[#334155] flex flex-col h-screen sticky top-0 shrink-0 text-slate-200 select-none transition-colors duration-150">
