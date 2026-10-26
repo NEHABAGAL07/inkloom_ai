@@ -534,3 +534,82 @@ export interface CommentsListResponse {
   resolved_count: number;
 }
 
+// Brand Assistant & Document Intelligence Types
+export interface CitationItem {
+  document_id: string;
+  document_name: string;
+  page?: number | null;
+  section?: string | null;
+  source_type: "document" | "guideline_rule" | string;
+  snippet: string;
+}
+
+export interface AskQuestionRequest {
+  session_id?: string;
+  question: string;
+}
+
+export interface AskQuestionResponse {
+  session_id: string;
+  answer: string;
+  citations: CitationItem[];
+  confidence: "high" | "medium" | "low" | "not_found" | string;
+  mode?: "llm" | "extractive" | string;
+}
+
+export interface ChatStatusResponse {
+  llm_enabled: boolean;
+  provider: string;
+  model: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  session_id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  citations?: CitationItem[];
+  confidence?: "high" | "medium" | "low" | "not_found" | string;
+  mode?: "llm" | "extractive" | string;
+  feedback?: {
+    helpful: boolean;
+    comment?: string;
+    created_at?: string;
+    user_id?: string;
+  } | null;
+  created_at: string;
+}
+
+export interface ChatSession {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+}
+
+export interface ChatSessionDetail extends ChatSession {
+  messages: ChatMessage[];
+}
+
+export interface KnowledgeDocument {
+  id: string;
+  organization_id: string;
+  filename: string;
+  file_size_bytes?: number;
+  mime_type: string;
+  status: "processing" | "ready" | "failed";
+  page_count: number;
+  error_message?: string | null;
+  created_at: string;
+  updated_at: string;
+  chunks_count?: number;
+}
+
+export interface DocumentListResponse {
+  documents: KnowledgeDocument[];
+  total: number;
+}
+

@@ -7,7 +7,6 @@ import { useAuth } from "@/services/auth-context";
 import {
   LayoutDashboard,
   BookOpen,
-  Send,
   ShieldCheck,
   ClipboardCheck,
   BarChart3,
@@ -16,6 +15,7 @@ import {
   Building2,
   ChevronRight,
   Shield,
+  Bot,
 } from "lucide-react";
 
 interface NavItem {
@@ -57,7 +57,7 @@ export function Sidebar() {
     if (isMarketing) {
       return [
         { name: "Marketing Station", href: "/", icon: LayoutDashboard },
-        { name: "Submit Content & Drafts", href: "/content", icon: Send },
+        { name: "Brand Assistant", href: "/assistant", icon: Bot },
         { name: "My Audit Results", href: "/audits", icon: ShieldCheck },
         { name: "Brand Voice & Rules", href: "/guidelines", icon: BookOpen },
       ];
@@ -66,6 +66,7 @@ export function Sidebar() {
     if (isDesigner) {
       return [
         { name: "Design Studio", href: "/", icon: LayoutDashboard },
+        { name: "Brand Assistant", href: "/assistant", icon: Bot },
         { name: "Visual Brand Standards", href: "/guidelines", icon: BookOpen },
         { name: "Asset Gallery & Audits", href: "/audits", icon: ShieldCheck },
         { name: "Review Feedback", href: "/reviews", icon: ClipboardCheck },
@@ -75,6 +76,7 @@ export function Sidebar() {
     if (isLegal) {
       return [
         { name: "Compliance Station", href: "/", icon: LayoutDashboard },
+        { name: "Brand Assistant", href: "/assistant", icon: Bot },
         { name: "Review & Approval Queue", href: "/reviews", icon: ClipboardCheck },
         { name: "Audit Evidence Ledger", href: "/audits", icon: ShieldCheck },
         { name: "Statutory Guidelines", href: "/guidelines", icon: BookOpen },
@@ -85,11 +87,11 @@ export function Sidebar() {
     // Default / Admin full executive suite
     return [
       { name: "Executive Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Brand Assistant", href: "/assistant", icon: Bot },
       { name: "Brand Guidelines & Rules", href: "/guidelines", icon: BookOpen },
       { name: "Governance Analytics", href: "/analytics", icon: BarChart3 },
       { name: "Approval Review Queue", href: "/reviews", icon: ClipboardCheck },
       { name: "Audit Results Ledger", href: "/audits", icon: ShieldCheck },
-      { name: "Submit Content", href: "/content", icon: Send },
       { name: "Team & Permissions", href: "/team", icon: Users },
     ];
   };

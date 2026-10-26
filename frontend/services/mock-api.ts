@@ -26,6 +26,15 @@ import {
   StarterTemplateRule,
   ContentComment,
   CommentsListResponse,
+  CitationItem,
+  AskQuestionRequest,
+  AskQuestionResponse,
+  ChatMessage,
+  ChatSession,
+  ChatSessionDetail,
+  KnowledgeDocument,
+  DocumentListResponse,
+  ChatStatusResponse,
 } from "../types";
 
 export interface CreateSubmissionInput {
@@ -96,6 +105,18 @@ export interface IApiService {
   inspectInvitation(token: string): Promise<PublicInvitation>;
   acceptInvitation(data: { token: string; full_name: string; password: string }): Promise<AuthResponse>;
   logout(): Promise<{ message: string; revoked: boolean }>;
+
+  // Brand Assistant & Document Intelligence
+  askAssistant(payload: AskQuestionRequest): Promise<AskQuestionResponse>;
+  getAssistantSessions(): Promise<ChatSession[]>;
+  getAssistantSession(sessionId: string): Promise<ChatSessionDetail>;
+  deleteAssistantSession(sessionId: string): Promise<void>;
+  submitMessageFeedback(messageId: string, payload: { helpful: boolean; comment?: string }): Promise<any>;
+  uploadKnowledgeDocument(file: File): Promise<KnowledgeDocument>;
+  getKnowledgeDocuments(): Promise<DocumentListResponse>;
+  getKnowledgeDocument(documentId: string): Promise<KnowledgeDocument>;
+  deleteKnowledgeDocument(documentId: string): Promise<void>;
+  getChatStatus(): Promise<ChatStatusResponse>;
 }
 
 // In-memory deterministic mock state
@@ -2044,6 +2065,269 @@ export class MockApiService implements IApiService {
     comment.resolution_note = isResolved ? (resolutionNote || "Fixed by designer") : null;
     comment.updated_at = new Date().toISOString();
     return { ...comment };
+  }
+
+  // --- Brand Assistant & Document Intelligence Mock State ---
+  private mockDocumentsStore: KnowledgeDocument[] = [
+    {
+      id: "doc_mock_1",
+      organization_id: "org_acme_cloud",
+      filename: "Acme_Brand_Identity_Standard_2026.pdf",
+      file_size_bytes: 4210000,
+      mime_type: "application/pdf",
+      status: "ready",
+      page_count: 24,
+      chunks_count: 68,
+      created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+      updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+    },
+    {
+      id: "doc_mock_2",
+      organization_id: "org_acme_cloud",
+      filename: "Digital_Accessibility_and_Color_Specs.docx",
+      file_size_bytes: 1850000,
+      mime_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      status: "ready",
+      page_count: 8,
+      chunks_count: 22,
+      created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+      updated_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+    },
+  ];
+
+  private mockSessionsStore: ChatSession[] = [
+    {
+      id: "ses_mock_1",
+      organization_id: "org_acme_cloud",
+      user_id: "user_reviewer",
+      title: "Logo on dark blue background inquiry",
+      created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+      updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+      message_count: 2,
+    },
+  ];
+
+  private mockMessagesStore: Record<string, ChatMessage[]> = {
+    ses_mock_1: [
+      {
+        id: "msg_user_1",
+        session_id: "ses_mock_1",
+        role: "user",
+        content: "Can I use a white logo on a dark blue background?",
+        created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+      },
+      {
+        id: "msg_asst_1",
+        session_id: "ses_mock_1",
+        role: "assistant",
+        content:
+          "Yes, you can. According to **Acme Brand Identity Standard 2026** (Page 4, Logo Usage & Backgrounds):\n\n> \"The white knockout (reversed) logo must always be used when placed against dark blue, black, or deep navy backgrounds. Never apply the full-color red logo over dark backgrounds.\"\n\nPlease ensure you maintain the minimum 16px clear space perimeter around the mark.",
+        citations: [
+          {
+            document_id: "doc_mock_1",
+            document_name: "Acme_Brand_Identity_Standard_2026.pdf",
+            page: 4,
+            section: "Logo Usage & Backgrounds",
+            source_type: "document",
+            snippet:
+              "The white knockout (reversed) logo must always be used when placed against dark blue, black, or deep navy backgrounds. Never apply the full-color red logo over dark backgrounds.",
+          },
+        ],
+        confidence: "high",
+        feedback: { helpful: true, comment: "Accurate rule citation." },
+        created_at: new Date(Date.now() - 3600000 * 2 + 1500).toISOString(),
+      },
+    ],
+  };
+
+  async askAssistant(payload: AskQuestionRequest): Promise<AskQuestionResponse> {
+    const qLower = payload.question.toLowerCase();
+    let sessionId = payload.session_id;
+
+    if (!sessionId) {
+      sessionId = `ses_${Date.now()}`;
+      const title = payload.question.trim().slice(0, 35) + (payload.question.length > 35 ? "..." : "");
+      this.mockSessionsStore.unshift({
+        id: sessionId,
+        organization_id: "org_acme_cloud",
+        user_id: "user_reviewer",
+        title,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        message_count: 0,
+      });
+      this.mockMessagesStore[sessionId] = [];
+    }
+
+    // Save user message
+    const userMsg: ChatMessage = {
+      id: `msg_u_${Date.now()}`,
+      session_id: sessionId,
+      role: "user",
+      content: payload.question,
+      created_at: new Date().toISOString(),
+    };
+    this.mockMessagesStore[sessionId].push(userMsg);
+
+    // Formulate response
+    let answer = "";
+    let confidence = "high";
+    let citations: CitationItem[] = [];
+
+    if (qLower.includes("logo") && (qLower.includes("blue") || qLower.includes("dark") || qLower.includes("white") || qLower.includes("background"))) {
+      answer =
+        "According to your organization's brand documentation in **Acme_Brand_Identity_Standard_2026.pdf** (Page 4):\n\n> \"The white knockout (reversed) logo must always be used when placed against dark blue, black, or deep navy backgrounds. Never apply the full-color red logo over dark backgrounds.\"\n\nPlease refer to the source citation for full operational specifications.";
+      citations = [
+        {
+          document_id: "doc_mock_1",
+          document_name: "Acme_Brand_Identity_Standard_2026.pdf",
+          page: 4,
+          section: "Logo Usage & Backgrounds",
+          source_type: "document",
+          snippet:
+            "The white knockout (reversed) logo must always be used when placed against dark blue, black, or deep navy backgrounds. Never apply the full-color red logo over dark backgrounds.",
+        },
+      ];
+      confidence = "high";
+    } else if (qLower.includes("font") || qLower.includes("typography") || qLower.includes("headline")) {
+      answer =
+        "Based on **Acme_Brand_Identity_Standard_2026.pdf** (Page 8):\n\n> \"The primary corporate typeface for digital headlines is Inter Bold. Secondary body copy must use Inter Regular or Medium with minimum 1.5 line height.\"\n\nProhibited: Comic Sans, Arial alternatives in branded collateral.";
+      citations = [
+        {
+          document_id: "doc_mock_1",
+          document_name: "Acme_Brand_Identity_Standard_2026.pdf",
+          page: 8,
+          section: "Typography Standards",
+          source_type: "document",
+          snippet:
+            "The primary corporate typeface for digital headlines is Inter Bold. Secondary body copy must use Inter Regular or Medium with minimum 1.5 line height.",
+        },
+      ];
+      confidence = "high";
+    } else if (qLower.includes("disclaimer") || qLower.includes("legal") || qLower.includes("promotional")) {
+      answer =
+        "Based on **Digital_Accessibility_and_Color_Specs.docx** (Page 3):\n\n> \"All public-facing promotional campaigns and social graphics must display the standard statutory disclaimer: 'Terms apply. Subject to regulatory compliance verification.' at a minimum 10pt size.\"\n\nHuman review is required before publishing.";
+      citations = [
+        {
+          document_id: "doc_mock_2",
+          document_name: "Digital_Accessibility_and_Color_Specs.docx",
+          page: 3,
+          section: "Mandatory Disclaimers",
+          source_type: "document",
+          snippet:
+            "All public-facing promotional campaigns and social graphics must display the standard statutory disclaimer: 'Terms apply. Subject to regulatory compliance verification.' at a minimum 10pt size.",
+        },
+      ];
+      confidence = "high";
+    } else {
+      answer = "I couldn't find this in your uploaded documents or brand guidelines.";
+      confidence = "not_found";
+      citations = [];
+    }
+
+    const mode = confidence === "not_found" ? "extractive" : "llm";
+
+    const asstMsg: ChatMessage = {
+      id: `msg_a_${Date.now()}`,
+      session_id: sessionId,
+      role: "assistant",
+      content: answer,
+      citations,
+      confidence,
+      mode,
+      created_at: new Date().toISOString(),
+    };
+    this.mockMessagesStore[sessionId].push(asstMsg);
+
+    const s = this.mockSessionsStore.find((x) => x.id === sessionId);
+    if (s) {
+      s.message_count = this.mockMessagesStore[sessionId].length;
+      s.updated_at = new Date().toISOString();
+    }
+
+    return {
+      session_id: sessionId,
+      answer,
+      citations,
+      confidence,
+      mode,
+    };
+  }
+
+  async getAssistantSessions(): Promise<ChatSession[]> {
+    return [...this.mockSessionsStore];
+  }
+
+  async getAssistantSession(sessionId: string): Promise<ChatSessionDetail> {
+    const session = this.mockSessionsStore.find((s) => s.id === sessionId);
+    if (!session) throw new Error("Chat session not found.");
+    return {
+      ...session,
+      messages: this.mockMessagesStore[sessionId] || [],
+    };
+  }
+
+  async deleteAssistantSession(sessionId: string): Promise<void> {
+    this.mockSessionsStore = this.mockSessionsStore.filter((s) => s.id !== sessionId);
+    delete this.mockMessagesStore[sessionId];
+  }
+
+  async submitMessageFeedback(messageId: string, payload: { helpful: boolean; comment?: string }): Promise<any> {
+    for (const msgs of Object.values(this.mockMessagesStore)) {
+      const msg = msgs.find((m) => m.id === messageId);
+      if (msg) {
+        msg.feedback = {
+          helpful: payload.helpful,
+          comment: payload.comment,
+          created_at: new Date().toISOString(),
+          user_id: "user_reviewer",
+        };
+        return { status: "success", feedback: msg.feedback };
+      }
+    }
+    return { status: "success" };
+  }
+
+  async uploadKnowledgeDocument(file: File): Promise<KnowledgeDocument> {
+    const newDoc: KnowledgeDocument = {
+      id: `doc_${Date.now()}`,
+      organization_id: "org_acme_cloud",
+      filename: file.name,
+      file_size_bytes: file.size,
+      mime_type: file.type || "application/pdf",
+      status: "ready",
+      page_count: Math.floor(Math.random() * 15) + 3,
+      chunks_count: Math.floor(Math.random() * 40) + 10,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    this.mockDocumentsStore.unshift(newDoc);
+    return newDoc;
+  }
+
+  async getKnowledgeDocuments(): Promise<DocumentListResponse> {
+    return {
+      documents: [...this.mockDocumentsStore],
+      total: this.mockDocumentsStore.length,
+    };
+  }
+
+  async getKnowledgeDocument(documentId: string): Promise<KnowledgeDocument> {
+    const doc = this.mockDocumentsStore.find((d) => d.id === documentId);
+    if (!doc) throw new Error("Document not found.");
+    return { ...doc };
+  }
+
+  async deleteKnowledgeDocument(documentId: string): Promise<void> {
+    this.mockDocumentsStore = this.mockDocumentsStore.filter((d) => d.id !== documentId);
+  }
+
+  async getChatStatus(): Promise<ChatStatusResponse> {
+    return {
+      llm_enabled: true,
+      provider: "gemini",
+      model: "gemini-1.5-flash",
+    };
   }
 }
 

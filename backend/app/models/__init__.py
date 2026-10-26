@@ -13,6 +13,8 @@ from app.models.audit_event import AuditEvent
 from app.models.invitation import Invitation
 from app.models.revoked_token import RevokedToken
 from app.models.knowledge import KnowledgeItem
+from app.models.document import KnowledgeDocument, DocumentChunk
+from app.models.chat import ChatSession, ChatMessage
 
 __all__ = [
     "TimestampedModel",
@@ -34,5 +36,9 @@ __all__ = [
     "AuditEvent",
     "RevokedToken",
     "KnowledgeItem",
+    "KnowledgeDocument",
+    "DocumentChunk",
+    "ChatSession",
+    "ChatMessage",
 ]
 

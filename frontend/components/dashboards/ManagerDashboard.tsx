@@ -311,10 +311,8 @@ export function ManagerDashboard({
         </div>
       </div>
 
-      {/* Two Column Layout: Content Pipeline & Team Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Organization Content Pipeline */}
-        <div className="lg:col-span-8 bg-surface border border-border rounded-xl p-6 shadow-subtle space-y-4">
+      {/* Organization Content Pipeline */}
+      <div className="bg-surface border border-border rounded-xl p-6 shadow-subtle space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
             <div>
               <h2 className="text-base font-bold text-navy flex items-center gap-2">
@@ -324,16 +322,6 @@ export function ManagerDashboard({
               <p className="text-xs text-ink-muted mt-0.5">
                 Real-time review and audit status across all active content assets
               </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <a
-                href="/content"
-                className="text-xs text-teal hover:text-teal-hover font-semibold flex items-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New Submission</span>
-              </a>
             </div>
           </div>
 
@@ -467,51 +455,6 @@ export function ManagerDashboard({
             )}
           </div>
         </div>
-
-        {/* Right Column: Workspace Team Members */}
-        <div className="lg:col-span-4 bg-surface border border-border rounded-xl p-6 shadow-subtle space-y-4 h-fit">
-          <div className="flex items-center justify-between pb-3 border-b border-border">
-            <h2 className="text-base font-bold text-navy flex items-center gap-2">
-              <Users className="w-4 h-4 text-teal" />
-              <span>Workspace Team</span>
-            </h2>
-            <button
-              onClick={() => setIsInviteModalOpen(true)}
-              className="text-xs text-teal hover:text-teal-hover font-semibold"
-            >
-              + Invite
-            </button>
-          </div>
-
-          <div className="space-y-2.5">
-            {members.slice(0, 5).map((m) => (
-              <div
-                key={m.user_id}
-                className="p-3 rounded-lg bg-workspace border border-border flex items-center justify-between gap-2"
-              >
-                <div className="truncate min-w-0">
-                  <div className="text-xs font-bold text-navy truncate">
-                    {m.full_name || m.email}
-                  </div>
-                  <div className="text-[10px] text-ink-muted truncate">{m.email}</div>
-                </div>
-                <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-surface border border-border text-ink-secondary shrink-0">
-                  {m.role.replace("_", " ")}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="pt-2">
-            <a
-              href="/team"
-              className="block w-full py-2 text-center text-xs font-semibold rounded-lg bg-workspace hover:bg-border text-ink-primary border border-border transition"
-            >
-              Manage Team &amp; Permissions &rarr;
-            </a>
-          </div>
-        </div>
-      </div>
 
       {/* Suggestion / Improvement Box under Designer's Content for Manager */}
       {selectedPipelineSub && (

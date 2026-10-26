@@ -45,14 +45,7 @@ const STATIC_NAVIGATION_ITEMS: SearchResultItem[] = [
     subtitle: "Explore active brand standards, statutory guardrails, and version history",
     badge: "Guidelines",
     url: "/guidelines",
-  },
-  {
-    id: "nav-submit",
-    category: "navigation",
-    title: "Submit Content for Audit",
-    subtitle: "Upload marketing copy or media assets for pre-publication AI compliance check",
-    badge: "Create",
-    url: "/content",
+
   },
   {
     id: "nav-reviews",

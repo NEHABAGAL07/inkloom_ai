@@ -16,6 +16,7 @@ In high-growth and decentralized enterprises, marketing, sales, and product team
 
 **Inkloom AI** solves this by acting as an intelligent brand governance co-pilot:
 - **Pre-publication Audit**: Automatically checks text copy, documents (PDF/DOCX), and visual assets against approved brand guidelines and corporate identity rules.
+- **Brand Guideline Assistant**: Natural-language conversational Q&A grounded strictly in uploaded brand guideline documents (PDF/DOCX/TXT) with in-house BM25 synonym expansion and exact page/snippet citations.
 - **Evidence & Confidence**: Explains every finding with verbatim evidence quotes, confidence metrics, and rule citations.
 - **Intent-Preserving Rewrites**: Proposes intelligent corrections that fix compliance flaws while preserving the creator's voice and intent.
 - **Truth Invariance**: Verifies numerical claims against certified benchmarks. Distinguishes *unverified claims* from *contradicted claims* without ever hallucinating citations.
@@ -167,7 +168,27 @@ npm run dev
 - Application is live at: [http://localhost:3000](http://localhost:3000)
 - By default, `NEXT_PUBLIC_USE_MOCK=true` allows the frontend to run fully offline with deterministic brand governance mock data. Set to `false` when connecting to the live FastAPI backend.
 
-### 5.3 Run with Docker Compose (Production Multi-Container)
+### 5.3 Enabling Real Google Gemini LLM Integration
+
+The `/assistant` brand guideline chatbot supports natural language answer synthesis powered by Google Gemini, grounded strictly in tenant-uploaded guideline documents:
+
+1. **Obtain API Key**:
+   - Generate a Gemini API key at [Google AI Studio](https://aistudio.google.com/).
+2. **Configure `backend/.env`**:
+   ```env
+   LLM_PROVIDER=gemini
+   LLM_API_KEY=AIzaSyYourGeminiApiKeyHere
+   LLM_MODEL_NAME=gemini-1.5-flash
+   LLM_TIMEOUT_SECONDS=20.0
+   LLM_MAX_OUTPUT_TOKENS=800
+   CHAT_RATE_LIMIT_PER_MINUTE=10
+   ```
+3. **Resilience & Safe Extractive Fallback**:
+   - **Zero-Key Extractive Mode**: When `LLM_API_KEY` is empty, Inkloom operates in deterministic **Extractive Mode** (`mode="extractive"`). It extracts top verbatim sections with page citations without making any outbound network calls.
+   - **Automatic Fallback on Failure**: If Gemini calls fail (e.g., HTTP 500, network timeouts, 429 quota limits, `MAX_TOKENS` truncation, or safety blocks), `FallbackAdapter` catches the error, logs a clean warning without secrets, and yields a complete extractive answer with HTTP 200. Zero 500s.
+   - **Strict Grounding Guarantee**: If BM25 retrieval finds no passages or scores fall below relevance thresholds, the system immediately returns `"I couldn't find this in your uploaded documents."` (`confidence="not_found"`) without spending LLM tokens.
+
+### 5.4 Run with Docker Compose (Production Multi-Container)
 ```bash
 # Using one-click deployment script
 ./scripts/deploy-docker.sh     # Linux / macOS / Cloud VPS

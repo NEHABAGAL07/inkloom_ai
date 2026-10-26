@@ -58,11 +58,14 @@ class Settings(BaseSettings):
         "video/mp4",
     ]
 
-    # AI Engine
+    # AI Engine & Assistant LLM Settings
     AI_ENGINE_MODE: str = "deterministic"
     LLM_PROVIDER: str = "offline_rule_engine"
     LLM_API_KEY: str = ""
-    LLM_MODEL_NAME: str = "gpt-4o-mini"
+    LLM_MODEL_NAME: str = ""
+    LLM_TIMEOUT_SECONDS: float = 20.0
+    LLM_MAX_OUTPUT_TOKENS: int = 800
+    CHAT_RATE_LIMIT_PER_MINUTE: int = 10
 
     model_config = SettingsConfigDict(
         env_file=".env",

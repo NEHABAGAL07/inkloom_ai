@@ -32,6 +32,15 @@ import {
   StarterTemplateRule,
   ContentComment,
   CommentsListResponse,
+  CitationItem,
+  AskQuestionRequest,
+  AskQuestionResponse,
+  ChatMessage,
+  ChatSession,
+  ChatSessionDetail,
+  KnowledgeDocument,
+  DocumentListResponse,
+  ChatStatusResponse,
 } from "../types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -661,6 +670,122 @@ export class ApiService implements IApiService {
     setApiAuthToken(res.access_token);
     setApiTenantId(res.active_organization_id);
     return res;
+  }
+
+  // --- Brand Assistant & Document Intelligence Methods ---
+  async askAssistant(payload: AskQuestionRequest): Promise<AskQuestionResponse> {
+    if (USE_MOCK) return mockApi.askAssistant(payload);
+    try {
+      return await this.fetchJson<AskQuestionResponse>("/chat/ask", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      return mockApi.askAssistant(payload);
+    }
+  }
+
+  async getAssistantSessions(): Promise<ChatSession[]> {
+    if (USE_MOCK) return mockApi.getAssistantSessions();
+    try {
+      return await this.fetchJson<ChatSession[]>("/chat/sessions");
+    } catch {
+      return mockApi.getAssistantSessions();
+    }
+  }
+
+  async getAssistantSession(sessionId: string): Promise<ChatSessionDetail> {
+    if (USE_MOCK) return mockApi.getAssistantSession(sessionId);
+    try {
+      return await this.fetchJson<ChatSessionDetail>(`/chat/sessions/${sessionId}`);
+    } catch {
+      return mockApi.getAssistantSession(sessionId);
+    }
+  }
+
+  async deleteAssistantSession(sessionId: string): Promise<void> {
+    if (USE_MOCK) return mockApi.deleteAssistantSession(sessionId);
+    try {
+      await this.fetchJson<void>(`/chat/sessions/${sessionId}`, { method: "DELETE" });
+    } catch {
+      return mockApi.deleteAssistantSession(sessionId);
+    }
+  }
+
+  async submitMessageFeedback(messageId: string, payload: { helpful: boolean; comment?: string }): Promise<any> {
+    if (USE_MOCK) return mockApi.submitMessageFeedback(messageId, payload);
+    try {
+      return await this.fetchJson<any>(`/chat/messages/${messageId}/feedback`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      return mockApi.submitMessageFeedback(messageId, payload);
+    }
+  }
+
+  async uploadKnowledgeDocument(file: File): Promise<KnowledgeDocument> {
+    if (USE_MOCK) return mockApi.uploadKnowledgeDocument(file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const url = `${API_BASE}/documents`;
+      const headers: Record<string, string> = {};
+      if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
+      if (activeTenantId) headers["X-Organization-Id"] = activeTenantId;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new ApiError(errorData.detail || "Failed to upload document", res.status, false, errorData.detail);
+      }
+      return await res.json();
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.uploadKnowledgeDocument(file);
+    }
+  }
+
+  async getKnowledgeDocuments(): Promise<DocumentListResponse> {
+    if (USE_MOCK) return mockApi.getKnowledgeDocuments();
+    try {
+      return await this.fetchJson<DocumentListResponse>("/documents");
+    } catch {
+      return mockApi.getKnowledgeDocuments();
+    }
+  }
+
+  async getKnowledgeDocument(documentId: string): Promise<KnowledgeDocument> {
+    if (USE_MOCK) return mockApi.getKnowledgeDocument(documentId);
+    try {
+      return await this.fetchJson<KnowledgeDocument>(`/documents/${documentId}`);
+    } catch {
+      return mockApi.getKnowledgeDocument(documentId);
+    }
+  }
+
+  async deleteKnowledgeDocument(documentId: string): Promise<void> {
+    if (USE_MOCK) return mockApi.deleteKnowledgeDocument(documentId);
+    try {
+      await this.fetchJson<void>(`/documents/${documentId}`, { method: "DELETE" });
+    } catch {
+      return mockApi.deleteKnowledgeDocument(documentId);
+    }
+  }
+
+  async getChatStatus(): Promise<ChatStatusResponse> {
+    if (USE_MOCK) return mockApi.getChatStatus();
+    try {
+      return await this.fetchJson<ChatStatusResponse>("/chat/status");
+    } catch {
+      return mockApi.getChatStatus();
+    }
   }
 }
 

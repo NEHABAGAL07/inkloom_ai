@@ -196,17 +196,10 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           <a
-            href="/content"
+            href="/audits"
             className="px-4 py-2.5 bg-teal hover:bg-teal-hover text-white text-xs font-bold rounded-xl shadow-subtle transition flex items-center gap-1.5"
           >
-            <Send className="w-3.5 h-3.5" />
-            <span>Full Ingestion Studio</span>
-          </a>
-          <a
-            href="/audits"
-            className="px-4 py-2.5 bg-workspace hover:bg-slate-200 text-ink-primary border border-border text-xs font-bold rounded-xl transition"
-          >
-            Audit Explorer
+            <span>Audit Explorer</span>
           </a>
         </div>
       </div>
@@ -403,7 +396,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
               <FileText className="w-4 h-4 text-teal" />
               <span>Active Campaign Submissions</span>
             </h2>
-            <a href="/content" className="text-xs text-teal font-semibold hover:text-teal-hover flex items-center gap-1">
+            <a href="/audits" className="text-xs text-teal font-semibold hover:text-teal-hover flex items-center gap-1">
               View All <ArrowRight className="w-3 h-3" />
             </a>
           </div>

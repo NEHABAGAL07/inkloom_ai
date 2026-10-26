@@ -404,3 +404,112 @@ stateDiagram-v2
 2. **Revision Invalidation**: Any revision to approved content immediately transitions the item back to `DRAFT`. Approvals are strictly version-scoped.
 3. **Audit Trail**: Every revision, audit execution, and review decision generates an immutable `AuditEventModel` record for compliance tracing.
 
+---
+
+## 9. Brand Guideline Assistant & Document Intelligence API
+
+### `POST /api/v1/documents`
+Upload and ingest brand guidelines, manuals, and style docs.
+- **Allowed Formats**: PDF (`application/pdf`), DOCX (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`), TXT (`text/plain`).
+- **File Limit**: 25 MB max.
+- **RBAC**: Restricted to `admin` and `compliance_officer`.
+- **Response `200 OK`**:
+```json
+{
+  "id": "doc_12345",
+  "organization_id": "org_acme_cloud",
+  "filename": "Acme_Brand_Identity_2026.pdf",
+  "file_size_bytes": 4200000,
+  "mime_type": "application/pdf",
+  "status": "ready",
+  "page_count": 24,
+  "chunks_count": 68,
+  "created_at": "2026-10-26T02:00:00Z",
+  "updated_at": "2026-10-26T02:00:05Z"
+}
+```
+
+### `GET /api/v1/documents`
+List all ingested brand documents for caller's organization.
+- **Response `200 OK`**:
+```json
+{
+  "documents": [ ... ],
+  "total": 3
+}
+```
+
+### `DELETE /api/v1/documents/{document_id}`
+Delete a document and cascade remove all child chunks.
+- **RBAC**: Restricted to `admin` and `compliance_officer`.
+- **Response `204 No Content`**
+
+---
+
+### `POST /api/v1/chat/ask`
+Ask natural language brand compliance and identity questions grounded strictly in organization documents and published guideline rules.
+- **Request Body**:
+```json
+{
+  "session_id": "ses_98765", // optional: creates new session if omitted
+  "question": "Can I use a white logo on a dark blue background?"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "session_id": "ses_98765",
+  "answer": "According to your organization's brand documentation in **Acme_Brand_Identity_2026.pdf** (Page 4):\n\n> \"The white knockout logo must always be used when placed against dark blue backgrounds...\"",
+  "citations": [
+    {
+      "document_id": "doc_12345",
+      "document_name": "Acme_Brand_Identity_2026.pdf",
+      "page": 4,
+      "section": "Page 4",
+      "source_type": "document",
+      "snippet": "The white knockout logo must always be used when placed against dark blue backgrounds..."
+    }
+  ],
+  "confidence": "high", // "high" | "medium" | "low" | "not_found"
+  "mode": "llm" // "llm" (generative grounded synthesis) | "extractive" (direct verbatim passage excerpt fallback)
+}
+```
+- **"Not Found" Guarantee**: When no relevant policy or passage exists, strictly returns:
+  `"I couldn't find this in your uploaded documents."` with `confidence: "not_found"`, `mode: "extractive"`, and empty `citations: []`.
+
+### `GET /api/v1/chat/status`
+Inspect LLM operational readiness, provider name, and active model identifier without disclosing credentials or secrets.
+- **RBAC**: Restricted to `admin` and `compliance_officer`.
+- **Response `200 OK`**:
+```json
+{
+  "llm_enabled": true,
+  "provider": "gemini",
+  "model": "gemini-1.5-flash"
+}
+```
+- **Security Guarantee**: Neither the API key nor headers/tokens are ever exposed in this response or any server logs.
+
+### `GET /api/v1/chat/sessions`
+List chat conversation sessions belonging to the authenticated user.
+- **Response `200 OK`**: Array of `SessionResponse`.
+
+### `GET /api/v1/chat/sessions/{session_id}`
+Retrieve full conversational turn history with citations and feedback.
+- **Response `200 OK`**: `SessionDetailResponse`.
+
+### `DELETE /api/v1/chat/sessions/{session_id}`
+Delete a chat session and all contained messages.
+- **Response `204 No Content`**
+
+### `POST /api/v1/chat/messages/{message_id}/feedback`
+Submit helpfulness feedback on assistant answers.
+- **Request Body**:
+```json
+{
+  "helpful": true,
+  "comment": "Exact rule citation verified."
+}
+```
+- **Response `200 OK`**
+

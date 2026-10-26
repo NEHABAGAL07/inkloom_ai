@@ -118,10 +118,10 @@ function AuditsContent() {
           </div>
           <div className="pt-2">
             <a
-              href="/content"
+              href="/"
               className="px-4 py-2.5 bg-teal hover:bg-teal-hover text-white text-xs font-semibold rounded-lg transition inline-flex items-center gap-2 shadow-sm"
             >
-              <span>Submit Content for Audit</span>
+              <span>Back to Dashboard</span>
               <ArrowRight className="w-4 h-4" />
             </a>
           </div>
