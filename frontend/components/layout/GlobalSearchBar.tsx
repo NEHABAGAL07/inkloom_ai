@@ -184,7 +184,7 @@ export function GlobalSearchBar() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.key === "/" && (e.target as HTMLElement).tagName !== "INPUT" && (e.target as HTMLElement).tagName !== "TEXTAREA") ||
-          ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")) {
+        ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")) {
         e.preventDefault();
         inputRef.current?.focus();
         setIsOpen(true);
@@ -416,11 +416,10 @@ export function GlobalSearchBar() {
                         type="button"
                         onClick={() => handleSelectResult(item)}
                         onMouseEnter={() => setSelectedIndex(idx)}
-                        className={`w-full px-3.5 py-2.5 text-left flex items-start gap-3 transition-colors ${
-                          isSelected
-                            ? "bg-workspace dark:bg-[#1E2D42] text-ink-primary"
-                            : "hover:bg-workspace dark:hover:bg-[#1E2D42]/60 text-ink-secondary"
-                        }`}
+                        className={`w-full px-3.5 py-2.5 text-left flex items-start gap-3 transition-colors ${isSelected
+                          ? "bg-workspace dark:bg-[#1E2D42] text-ink-primary"
+                          : "hover:bg-workspace dark:hover:bg-[#1E2D42]/60 text-ink-secondary"
+                          }`}
                       >
                         <div className="mt-0.5 shrink-0 p-1.5 rounded-lg bg-workspace dark:bg-[#111C2E] border border-border">
                           {getCategoryIcon(item.category)}
@@ -432,9 +431,8 @@ export function GlobalSearchBar() {
                             </h4>
                             {item.badge && (
                               <span
-                                className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0 ${
-                                  item.badgeColor || "bg-workspace border-border text-ink-muted"
-                                }`}
+                                className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0 ${item.badgeColor || "bg-workspace border-border text-ink-muted"
+                                  }`}
                               >
                                 {item.badge}
                               </span>
