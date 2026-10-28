@@ -41,6 +41,36 @@ import {
   KnowledgeDocument,
   DocumentListResponse,
   ChatStatusResponse,
+  CampaignBriefRequest,
+  MarketingGenerationResponse,
+  SaveDraftRequest,
+  UpdateDraftRevisionRequest,
+  DraftDetailResponse,
+  BrandAssetItem,
+  CreativeBriefRequest,
+  DesignConceptGenerationResponse,
+  SaveCreativeBriefDraftRequest,
+  DesignDraftDetailResponse,
+  AuthoritativeLegalSource,
+  LegalReviewRequest,
+  LegalReviewReport,
+  ApplyRevisionRequest,
+  RecordLegalFeedbackRequest,
+  Campaign,
+  CampaignCreate,
+  CampaignUpdate,
+  CampaignDecisionRequest,
+  CampaignReadinessEvaluation,
+  NotificationItem,
+  ReferenceImageAnalysisRequest,
+  ReferenceImageAnalysisResponse,
+  DesignCritiqueRequest,
+  DesignCritiqueResponse,
+  DesignAdaptationRequest,
+  DesignAdaptationResponse,
+  CopilotOrchestrateRequest,
+  CopilotOrchestrateResponse,
+  CopilotFeedbackRequest,
 } from "../types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -787,7 +817,545 @@ export class ApiService implements IApiService {
       return mockApi.getChatStatus();
     }
   }
+
+  // ==========================================
+  // Marketing Copilot API Endpoints
+  // ==========================================
+  async generateMarketingCopy(brief: CampaignBriefRequest): Promise<MarketingGenerationResponse> {
+    if (USE_MOCK) return mockApi.generateMarketingCopy(brief);
+    try {
+      return await this.fetchJson<MarketingGenerationResponse>("/marketing-copilot/generate", {
+        method: "POST",
+        body: JSON.stringify(brief),
+      }, 30000); // 30s timeout for LLM generation
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.generateMarketingCopy(brief);
+    }
+  }
+
+  async saveMarketingDraft(payload: SaveDraftRequest): Promise<DraftDetailResponse> {
+    if (USE_MOCK) return mockApi.saveMarketingDraft(payload);
+    try {
+      return await this.fetchJson<DraftDetailResponse>("/marketing-copilot/drafts", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.saveMarketingDraft(payload);
+    }
+  }
+
+  async getMarketingDrafts(limit: number = 50, offset: number = 0): Promise<DraftDetailResponse[]> {
+    if (USE_MOCK) return mockApi.getMarketingDrafts(limit, offset);
+    try {
+      return await this.fetchJson<DraftDetailResponse[]>(`/marketing-copilot/drafts?limit=${limit}&offset=${offset}`);
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getMarketingDrafts(limit, offset);
+    }
+  }
+
+  async getMarketingDraft(draftId: string): Promise<DraftDetailResponse> {
+    if (USE_MOCK) return mockApi.getMarketingDraft(draftId);
+    try {
+      return await this.fetchJson<DraftDetailResponse>(`/marketing-copilot/drafts/${draftId}`);
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getMarketingDraft(draftId);
+    }
+  }
+
+  async updateMarketingDraftRevision(
+    draftId: string,
+    payload: UpdateDraftRevisionRequest
+  ): Promise<DraftDetailResponse> {
+    if (USE_MOCK) return mockApi.updateMarketingDraftRevision(draftId, payload);
+    try {
+      return await this.fetchJson<DraftDetailResponse>(`/marketing-copilot/drafts/${draftId}/revisions`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.updateMarketingDraftRevision(draftId, payload);
+    }
+  }
+
+  async auditMarketingDraft(draftId: string, revisionId?: string): Promise<AuditResult> {
+    if (USE_MOCK) return mockApi.auditMarketingDraft(draftId, revisionId);
+    try {
+      const url = revisionId
+        ? `/marketing-copilot/drafts/${draftId}/audit?revision_id=${revisionId}`
+        : `/marketing-copilot/drafts/${draftId}/audit`;
+      return await this.fetchJson<AuditResult>(url, {
+        method: "POST",
+      }, 45000); // 45s timeout for deep multi-layer audit
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.auditMarketingDraft(draftId, revisionId);
+    }
+  }
+
+  async submitMarketingDraft(draftId: string): Promise<DraftDetailResponse> {
+    if (USE_MOCK) return mockApi.submitMarketingDraft(draftId);
+    try {
+      return await this.fetchJson<DraftDetailResponse>(`/marketing-copilot/drafts/${draftId}/submit`, {
+        method: "POST",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.submitMarketingDraft(draftId);
+    }
+  }
+
+  // ==========================================
+  // Designer Copilot
+  // ==========================================
+  async getAuthorizedBrandAssets(assetType?: string): Promise<BrandAssetItem[]> {
+    if (USE_MOCK) return mockApi.getAuthorizedBrandAssets(assetType);
+    try {
+      const url = assetType
+        ? `/designer-copilot/assets?asset_type=${encodeURIComponent(assetType)}`
+        : "/designer-copilot/assets";
+      return await this.fetchJson<BrandAssetItem[]>(url);
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getAuthorizedBrandAssets(assetType);
+    }
+  }
+
+  async generateDesignConcepts(brief: CreativeBriefRequest): Promise<DesignConceptGenerationResponse> {
+    if (USE_MOCK) return mockApi.generateDesignConcepts(brief);
+    try {
+      return await this.fetchJson<DesignConceptGenerationResponse>("/designer-copilot/concepts/generate", {
+        method: "POST",
+        body: JSON.stringify(brief),
+      }, 35000); // 35s timeout for AI concept generation
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.generateDesignConcepts(brief);
+    }
+  }
+
+  async saveDesignBriefDraft(payload: SaveCreativeBriefDraftRequest): Promise<DesignDraftDetailResponse> {
+    if (USE_MOCK) return mockApi.saveDesignBriefDraft(payload);
+    try {
+      return await this.fetchJson<DesignDraftDetailResponse>("/designer-copilot/briefs", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.saveDesignBriefDraft(payload);
+    }
+  }
+
+  async getDesignBriefs(limit: number = 50, offset: number = 0): Promise<DesignDraftDetailResponse[]> {
+    if (USE_MOCK) return mockApi.getDesignBriefs(limit, offset);
+    try {
+      return await this.fetchJson<DesignDraftDetailResponse[]>(
+        `/designer-copilot/briefs?limit=${limit}&offset=${offset}`
+      );
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getDesignBriefs(limit, offset);
+    }
+  }
+
+  async getDesignBrief(briefId: string): Promise<DesignDraftDetailResponse> {
+    if (USE_MOCK) return mockApi.getDesignBrief(briefId);
+    try {
+      return await this.fetchJson<DesignDraftDetailResponse>(`/designer-copilot/briefs/${briefId}`);
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getDesignBrief(briefId);
+    }
+  }
+
+  async uploadDesignVersion(
+    briefId: string,
+    file: File,
+    changeSummary?: string
+  ): Promise<DesignDraftDetailResponse> {
+    if (USE_MOCK) return mockApi.uploadDesignVersion(briefId, file, changeSummary);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (changeSummary) {
+        formData.append("change_summary", changeSummary);
+      }
+
+      const url = `${API_BASE}/designer-copilot/briefs/${briefId}/upload`;
+      const headers: Record<string, string> = {};
+      if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
+      if (activeTenantId) headers["X-Organization-Id"] = activeTenantId;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new ApiError(errorData.detail || "Failed to upload design version", res.status, false, errorData.detail);
+      }
+      return await res.json();
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.uploadDesignVersion(briefId, file, changeSummary);
+    }
+  }
+
+  async auditDesignVersion(briefId: string, revisionId?: string): Promise<AuditResult> {
+    if (USE_MOCK) return mockApi.auditDesignVersion(briefId, revisionId);
+    try {
+      const url = revisionId
+        ? `/designer-copilot/briefs/${briefId}/audit?revision_id=${revisionId}`
+        : `/designer-copilot/briefs/${briefId}/audit`;
+      return await this.fetchJson<AuditResult>(url, {
+        method: "POST",
+      }, 45000);
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.auditDesignVersion(briefId, revisionId);
+    }
+  }
+
+  async submitDesignForReview(briefId: string): Promise<DesignDraftDetailResponse> {
+    if (USE_MOCK) return mockApi.submitDesignForReview(briefId);
+    try {
+      return await this.fetchJson<DesignDraftDetailResponse>(`/designer-copilot/briefs/${briefId}/submit`, {
+        method: "POST",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.submitDesignForReview(briefId);
+    }
+  }
+
+  async analyzeReferenceImage(req: ReferenceImageAnalysisRequest): Promise<ReferenceImageAnalysisResponse> {
+    return await this.fetchJson<ReferenceImageAnalysisResponse>("/designer-copilot/analyze-image", {
+      method: "POST",
+      body: JSON.stringify(req),
+    }, 25000);
+  }
+
+  async critiqueDesign(req: DesignCritiqueRequest): Promise<DesignCritiqueResponse> {
+    return await this.fetchJson<DesignCritiqueResponse>("/designer-copilot/critique", {
+      method: "POST",
+      body: JSON.stringify(req),
+    }, 25000);
+  }
+
+  async adaptDesignConcept(req: DesignAdaptationRequest): Promise<DesignAdaptationResponse> {
+    return await this.fetchJson<DesignAdaptationResponse>("/designer-copilot/adapt", {
+      method: "POST",
+      body: JSON.stringify(req),
+    }, 25000);
+  }
+
+  async orchestrateCopilot(req: CopilotOrchestrateRequest): Promise<CopilotOrchestrateResponse> {
+    return await this.fetchJson<CopilotOrchestrateResponse>("/chat/orchestrate", {
+      method: "POST",
+      body: JSON.stringify(req),
+    }, 35000);
+  }
+
+  async sendCopilotFeedback(req: CopilotFeedbackRequest): Promise<any> {
+    return await this.fetchJson<any>("/chat/feedback", {
+      method: "POST",
+      body: JSON.stringify(req),
+    });
+  }
+
+  // Phase 5: Legal Copilot
+  async getLegalSources(jurisdiction?: string, regulatedCategory?: string): Promise<AuthoritativeLegalSource[]> {
+    if (USE_MOCK) return mockApi.getLegalSources(jurisdiction, regulatedCategory);
+    try {
+      const params = new URLSearchParams();
+      if (jurisdiction) params.append("jurisdiction", jurisdiction);
+      if (regulatedCategory) params.append("regulated_category", regulatedCategory);
+      const query = params.toString() ? `?${params.toString()}` : "";
+      return await this.fetchJson<AuthoritativeLegalSource[]>(`/legal-copilot/sources${query}`);
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getLegalSources(jurisdiction, regulatedCategory);
+    }
+  }
+
+  async reviewLegalCompliance(request: LegalReviewRequest): Promise<LegalReviewReport> {
+    if (USE_MOCK) return mockApi.reviewLegalCompliance(request);
+    try {
+      return await this.fetchJson<LegalReviewReport>(`/legal-copilot/review`, {
+        method: "POST",
+        body: JSON.stringify(request),
+      }, 45000);
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.reviewLegalCompliance(request);
+    }
+  }
+
+  async getSubmissionLegalReport(submissionId: string, jurisdiction?: string): Promise<LegalReviewReport> {
+    if (USE_MOCK) return mockApi.getSubmissionLegalReport(submissionId, jurisdiction);
+    try {
+      const query = jurisdiction ? `?jurisdiction=${encodeURIComponent(jurisdiction)}` : "";
+      return await this.fetchJson<LegalReviewReport>(`/legal-copilot/reviews/${submissionId}${query}`, {
+        method: "GET",
+      }, 30000);
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getSubmissionLegalReport(submissionId, jurisdiction);
+    }
+  }
+
+  async applyLegalRevision(submissionId: string, payload: ApplyRevisionRequest): Promise<any> {
+    if (USE_MOCK) return mockApi.applyLegalRevision(submissionId, payload);
+    try {
+      return await this.fetchJson<any>(`/legal-copilot/reviews/${submissionId}/apply-revision`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.applyLegalRevision(submissionId, payload);
+    }
+  }
+
+  async recordLegalDecision(submissionId: string, payload: RecordLegalFeedbackRequest): Promise<any> {
+    if (USE_MOCK) return mockApi.recordLegalDecision(submissionId, payload);
+    try {
+      return await this.fetchJson<any>(`/legal-copilot/reviews/${submissionId}/decision`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.recordLegalDecision(submissionId, payload);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Phase 6: Unified Campaign Workflow & Orchestration API Methods
+  // -------------------------------------------------------------------------
+
+  async getCampaigns(status?: string, priority?: string): Promise<Campaign[]> {
+    if (USE_MOCK) return mockApi.getCampaigns(status, priority);
+    try {
+      const params = new URLSearchParams();
+      if (status) params.append("status", status);
+      if (priority) params.append("priority", priority);
+      const query = params.toString() ? `?${params.toString()}` : "";
+      return await this.fetchJson<Campaign[]>(`/campaigns${query}`, { method: "GET" });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getCampaigns(status, priority);
+    }
+  }
+
+  async getCampaign(campaignId: string): Promise<Campaign> {
+    if (USE_MOCK) return mockApi.getCampaign(campaignId);
+    try {
+      return await this.fetchJson<Campaign>(`/campaigns/${campaignId}`, { method: "GET" });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getCampaign(campaignId);
+    }
+  }
+
+  async createCampaign(payload: CampaignCreate): Promise<Campaign> {
+    if (USE_MOCK) return mockApi.createCampaign(payload);
+    try {
+      return await this.fetchJson<Campaign>("/campaigns", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.createCampaign(payload);
+    }
+  }
+
+  async updateCampaign(campaignId: string, payload: CampaignUpdate): Promise<Campaign> {
+    if (USE_MOCK) return mockApi.updateCampaign(campaignId, payload);
+    try {
+      return await this.fetchJson<Campaign>(`/campaigns/${campaignId}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.updateCampaign(campaignId, payload);
+    }
+  }
+
+  async associateSubmissionsToCampaign(campaignId: string, submissionIds: string[]): Promise<Campaign> {
+    if (USE_MOCK) return mockApi.associateSubmissionsToCampaign(campaignId, submissionIds);
+    try {
+      return await this.fetchJson<Campaign>(`/campaigns/${campaignId}/associate`, {
+        method: "POST",
+        body: JSON.stringify({ submission_ids: submissionIds }),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.associateSubmissionsToCampaign(campaignId, submissionIds);
+    }
+  }
+
+  async runCampaignReviews(campaignId: string): Promise<Campaign> {
+    if (USE_MOCK) return mockApi.runCampaignReviews(campaignId);
+    try {
+      return await this.fetchJson<Campaign>(`/campaigns/${campaignId}/reviews/run`, {
+        method: "POST",
+      }, 60000);
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.runCampaignReviews(campaignId);
+    }
+  }
+
+  async submitCampaignDecision(campaignId: string, payload: CampaignDecisionRequest): Promise<Campaign> {
+    if (USE_MOCK) return mockApi.submitCampaignDecision(campaignId, payload);
+    try {
+      return await this.fetchJson<Campaign>(`/campaigns/${campaignId}/decide`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.submitCampaignDecision(campaignId, payload);
+    }
+  }
+
+  async getCampaignReadiness(campaignId: string): Promise<CampaignReadinessEvaluation> {
+    if (USE_MOCK) return mockApi.getCampaignReadiness(campaignId);
+    try {
+      return await this.fetchJson<CampaignReadinessEvaluation>(`/campaigns/${campaignId}/readiness`, {
+        method: "GET",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getCampaignReadiness(campaignId);
+    }
+  }
+
+  async getCampaignActivity(campaignId: string): Promise<any[]> {
+    if (USE_MOCK) return mockApi.getCampaignActivity(campaignId);
+    try {
+      return await this.fetchJson<any[]>(`/campaigns/${campaignId}/activity`, {
+        method: "GET",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getCampaignActivity(campaignId);
+    }
+  }
+
+  async getNotifications(unreadOnly?: boolean): Promise<NotificationItem[]> {
+    if (USE_MOCK) return mockApi.getNotifications(unreadOnly);
+    try {
+      const query = unreadOnly ? "?unread_only=true" : "";
+      return await this.fetchJson<NotificationItem[]>(`/notifications${query}`, {
+        method: "GET",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getNotifications(unreadOnly);
+    }
+  }
+
+  async markNotificationRead(notificationId: string): Promise<any> {
+    if (USE_MOCK) return mockApi.markNotificationRead(notificationId);
+    try {
+      return await this.fetchJson<any>(`/notifications/${notificationId}/read`, {
+        method: "POST",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.markNotificationRead(notificationId);
+    }
+  }
+
+  async markAllNotificationsRead(): Promise<any> {
+    if (USE_MOCK) return mockApi.markAllNotificationsRead();
+    try {
+      return await this.fetchJson<any>("/notifications/read-all", {
+        method: "POST",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.markAllNotificationsRead();
+    }
+  }
 }
 
 export const api = new ApiService();
 export type { IApiService, CreateSubmissionInput, ReviewDecisionInput };
+

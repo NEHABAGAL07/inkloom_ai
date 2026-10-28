@@ -163,7 +163,9 @@
             "visual_brand",
             "accessibility",
             "editorial_standards",
-            "legal_compliance"
+            "legal_compliance",
+            "marketing_quality",
+            "cross_rule_conflict"
           ]
         },
         "severity": {
@@ -193,7 +195,7 @@
             "is_external": { "type": "boolean" },
             "verification_status": {
               "type": "string",
-              "enum": ["verified", "unverified", "contradicted", "not_applicable"]
+              "enum": ["verified", "unverified", "contradicted", "not_applicable", "supported", "unavailable"]
             }
           },
           "required": ["rule_name", "verification_status"]
@@ -240,6 +242,48 @@
         "requires_human_review": {
           "type": "boolean",
           "description": "Flags if human reviewer confirmation is mandatory before accepting this finding."
+        },
+        "original_text": {
+          "type": ["string", "null"],
+          "description": "Original text segment evaluated for finding."
+        },
+        "explanation": {
+          "type": ["string", "null"],
+          "description": "Detailed explanation of the governance finding."
+        },
+        "rule_reference": {
+          "type": ["string", "null"],
+          "description": "Identifier or title of the governing guideline rule."
+        },
+        "evidence_status": {
+          "type": ["string", "null"],
+          "description": "Substantiation evidence status: supported, contradicted, unverified, unavailable."
+        },
+        "evidence_references": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of source citations and fact identifiers."
+        },
+        "jurisdiction": {
+          "type": ["string", "null"],
+          "description": "Applicable legal or regulatory jurisdiction."
+        },
+        "correction_rationale": {
+          "type": ["string", "null"],
+          "description": "Explanation of why proposed revision is safer or brand-compliant."
+        },
+        "review_required": {
+          "type": "boolean",
+          "description": "Whether human review is required."
+        },
+        "limitations": {
+          "type": ["string", "null"],
+          "description": "Known scope limitations or caveats regarding this finding."
+        },
+        "alternative_punchlines": {
+          "type": ["array", "null"],
+          "items": { "type": "object" },
+          "description": "Alternative marketing headlines or copy options with trade-offs."
         }
       },
       "additionalProperties": false

@@ -2,17 +2,19 @@
 
 import React, { useEffect, useState } from "react";
 import { api } from "@/services/api";
-import { ContentSubmission } from "@/types";
+import { ContentSubmission, Campaign } from "@/types";
 import { ReviewActionModal } from "@/components/reviews/ReviewActionModal";
 import { AuditTrailTimeline } from "@/components/reviews/AuditTrailTimeline";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
 import { useAuth } from "@/services/auth-context";
-import { Scale, FileText, CheckCircle, ArrowRight, Eye } from "lucide-react";
+import { Scale, FileText, CheckCircle, ArrowRight, Eye, Briefcase, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 export default function ReviewsPage() {
   const { user } = useAuth();
   const [pendingSubmissions, setPendingSubmissions] = useState<ContentSubmission[]>([]);
+  const [pendingCampaigns, setPendingCampaigns] = useState<Campaign[]>([]);
   const [selectedSub, setSelectedSub] = useState<ContentSubmission | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -24,8 +26,12 @@ export default function ReviewsPage() {
     setLoading(true);
     setError(null);
     try {
-      const subs = await api.getPendingReviews();
+      const [subs, camps] = await Promise.all([
+        api.getPendingReviews(),
+        api.getCampaigns("human_review_pending"),
+      ]);
       setPendingSubmissions(subs || []);
+      setPendingCampaigns(camps || []);
     } catch (e: any) {
       console.error("Failed to load review queue:", e);
       setError(e?.message || "Failed to load pending reviews.");
@@ -77,14 +83,93 @@ export default function ReviewsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Queue List */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-navy flex items-center gap-2">
-              <FileText className="w-4 h-4 text-teal" />
-              <span>Pending Submissions ({pendingSubmissions.length})</span>
-            </h2>
-            <span className="text-xs text-ink-muted">Sorted by submission date</span>
-          </div>
+        <div className="lg:col-span-2 space-y-6">
+          {/* Section 1: Campaign Workflows Awaiting Sign-off */}
+          {pendingCampaigns.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-navy flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-teal" />
+                  <span>Campaigns Awaiting Sign-Off ({pendingCampaigns.length})</span>
+                </h2>
+                <span className="text-xs text-teal font-semibold">Multi-track audits completed</span>
+              </div>
+
+              <div className="space-y-3">
+                {pendingCampaigns.map((camp) => (
+                  <div
+                    key={camp.id}
+                    className="bg-surface rounded-2xl p-5 border border-teal/40 dark:border-teal-800/60 shadow-subtle space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-bold text-teal uppercase tracking-wider">
+                            Campaign Workflow
+                          </span>
+                          <span className="text-[10px] text-ink-muted">
+                            v{camp.version} • {camp.priority.toUpperCase()}
+                          </span>
+                        </div>
+                        <h3 className="text-base font-bold text-navy tracking-tight">{camp.name}</h3>
+                        <p className="text-xs text-ink-secondary mt-1">{camp.description}</p>
+                        <div className="flex items-center gap-3 mt-2 text-[11px] text-ink-muted">
+                          <span>Channel: <strong className="text-navy capitalize">{camp.target_channel || "General"}</strong></span>
+                          <span>•</span>
+                          <span>Jurisdiction: <strong className="text-navy">{camp.target_jurisdiction || "Global"}</strong></span>
+                          <span>•</span>
+                          <span>Assets: <strong className="text-navy">{camp.submissions?.length || 0}</strong></span>
+                        </div>
+                      </div>
+
+                      <span className="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wide border shrink-0 bg-purple-50 text-purple-700 border-purple-200">
+                        Human Review Pending
+                      </span>
+                    </div>
+
+                    <div className="pt-3 border-t border-border flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs text-ink-muted">
+                        <span>Review Tracks:</span>
+                        {camp.review_tracks?.marketing?.score && (
+                          <span className="px-1.5 py-0.5 rounded bg-teal/10 text-teal text-[10px] font-bold">
+                            Mkt: {camp.review_tracks.marketing.score}
+                          </span>
+                        )}
+                        {camp.review_tracks?.visual?.score && (
+                          <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-bold">
+                            Vis: {camp.review_tracks.visual.score}
+                          </span>
+                        )}
+                        {camp.review_tracks?.legal?.score && (
+                          <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-bold">
+                            Legal: {camp.review_tracks.legal.score}
+                          </span>
+                        )}
+                      </div>
+
+                      <Link
+                        href={`/campaigns?id=${camp.id}`}
+                        className="bg-teal hover:bg-teal-hover text-white font-bold text-xs px-4 py-2 rounded-xl shadow-subtle transition flex items-center gap-1.5"
+                      >
+                        <span>Open &amp; Sign Off</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Section 2: Individual Draft Submissions */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-navy flex items-center gap-2">
+                <FileText className="w-4 h-4 text-teal" />
+                <span>Pending Submissions ({pendingSubmissions.length})</span>
+              </h2>
+              <span className="text-xs text-ink-muted">Sorted by submission date</span>
+            </div>
 
           {loading ? (
             <div className="bg-surface rounded-2xl p-12 text-center text-ink-muted text-sm border border-border shadow-subtle space-y-3">
@@ -170,6 +255,7 @@ export default function ReviewsPage() {
               </div>
             ))
           )}
+          </div>
         </div>
 
         {/* Sidebar Audit Trail */}

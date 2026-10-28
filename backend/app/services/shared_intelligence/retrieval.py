@@ -7,6 +7,7 @@ Executes multi-tenant, permission-aware retrieval across:
 - Brand assets and specifications
 - Content revisions, previous audit findings, and reviewer decisions
 """
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any, Tuple
 from sqlalchemy import or_, and_, desc, asc
 from sqlalchemy.orm import Session
@@ -18,6 +19,7 @@ from app.models.submission import ContentSubmission
 from app.models.revision import ContentRevision
 from app.models.audit import AuditRun, AuditFinding
 from app.models.review import ReviewDecision
+from app.models.document import KnowledgeDocument, DocumentChunk
 from app.schemas.knowledge import (
     KnowledgeSourceType,
     EvidenceStatus,
@@ -25,12 +27,15 @@ from app.schemas.knowledge import (
     RulePriorityType,
     VerificationStatus,
     KnowledgeSearchFilter,
+    UnifiedRetrievalResultItem,
+    UnifiedRetrievalResponse,
 )
 from app.schemas.ai_context import (
     ProvenanceRecord,
     BrandRuleContext,
     VerifiedFactContext,
     LegalSourceContext,
+    BrandAssetContext,
     ContentVersionContext,
     PreviousFindingContext,
     ReviewerDecisionContext,
@@ -192,6 +197,7 @@ class KnowledgeRetriever:
                 source_type=KnowledgeSourceType(ki.source_type),
                 title=ki.title,
                 authoritative_source=ki.authoritative_source,
+                responsible_owner=ki.responsible_owner,
                 source_reference=ki.source_reference,
                 source_url=ki.source_url,
                 jurisdiction=ki.jurisdiction,
@@ -264,6 +270,7 @@ class KnowledgeRetriever:
                 source_type=KnowledgeSourceType(item.source_type),
                 title=item.title,
                 authoritative_source=item.authoritative_source,
+                responsible_owner=item.responsible_owner,
                 source_reference=item.source_reference,
                 source_url=item.source_url,
                 jurisdiction=item.jurisdiction,
@@ -351,6 +358,7 @@ class KnowledgeRetriever:
                 source_type=KnowledgeSourceType(item.source_type),
                 title=item.title,
                 authoritative_source=item.authoritative_source,
+                responsible_owner=item.responsible_owner,
                 source_reference=item.source_reference,
                 source_url=item.source_url,
                 jurisdiction=item.jurisdiction,
@@ -468,3 +476,267 @@ class KnowledgeRetriever:
             )
 
         return (content_context, previous_findings, reviewer_decisions)
+
+    @staticmethod
+    def retrieve_brand_assets(
+        db: Session,
+        organization_id: str,
+        asset_type: Optional[str] = None,
+        name_query: Optional[str] = None,
+    ) -> List[BrandAssetContext]:
+        """
+        Retrieves approved brand assets and specifications (logos, colors, typography, boilerplate)
+        scoped strictly to the authenticated organization.
+        """
+        results: List[BrandAssetContext] = []
+
+        # 1. ApprovedAsset table
+        query_assets = db.query(ApprovedAsset).filter(
+            ApprovedAsset.organization_id == organization_id,
+            ApprovedAsset.is_active == True,
+        )
+        if asset_type:
+            query_assets = query_assets.filter(ApprovedAsset.asset_type == asset_type)
+        if name_query:
+            term = f"%{name_query.strip()}%"
+            query_assets = query_assets.filter(ApprovedAsset.name.ilike(term))
+
+        for asset in query_assets.all():
+            provenance = ProvenanceRecord(
+                source_id=asset.id,
+                source_type=KnowledgeSourceType.ASSET_METADATA,
+                title=f"Approved Asset: {asset.name}",
+                authoritative_source="Brand Asset Registry",
+                source_reference=f"Asset Type: {asset.asset_type}",
+                source_url=asset.file_url,
+                jurisdiction="Global",
+                version="1.0.0",
+                verification_status=VerificationStatus.VERIFIED,
+                is_binding=False,
+            )
+            results.append(
+                BrandAssetContext(
+                    asset_id=asset.id,
+                    asset_name=asset.name,
+                    asset_type=asset.asset_type,
+                    file_url=asset.file_url,
+                    file_path=asset.file_path,
+                    specifications=asset.specifications or {},
+                    is_active=asset.is_active,
+                    provenance=provenance,
+                )
+            )
+
+        # 2. KnowledgeItem table (source_type == 'asset_metadata')
+        query_ki = db.query(KnowledgeItem).filter(
+            KnowledgeItem.organization_id == organization_id,
+            KnowledgeItem.is_active == True,
+            KnowledgeItem.source_type == "asset_metadata",
+        )
+        if asset_type:
+            query_ki = query_ki.filter(KnowledgeItem.category == asset_type)
+        if name_query:
+            term = f"%{name_query.strip()}%"
+            query_ki = query_ki.filter(
+                or_(
+                    KnowledgeItem.title.ilike(term),
+                    KnowledgeItem.description.ilike(term),
+                )
+            )
+
+        for item in query_ki.all():
+            provenance = ProvenanceRecord(
+                source_id=item.id,
+                source_type=KnowledgeSourceType.ASSET_METADATA,
+                title=item.title,
+                authoritative_source=item.authoritative_source or "Brand Asset Registry",
+                responsible_owner=item.responsible_owner,
+                source_reference=item.source_reference,
+                source_url=item.source_url,
+                jurisdiction=item.jurisdiction,
+                version=item.version,
+                effective_date=item.effective_date,
+                publication_date=item.publication_date,
+                verification_status=VerificationStatus(item.verification_status),
+                verified_by=item.verified_by,
+                verified_at=item.verified_at,
+                is_binding=item.priority_level == 1,
+            )
+            results.append(
+                BrandAssetContext(
+                    asset_id=item.id,
+                    asset_name=item.title,
+                    asset_type=item.category,
+                    file_url=item.source_url,
+                    file_path=item.source_reference,
+                    specifications=item.content_payload or {},
+                    is_active=item.is_active,
+                    provenance=provenance,
+                )
+            )
+
+        return results
+
+    @staticmethod
+    def unified_search(
+        db: Session,
+        organization_id: str,
+        query: str,
+        filters: Optional[KnowledgeSearchFilter] = None,
+    ) -> UnifiedRetrievalResponse:
+        """
+        Unified cross-modal search across rules, facts, statutes, assets, and indexed document chunks.
+        Strictly tenant isolated. If a fact is unverified or missing, returns an explicit UNAVAILABLE record
+        rather than fabricating citations.
+        """
+        results: List[UnifiedRetrievalResultItem] = []
+        unavailable_evidence: List[str] = []
+        clean_query = query.strip() if query else ""
+        term = f"%{clean_query}%" if clean_query else None
+
+        # 1. Search KnowledgeItem
+        ki_query = db.query(KnowledgeItem).filter(
+            KnowledgeItem.organization_id == organization_id,
+            KnowledgeItem.is_active == True,
+        )
+        if term:
+            ki_query = ki_query.filter(
+                or_(
+                    KnowledgeItem.title.ilike(term),
+                    KnowledgeItem.description.ilike(term),
+                    KnowledgeItem.source_reference.ilike(term),
+                    KnowledgeItem.authoritative_source.ilike(term),
+                )
+            )
+        if filters:
+            if filters.source_types:
+                ki_query = ki_query.filter(KnowledgeItem.source_type.in_([st.value for st in filters.source_types]))
+            if filters.categories:
+                ki_query = ki_query.filter(KnowledgeItem.category.in_([c.value for c in filters.categories]))
+            if filters.jurisdictions:
+                conditions = [KnowledgeItem.jurisdiction == "Global"]
+                for j in filters.jurisdictions:
+                    conditions.append(KnowledgeItem.jurisdiction.ilike(f"%{j}%"))
+                ki_query = ki_query.filter(or_(*conditions))
+            if filters.verification_statuses:
+                ki_query = ki_query.filter(KnowledgeItem.verification_status.in_([vs.value for vs in filters.verification_statuses]))
+
+        ki_items = ki_query.order_by(asc(KnowledgeItem.priority_level)).limit(50).all()
+        for item in ki_items:
+            is_binding = item.source_type in ["legislation", "regulation"] or item.priority_level == 1
+            results.append(
+                UnifiedRetrievalResultItem(
+                    id=item.id,
+                    source_type=item.source_type,
+                    category=item.category,
+                    title=item.title,
+                    summary_or_excerpt=item.description or item.title,
+                    provenance_reference=item.source_reference or item.authoritative_source,
+                    source_url=item.source_url,
+                    jurisdiction=item.jurisdiction,
+                    priority_level=item.priority_level,
+                    rule_type=item.rule_type,
+                    verification_status=item.verification_status,
+                    evidence_status=item.evidence_status,
+                    is_binding=is_binding,
+                    relevance_score=1.0 if not clean_query or clean_query.lower() in item.title.lower() else 0.8,
+                    responsible_owner=item.responsible_owner,
+                    metadata=item.content_payload or {},
+                )
+            )
+
+        # 2. Search ApprovedAsset
+        asset_query = db.query(ApprovedAsset).filter(
+            ApprovedAsset.organization_id == organization_id,
+            ApprovedAsset.is_active == True,
+        )
+        if term:
+            asset_query = asset_query.filter(
+                or_(
+                    ApprovedAsset.name.ilike(term),
+                    ApprovedAsset.asset_type.ilike(term),
+                )
+            )
+        for asset in asset_query.limit(20).all():
+            results.append(
+                UnifiedRetrievalResultItem(
+                    id=asset.id,
+                    source_type="brand_asset",
+                    category=asset.asset_type,
+                    title=asset.name,
+                    summary_or_excerpt=f"Approved brand asset: {asset.name} ({asset.asset_type})",
+                    provenance_reference=asset.file_path or asset.file_url,
+                    source_url=asset.file_url,
+                    jurisdiction="Global",
+                    priority_level=3,
+                    rule_type="brand_standard",
+                    verification_status="verified",
+                    evidence_status="supported",
+                    is_binding=False,
+                    relevance_score=0.9,
+                    metadata=asset.specifications or {},
+                )
+            )
+
+        # 3. Search DocumentChunk from uploaded documents
+        if clean_query:
+            chunk_query = (
+                db.query(DocumentChunk, KnowledgeDocument)
+                .join(KnowledgeDocument, DocumentChunk.document_id == KnowledgeDocument.id)
+                .filter(
+                    DocumentChunk.organization_id == organization_id,
+                    DocumentChunk.text.ilike(term),
+                )
+                .limit(10)
+            )
+            for chunk, doc in chunk_query.all():
+                excerpt = chunk.text[:200] + ("..." if len(chunk.text) > 200 else "")
+                results.append(
+                    UnifiedRetrievalResultItem(
+                        id=chunk.id,
+                        source_type="document_chunk",
+                        category="internal_guidance",
+                        title=f"{doc.filename} (p. {chunk.page_number})",
+                        summary_or_excerpt=excerpt,
+                        provenance_reference=f"{doc.filename}#page={chunk.page_number}",
+                        jurisdiction="Global",
+                        priority_level=3,
+                        rule_type="brand_standard",
+                        verification_status="verified" if doc.status == "ready" else "unverified",
+                        evidence_status="supported",
+                        is_binding=False,
+                        relevance_score=0.75,
+                        metadata={"page_number": chunk.page_number, "document_id": doc.id},
+                    )
+                )
+
+        # If query provided and NO results found, return explicit UNAVAILABLE evidence status
+        if clean_query and not results:
+            unavailable_evidence.append(clean_query)
+            results.append(
+                UnifiedRetrievalResultItem(
+                    id="unavailable_query_fallback",
+                    source_type="verified_fact",
+                    category="claim_verification",
+                    title="Unverified / Unavailable Claim Record",
+                    summary_or_excerpt=f"No certified evidence or registered governance standard found for query: '{clean_query}'.",
+                    provenance_reference="Internal Knowledge Registry",
+                    jurisdiction="Global",
+                    priority_level=5,
+                    rule_type="advisory",
+                    verification_status="unverified",
+                    evidence_status="unavailable",
+                    is_binding=False,
+                    relevance_score=0.0,
+                    metadata={"query": clean_query, "status": "unavailable"},
+                )
+            )
+
+        return UnifiedRetrievalResponse(
+            organization_id=organization_id,
+            query=clean_query,
+            total_matches=len(results),
+            results=results,
+            unavailable_evidence_requested=unavailable_evidence,
+            search_timestamp=datetime.now(timezone.utc),
+        )

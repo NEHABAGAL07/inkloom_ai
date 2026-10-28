@@ -1,0 +1,311 @@
+{
+  "version": "1.0.0",
+  "dataset_description": "Inkloom AI Phase 7 Evaluation Benchmark: Synthetic, sanitized multi-modal test cases for Brand, Designer, Legal, and Workflow governance.",
+  "metadata": {
+    "total_cases": 24,
+    "categories": ["brand_marketing", "designer_visual", "legal_copilot", "unified_workflow"]
+  },
+  "brand_marketing_cases": [
+    {
+      "id": "bm_01",
+      "name": "Aggressive tone violation",
+      "text": "Get started with Inkloom AI today before your competitors crush you into bankruptcy.",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "tone",
+        "severity": "high",
+        "expected_flagged_phrase": "competitors crush you",
+        "human_escalation_required": false
+      }
+    },
+    {
+      "id": "bm_02",
+      "name": "Fully compliant enterprise brand copy",
+      "text": "Inkloom AI helps brand marketing, creative design, and legal compliance teams collaborate with unified guideline intelligence.",
+      "ground_truth": {
+        "has_violation": false,
+        "category": "none",
+        "severity": "none",
+        "expected_flagged_phrase": null,
+        "human_escalation_required": false
+      }
+    },
+    {
+      "id": "bm_03",
+      "name": "Unsupported extreme performance claim",
+      "text": "Inkloom AI boosts organic conversion rates by 850% within 48 hours guaranteed with zero human input.",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "unsupported_claim",
+        "severity": "critical",
+        "expected_flagged_phrase": "850%",
+        "human_escalation_required": true
+      }
+    },
+    {
+      "id": "bm_04",
+      "name": "Contradictory product factual claim",
+      "text": "Inkloom operates as an exclusively offline desktop utility that synchronizes all customer creative assets in real-time to multi-tenant cloud storage.",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "fact_conflict",
+        "severity": "high",
+        "expected_flagged_phrase": "offline desktop utility",
+        "human_escalation_required": true
+      }
+    },
+    {
+      "id": "bm_05",
+      "name": "Direct competitor disparagement",
+      "text": "Unlike BrandToolX which is insecure, corrupt, and exposes customer secrets, Inkloom is secure.",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "competitor_disparagement",
+        "severity": "high",
+        "expected_flagged_phrase": "BrandToolX",
+        "human_escalation_required": false
+      }
+    },
+    {
+      "id": "bm_06",
+      "name": "Ambiguous urgency copy",
+      "text": "Act now or permanently miss your chance to automate marketing governance.",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "tone",
+        "severity": "medium",
+        "expected_flagged_phrase": "permanently miss your chance",
+        "human_escalation_required": false
+      }
+    },
+    {
+      "id": "bm_07",
+      "name": "Missing substantiation reference footnote",
+      "text": "Rated #1 brand management system in user satisfaction across 10,000 surveyed enterprise organizations.",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "unsubstantiated_statistic",
+        "severity": "high",
+        "expected_flagged_phrase": "Rated #1",
+        "human_escalation_required": true
+      }
+    },
+    {
+      "id": "bm_08",
+      "name": "Compliant technical overview with proper caveat",
+      "text": "The platform provides AI-assisted guideline recommendations subject to final review and approval by authorized brand managers.",
+      "ground_truth": {
+        "has_violation": false,
+        "category": "none",
+        "severity": "none",
+        "expected_flagged_phrase": null,
+        "human_escalation_required": false
+      }
+    }
+  ],
+  "designer_visual_cases": [
+    {
+      "id": "dv_01",
+      "name": "Failing text contrast on light background",
+      "background_color": "#FFFFFF",
+      "foreground_color": "#F1F5F9",
+      "contrast_ratio": 1.12,
+      "ground_truth": {
+        "has_violation": true,
+        "category": "contrast",
+        "severity": "high",
+        "min_contrast_required": 4.5
+      }
+    },
+    {
+      "id": "dv_02",
+      "name": "Passing high contrast accessible text",
+      "background_color": "#0F172A",
+      "foreground_color": "#F8FAFC",
+      "contrast_ratio": 16.4,
+      "ground_truth": {
+        "has_violation": false,
+        "category": "none",
+        "severity": "none",
+        "min_contrast_required": 4.5
+      }
+    },
+    {
+      "id": "dv_03",
+      "name": "Missing required brand logo asset",
+      "has_logo": false,
+      "requires_logo": true,
+      "ground_truth": {
+        "has_violation": true,
+        "category": "missing_required_element",
+        "severity": "medium"
+      }
+    },
+    {
+      "id": "dv_04",
+      "name": "Sub-threshold low resolution billboard asset",
+      "width_px": 300,
+      "height_px": 250,
+      "dpi": 72,
+      "target_channel": "billboard_print",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "resolution",
+        "severity": "high"
+      }
+    },
+    {
+      "id": "dv_05",
+      "name": "Unauthorized accent color palette",
+      "detected_hex": "#FF007F",
+      "approved_palette": ["#1E293B", "#3B82F6", "#10B981", "#FFFFFF"],
+      "ground_truth": {
+        "has_violation": true,
+        "category": "color_palette",
+        "severity": "medium"
+      }
+    },
+    {
+      "id": "dv_06",
+      "name": "Compliant digital social banner",
+      "width_px": 1200,
+      "height_px": 630,
+      "contrast_ratio": 7.8,
+      "has_logo": true,
+      "requires_logo": true,
+      "ground_truth": {
+        "has_violation": false,
+        "category": "none",
+        "severity": "none"
+      }
+    }
+  ],
+  "legal_copilot_cases": [
+    {
+      "id": "lc_01",
+      "name": "Absolute immunity guarantee claim",
+      "text": "Inkloom ensures 100% complete immunity from all FTC and GDPR regulatory fines and legal liability.",
+      "jurisdiction": "Global",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "absolute_guarantee",
+        "severity": "critical",
+        "human_escalation_required": true,
+        "expected_citation_keyword": "15 U.S.C."
+      }
+    },
+    {
+      "id": "lc_02",
+      "name": "Deceptive free trial promotional pricing",
+      "text": "Try the enterprise tier completely free forever with no credit card, billed automatically at $5,000 monthly upon signup.",
+      "jurisdiction": "US",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "pricing_promotional",
+        "severity": "critical",
+        "human_escalation_required": true,
+        "expected_citation_keyword": "FTC"
+      }
+    },
+    {
+      "id": "lc_03",
+      "name": "Cross-jurisdiction data privacy mismatch",
+      "text": "We store all European customer personal data under US jurisdiction regulations without opt-out options.",
+      "jurisdiction": "EU",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "sensitive_regulated",
+        "severity": "high",
+        "human_escalation_required": true,
+        "expected_citation_keyword": "GDPR"
+      }
+    },
+    {
+      "id": "lc_04",
+      "name": "Substantiated compliance assistance statement",
+      "text": "Inkloom provides automated checks based on user-configured rules; legal teams must review and approve all published campaigns.",
+      "jurisdiction": "Global",
+      "ground_truth": {
+        "has_violation": false,
+        "category": "none",
+        "severity": "none",
+        "human_escalation_required": false,
+        "expected_citation_keyword": null
+      }
+    },
+    {
+      "id": "lc_05",
+      "name": "Fabricated statute citation attempt",
+      "text": "Certified fully compliant under Intergalactic Trade Commission Directive 9999.",
+      "jurisdiction": "US",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "unsupported_performance",
+        "severity": "medium",
+        "human_escalation_required": true,
+        "invalid_citation_expected": true
+      }
+    },
+    {
+      "id": "lc_06",
+      "name": "Missing required commercial disclosure",
+      "text": "Endorsed by leading industry analysts without mentioning that reviewers received paid compensation for testimonials.",
+      "jurisdiction": "US",
+      "ground_truth": {
+        "has_violation": true,
+        "category": "endorsement_testimonial",
+        "severity": "high",
+        "human_escalation_required": true,
+        "expected_citation_keyword": "Endorsement Guides"
+      }
+    }
+  ],
+  "unified_workflow_cases": [
+    {
+      "id": "wf_01",
+      "name": "Prohibited creator self-approval",
+      "campaign_creator_id": "user_marketing_01",
+      "attempted_approver_id": "user_marketing_01",
+      "user_role": "marketing_lead",
+      "ground_truth": {
+        "action_permitted": false,
+        "rejection_reason": "Self-approval prohibited: Segregation of duties policy requires independent review."
+      }
+    },
+    {
+      "id": "wf_02",
+      "name": "Attempting approval with unresolved critical legal finding",
+      "campaign_creator_id": "user_marketing_01",
+      "attempted_approver_id": "user_legal_01",
+      "user_role": "legal_counsel",
+      "has_unresolved_critical_finding": true,
+      "ground_truth": {
+        "action_permitted": false,
+        "rejection_reason": "Approval blocked: Campaign contains unresolved critical legal or brand risk findings."
+      }
+    },
+    {
+      "id": "wf_03",
+      "name": "Authorized multi-role approval workflow",
+      "campaign_creator_id": "user_marketing_01",
+      "attempted_approver_id": "user_legal_01",
+      "user_role": "legal_counsel",
+      "has_unresolved_critical_finding": false,
+      "ground_truth": {
+        "action_permitted": true,
+        "rejection_reason": null
+      }
+    },
+    {
+      "id": "wf_04",
+      "name": "Post-approval content mutation",
+      "original_approved_version": 1,
+      "current_content_version": 2,
+      "content_modified_after_approval": true,
+      "ground_truth": {
+        "action_permitted": false,
+        "rejection_reason": "Approval invalidated: Content changed after approval; re-audit and fresh review required."
+      }
+    }
+  ]
+}

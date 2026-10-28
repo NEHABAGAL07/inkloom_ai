@@ -12,13 +12,15 @@ export type FindingCategory =
   | "visual_brand"
   | "accessibility"
   | "editorial_standards"
-  | "legal_compliance";
+  | "legal_compliance"
+  | "marketing_quality"
+  | "cross_rule_conflict";
 
 export type FindingSeverity = "critical" | "high" | "medium" | "low" | "info";
 
 export type FindingStatus = "open" | "accepted" | "dismissed" | "manual_check_required";
 
-export type VerificationStatus = "verified" | "unverified" | "contradicted" | "not_applicable";
+export type VerificationStatus = "verified" | "unverified" | "contradicted" | "not_applicable" | "supported" | "unavailable";
 
 export interface BoundingBox {
   x: number;
@@ -64,6 +66,18 @@ export interface Finding {
   status: FindingStatus;
   location?: FindingLocation | null;
   requires_human_review: boolean;
+
+  // Extended Phase 2 Evidence & Provenance Fields
+  original_text?: string | null;
+  explanation?: string | null;
+  rule_reference?: string | null;
+  evidence_status?: string | null;
+  evidence_references?: string[];
+  jurisdiction?: string | null;
+  correction_rationale?: string | null;
+  review_required?: boolean;
+  limitations?: string | null;
+  alternative_punchlines?: Array<{ text: string; rationale: string; trade_off?: string }> | null;
 }
 
 export interface AuditSummary {

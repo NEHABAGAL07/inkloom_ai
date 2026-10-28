@@ -4,8 +4,8 @@ Conforms strictly to contracts/audit-result.schema.json
 """
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
-from pydantic import BaseModel, Field, HttpUrl, ConfigDict
+from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, HttpUrl, ConfigDict, model_validator
 
 
 class OverallAuditStatus(str, Enum):
@@ -23,6 +23,8 @@ class FindingCategory(str, Enum):
     ACCESSIBILITY = "accessibility"
     EDITORIAL_STANDARDS = "editorial_standards"
     LEGAL_COMPLIANCE = "legal_compliance"
+    MARKETING_QUALITY = "marketing_quality"
+    CROSS_RULE_CONFLICT = "cross_rule_conflict"
 
 
 class FindingSeverity(str, Enum):
@@ -45,6 +47,8 @@ class VerificationStatus(str, Enum):
     UNVERIFIED = "unverified"
     CONTRADICTED = "contradicted"
     NOT_APPLICABLE = "not_applicable"
+    SUPPORTED = "supported"
+    UNAVAILABLE = "unavailable"
 
 
 class BoundingBox(BaseModel):
@@ -83,7 +87,7 @@ class Finding(BaseModel):
     category: FindingCategory
     severity: FindingSeverity
     title: str
-    message: str
+    message: str = ""
     evidence: Optional[str] = None
     source_reference: Optional[SourceReference] = None
     confidence: float = Field(ge=0.0, le=1.0)
@@ -92,7 +96,57 @@ class Finding(BaseModel):
     location: Optional[FindingLocation] = None
     requires_human_review: bool = False
 
+    # Extended Phase 2 Evidence & Provenance Fields
+    original_text: Optional[str] = None
+    explanation: Optional[str] = None
+    rule_reference: Optional[str] = None
+    evidence_status: Optional[str] = None
+    evidence_references: Optional[List[str]] = Field(default_factory=list)
+    jurisdiction: Optional[str] = None
+    correction_rationale: Optional[str] = None
+    review_required: bool = False
+    limitations: Optional[str] = None
+    alternative_punchlines: Optional[List[Dict[str, Any]]] = None
+
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="before")
+    @classmethod
+    def sync_finding_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+
+        # Synchronize aliases for bidirectional contract compatibility
+        if "explanation" in data and not data.get("message"):
+            data["message"] = data["explanation"]
+        elif "message" in data and not data.get("explanation"):
+            data["explanation"] = data["message"]
+
+        if "original_text" in data and not data.get("evidence"):
+            data["evidence"] = data["original_text"]
+        elif "evidence" in data and not data.get("original_text"):
+            data["original_text"] = data["evidence"]
+
+        if data.get("review_required") is True:
+            data["requires_human_review"] = True
+        elif data.get("requires_human_review") is True:
+            data["review_required"] = True
+
+        if not data.get("correction_rationale") and data.get("suggested_correction"):
+            corr = data["suggested_correction"]
+            if isinstance(corr, dict):
+                data["correction_rationale"] = corr.get("rationale")
+            elif hasattr(corr, "rationale"):
+                data["correction_rationale"] = corr.rationale
+
+        if not data.get("evidence_status") and data.get("source_reference"):
+            sr = data["source_reference"]
+            if isinstance(sr, dict):
+                data["evidence_status"] = sr.get("verification_status")
+            elif hasattr(sr, "verification_status"):
+                data["evidence_status"] = sr.verification_status.value if hasattr(sr.verification_status, "value") else str(sr.verification_status)
+
+        return data
 
 
 class AuditSummary(BaseModel):

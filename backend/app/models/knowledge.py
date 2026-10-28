@@ -68,6 +68,7 @@ class KnowledgeItem(TimestampedModel):
 
     # Attribution & human accountability
     authoritative_source = Column(String(255), nullable=True)
+    responsible_owner = Column(String(255), nullable=True)  # Designated human owner or departmental steward
     verified_by = Column(String(255), nullable=True)  # User ID or officer name who certified the item
     verified_at = Column(DateTime(timezone=True), nullable=True)
     verification_rationale = Column(Text, nullable=True)

@@ -6,6 +6,7 @@ import { useAuth } from "@/services/auth-context";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/services/theme-context";
 import { GlobalSearchBar } from "./GlobalSearchBar";
+import { NotificationBell } from "./NotificationBell";
 import {
   Building2,
   ChevronDown,
@@ -249,6 +250,9 @@ export function Header() {
           Right Section: Theme Toggle & Compact Profile Dropdown
           ---------------------------------------------------- */}
       <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+        {/* In-App Workflow Notification Bell */}
+        <NotificationBell />
+
         {/* Global Light / Dark Theme Toggle */}
         <ThemeToggle />
 

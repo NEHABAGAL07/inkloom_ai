@@ -15,8 +15,10 @@ class ContentSubmission(TimestampedModel):
     # Workflow status: draft, submitted, auditing, changes_requested, resubmitted, pending_approval, approved, rejected
     status = Column(String(50), default="draft", nullable=False, index=True)
     current_revision_id = Column(String(36), nullable=True)
+    campaign_id = Column(String(36), ForeignKey("campaigns.id", ondelete="SET NULL"), nullable=True, index=True)
 
     organization = relationship("Organization", back_populates="submissions")
+    campaign = relationship("Campaign", back_populates="submissions")
     revisions = relationship("ContentRevision", back_populates="submission", cascade="all, delete-orphan", foreign_keys="ContentRevision.submission_id", order_by="desc(ContentRevision.version_number)")
     audits = relationship("AuditRun", back_populates="submission", cascade="all, delete-orphan")
     reviews = relationship("ReviewDecision", back_populates="submission", cascade="all, delete-orphan")

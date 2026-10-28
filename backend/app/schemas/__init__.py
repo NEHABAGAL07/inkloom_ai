@@ -49,6 +49,7 @@ from app.schemas.ai_context import (
     BrandRuleContext,
     VerifiedFactContext,
     LegalSourceContext,
+    BrandAssetContext,
     ContentVersionContext,
     PreviousFindingContext,
     ReviewerDecisionContext,
@@ -66,6 +67,18 @@ from app.schemas.copilot_contracts import (
     DesignerCopilotResponse,
     LegalCopilotRequest,
     LegalCopilotResponse,
+)
+from app.schemas.campaign import (
+    CampaignCreate,
+    CampaignUpdate,
+    CampaignAssociateSubmissionsRequest,
+    CampaignDecisionRequest,
+    CampaignResponse,
+    CampaignReadinessEvaluation,
+    ReviewTrackResult,
+    CampaignReviewTrackStatus,
+    CampaignPriority,
+    NotificationResponse,
 )
 
 __all__ = [
@@ -114,6 +127,7 @@ __all__ = [
     "BrandRuleContext",
     "VerifiedFactContext",
     "LegalSourceContext",
+    "BrandAssetContext",
     "ContentVersionContext",
     "PreviousFindingContext",
     "ReviewerDecisionContext",
@@ -129,4 +143,14 @@ __all__ = [
     "DesignerCopilotResponse",
     "LegalCopilotRequest",
     "LegalCopilotResponse",
+    "CampaignCreate",
+    "CampaignUpdate",
+    "CampaignAssociateSubmissionsRequest",
+    "CampaignDecisionRequest",
+    "CampaignResponse",
+    "CampaignReadinessEvaluation",
+    "ReviewTrackResult",
+    "CampaignReviewTrackStatus",
+    "CampaignPriority",
+    "NotificationResponse",
 ]

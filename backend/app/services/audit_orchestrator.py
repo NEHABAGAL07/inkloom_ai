@@ -111,6 +111,9 @@ class AuditOrchestrator:
             media_type=media_type,
             guideline_version=guideline_version,
             guideline_profile=guideline_profile,
+            organization_id=submission.organization_id,
+            db=db,
+            file_path=target_revision.file_path if target_revision else None,
         )
 
         # Persist AuditRun with immutable guideline version metadata and compliance disclaimer
@@ -137,7 +140,7 @@ class AuditOrchestrator:
         db.add(run_record)
 
 
-        # Persist individual findings
+        # Persist individual findings with full Phase 2 provenance
         for finding in audit_result.findings:
             db_finding = AuditFinding(
                 audit_run_id=run_record.id,
@@ -145,14 +148,25 @@ class AuditOrchestrator:
                 category=finding.category.value,
                 severity=finding.severity.value,
                 title=finding.title,
-                message=finding.message,
-                evidence=finding.evidence,
+                message=finding.message or finding.explanation or "",
+                evidence=finding.evidence or finding.original_text,
                 source_reference=finding.source_reference.model_dump() if finding.source_reference else None,
                 confidence=finding.confidence,
                 suggested_correction=finding.suggested_correction.model_dump() if finding.suggested_correction else None,
                 status=finding.status.value,
                 location=finding.location.model_dump() if finding.location else None,
                 requires_human_review=finding.requires_human_review,
+                rule_reference=finding.rule_reference,
+                evidence_status=finding.evidence_status,
+                jurisdiction=finding.jurisdiction,
+                details={
+                    "original_text": finding.original_text,
+                    "explanation": finding.explanation,
+                    "evidence_references": finding.evidence_references,
+                    "correction_rationale": finding.correction_rationale,
+                    "limitations": finding.limitations,
+                    "alternative_punchlines": finding.alternative_punchlines,
+                },
             )
             db.add(db_finding)
 

@@ -1,6 +1,9 @@
 """
 Inkloom AI Brand Governance Backend Application Entrypoint
 """
+import time
+import uuid
+import logging
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -12,6 +15,8 @@ from app.database.session import engine
 from app.database.base import Base
 # Import all models to ensure metadata registration
 import app.models
+
+logger = logging.getLogger("inkloom.api")
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -30,7 +35,52 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID", "X-Process-Time-Ms"],
 )
+
+
+@app.middleware("http")
+async def security_and_tracing_middleware(request: Request, call_next):
+    """
+    Production-grade middleware:
+    1. Propagates or generates correlation X-Request-ID
+    2. Measures request execution duration
+    3. Attaches strict security headers (HSTS, CSP, nosniff, frame-ancestors)
+    4. Provides structured access logging without exposing secrets or token bodies
+    """
+    request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+    start_time = time.perf_counter()
+
+    response = await call_next(request)
+
+    process_time_ms = (time.perf_counter() - start_time) * 1000.0
+
+    # Tracing headers
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Process-Time-Ms"] = f"{process_time_ms:.2f}"
+
+    # Strict Security Headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "0"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+
+    # Relaxed CSP for interactive Swagger/ReDoc docs, strict CSP for API
+    path = request.url.path
+    if not (path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi.json")):
+        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
+
+    # Access logging (sanitized, no credentials or confidential prompt bodies)
+    client_host = request.client.host if request.client else "unknown"
+    logger.info(
+        f"{request.method} {request.url.path} - status={response.status_code} "
+        f"duration={process_time_ms:.2f}ms ip={client_host} req_id={request_id}"
+    )
+
+    return response
+
 
 
 @app.on_event("startup")
@@ -134,6 +184,33 @@ def on_startup():
                         conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN evidence_description TEXT"))
                     if "required_disclosure" not in cols_r:
                         conn.execute(text("ALTER TABLE guideline_rules ADD COLUMN required_disclosure TEXT"))
+
+                # 4. knowledge_items table
+                cursor_k = conn.execute(text("PRAGMA table_info(knowledge_items)"))
+                cols_k = [row[1] for row in cursor_k.fetchall()]
+                if cols_k:
+                    if "responsible_owner" not in cols_k:
+                        conn.execute(text("ALTER TABLE knowledge_items ADD COLUMN responsible_owner VARCHAR(255)"))
+
+                # 5. audit_findings table
+                cursor_af = conn.execute(text("PRAGMA table_info(audit_findings)"))
+                cols_af = [row[1] for row in cursor_af.fetchall()]
+                if cols_af:
+                    if "rule_reference" not in cols_af:
+                        conn.execute(text("ALTER TABLE audit_findings ADD COLUMN rule_reference VARCHAR(255)"))
+                    if "evidence_status" not in cols_af:
+                        conn.execute(text("ALTER TABLE audit_findings ADD COLUMN evidence_status VARCHAR(50)"))
+                    if "jurisdiction" not in cols_af:
+                        conn.execute(text("ALTER TABLE audit_findings ADD COLUMN jurisdiction VARCHAR(100)"))
+                    if "details" not in cols_af:
+                        conn.execute(text("ALTER TABLE audit_findings ADD COLUMN details JSON"))
+
+                # 6. content_submissions table (campaign_id)
+                cursor_cs = conn.execute(text("PRAGMA table_info(content_submissions)"))
+                cols_cs = [row[1] for row in cursor_cs.fetchall()]
+                if cols_cs:
+                    if "campaign_id" not in cols_cs:
+                        conn.execute(text("ALTER TABLE content_submissions ADD COLUMN campaign_id VARCHAR(36)"))
 
                 conn.commit()
         except Exception as e:

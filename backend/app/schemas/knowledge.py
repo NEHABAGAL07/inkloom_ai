@@ -3,10 +3,10 @@ Knowledge Item & Provenance Pydantic Schemas
 Defines request/response contracts for enterprise knowledge items, legal sources,
 certified facts, and empirical benchmarks.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
 class KnowledgeSourceType(str, Enum):
@@ -67,9 +67,6 @@ class VerificationStatus(str, Enum):
     OVERDUE_FOR_REVIEW = "overdue_for_review"
 
 
-from pydantic import BaseModel, Field, ConfigDict, model_validator
-
-
 class KnowledgeItemBase(BaseModel):
     source_type: KnowledgeSourceType
     category: KnowledgeCategory
@@ -88,6 +85,7 @@ class KnowledgeItemBase(BaseModel):
     rule_type: RulePriorityType = RulePriorityType.BRAND_STANDARD
     priority_level: int = Field(default=3, ge=1, le=5)
     authoritative_source: Optional[str] = Field(None, max_length=255)
+    responsible_owner: Optional[str] = Field(None, max_length=255, description="Designated human owner or steward")
     tags: Optional[List[str]] = Field(default_factory=list)
 
 
@@ -125,6 +123,7 @@ class KnowledgeItemUpdate(BaseModel):
     rule_type: Optional[RulePriorityType] = None
     priority_level: Optional[int] = Field(None, ge=1, le=5)
     authoritative_source: Optional[str] = None
+    responsible_owner: Optional[str] = None
     is_active: Optional[bool] = None
     tags: Optional[List[str]] = None
 
@@ -185,6 +184,7 @@ class UnifiedRetrievalResultItem(BaseModel):
     evidence_status: str = "unavailable"
     is_binding: bool = False
     relevance_score: float = 1.0
+    responsible_owner: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 

@@ -26,7 +26,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
-      - name: Run Backend & Contract Tests
+      - name: Run AI Quality & Evaluation Benchmark
+        run: |
+          cd backend
+          python -m pytest tests/test_ai_evaluation.py -v -s
+
+      - name: Run Backend & Security Tests
         run: |
           cd backend
           python -m pytest tests/ -v
@@ -51,7 +56,13 @@ jobs:
           cd frontend
           npm ci || npm install
 
-      - name: Run TypeScript Type Check & Build
+      - name: TypeScript Type Check
+        run: |
+          cd frontend
+          npx tsc --noEmit
+
+      - name: Frontend Production Build
         run: |
           cd frontend
           npm run build
+

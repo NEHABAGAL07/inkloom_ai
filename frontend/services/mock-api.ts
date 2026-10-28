@@ -35,6 +35,31 @@ import {
   KnowledgeDocument,
   DocumentListResponse,
   ChatStatusResponse,
+  CampaignBriefRequest,
+  MarketingGenerationResponse,
+  SaveDraftRequest,
+  UpdateDraftRevisionRequest,
+  DraftDetailResponse,
+  BrandAssetItem,
+  CreativeBriefRequest,
+  DesignConceptGenerationResponse,
+  SaveCreativeBriefDraftRequest,
+  DesignDraftDetailResponse,
+  DesignRevisionItem,
+  DesignConceptAlternative,
+  ColorTokenRecommendation,
+  TypographyRecommendation,
+  AuthoritativeLegalSource,
+  LegalReviewRequest,
+  LegalReviewReport,
+  ApplyRevisionRequest,
+  RecordLegalFeedbackRequest,
+  Campaign,
+  CampaignCreate,
+  CampaignUpdate,
+  CampaignDecisionRequest,
+  CampaignReadinessEvaluation,
+  NotificationItem,
 } from "../types";
 
 export interface CreateSubmissionInput {
@@ -117,6 +142,46 @@ export interface IApiService {
   getKnowledgeDocument(documentId: string): Promise<KnowledgeDocument>;
   deleteKnowledgeDocument(documentId: string): Promise<void>;
   getChatStatus(): Promise<ChatStatusResponse>;
+
+  // Marketing Copilot
+  generateMarketingCopy(brief: CampaignBriefRequest): Promise<MarketingGenerationResponse>;
+  saveMarketingDraft(payload: SaveDraftRequest): Promise<DraftDetailResponse>;
+  getMarketingDrafts(limit?: number, offset?: number): Promise<DraftDetailResponse[]>;
+  getMarketingDraft(draftId: string): Promise<DraftDetailResponse>;
+  updateMarketingDraftRevision(draftId: string, payload: UpdateDraftRevisionRequest): Promise<DraftDetailResponse>;
+  auditMarketingDraft(draftId: string, revisionId?: string): Promise<AuditResult>;
+  submitMarketingDraft(draftId: string): Promise<DraftDetailResponse>;
+
+  // Designer Copilot
+  getAuthorizedBrandAssets(assetType?: string): Promise<BrandAssetItem[]>;
+  generateDesignConcepts(brief: CreativeBriefRequest): Promise<DesignConceptGenerationResponse>;
+  saveDesignBriefDraft(payload: SaveCreativeBriefDraftRequest): Promise<DesignDraftDetailResponse>;
+  getDesignBriefs(limit?: number, offset?: number): Promise<DesignDraftDetailResponse[]>;
+  getDesignBrief(briefId: string): Promise<DesignDraftDetailResponse>;
+  uploadDesignVersion(briefId: string, file: File, changeSummary?: string): Promise<DesignDraftDetailResponse>;
+  auditDesignVersion(briefId: string, revisionId?: string): Promise<AuditResult>;
+  submitDesignForReview(briefId: string): Promise<DesignDraftDetailResponse>;
+  
+  // Phase 5: Legal Copilot
+  getLegalSources(jurisdiction?: string, regulatedCategory?: string): Promise<AuthoritativeLegalSource[]>;
+  reviewLegalCompliance(request: LegalReviewRequest): Promise<LegalReviewReport>;
+  getSubmissionLegalReport(submissionId: string, jurisdiction?: string): Promise<LegalReviewReport>;
+  applyLegalRevision(submissionId: string, payload: ApplyRevisionRequest): Promise<any>;
+  recordLegalDecision(submissionId: string, payload: RecordLegalFeedbackRequest): Promise<any>;
+
+  // Phase 6: Unified Campaign Workflow & Orchestration
+  getCampaigns(status?: string, priority?: string): Promise<Campaign[]>;
+  getCampaign(campaignId: string): Promise<Campaign>;
+  createCampaign(payload: CampaignCreate): Promise<Campaign>;
+  updateCampaign(campaignId: string, payload: CampaignUpdate): Promise<Campaign>;
+  associateSubmissionsToCampaign(campaignId: string, submissionIds: string[]): Promise<Campaign>;
+  runCampaignReviews(campaignId: string): Promise<Campaign>;
+  submitCampaignDecision(campaignId: string, payload: CampaignDecisionRequest): Promise<Campaign>;
+  getCampaignReadiness(campaignId: string): Promise<CampaignReadinessEvaluation>;
+  getCampaignActivity(campaignId: string): Promise<any[]>;
+  getNotifications(unreadOnly?: boolean): Promise<NotificationItem[]>;
+  markNotificationRead(notificationId: string): Promise<any>;
+  markAllNotificationsRead(): Promise<any>;
 }
 
 // In-memory deterministic mock state
@@ -2329,6 +2394,1366 @@ export class MockApiService implements IApiService {
       model: "gemini-1.5-flash",
     };
   }
+
+  // ==========================================
+  // Marketing Copilot Mock Implementation
+  // ==========================================
+  private mockDraftsStore: DraftDetailResponse[] = [
+    {
+      id: "draft_mkt_001",
+      organization_id: "org_acme_cloud",
+      title: "Q3 Enterprise Security Launch Headline",
+      description: "Marketing Copilot Draft for linkedin",
+      content_type: "headline",
+      status: "draft",
+      current_revision_id: "rev_mkt_001",
+      current_text: "Engineered for Integrity: Accelerate Your Enterprise Security with Verified Brand Intelligence.",
+      version_number: 1,
+      created_at: new Date(Date.now() - 3600000).toISOString(),
+      updated_at: new Date(Date.now() - 3600000).toISOString(),
+      revisions: [
+        {
+          id: "rev_mkt_001",
+          version_number: 1,
+          raw_text: "Engineered for Integrity: Accelerate Your Enterprise Security with Verified Brand Intelligence.",
+          created_at: new Date(Date.now() - 3600000).toISOString(),
+          media_metadata: { channel: "linkedin", target_audience: "IT Directors" },
+        },
+      ],
+      latest_audit: null,
+    },
+  ];
+
+  async generateMarketingCopy(brief: CampaignBriefRequest): Promise<MarketingGenerationResponse> {
+    const product = brief.product || "Inkloom AI Governance Hub";
+    const audience = brief.target_audience || "Enterprise Marketing Teams";
+    const channel = brief.channel || "linkedin";
+    const tone = brief.preferred_tone || "Authoritative & Trustworthy";
+    const cta = brief.call_to_action || "Schedule a consultation";
+    const contentType = brief.content_type || "short_copy";
+
+    return {
+      generation_id: `gen_${Date.now()}`,
+      created_at: new Date().toISOString(),
+      brief,
+      alternatives: [
+        {
+          id: `alt_${Date.now()}_1`,
+          content_type: contentType,
+          text: `Empower ${audience} with verified brand governance. With ${product}, automate review workflows while preserving institutional tone and regulatory rigor. ${cta}.`,
+          creative_rationale: "Strategic Authority Angle: Emphasizes institutional trust, operational velocity, and governance peace of mind.",
+          target_channel: channel,
+          target_audience: audience,
+          brand_tone_alignment: `Adheres to approved ${tone} guidelines without hyperbolic sales claims.`,
+          assumptions: ["Assumes enterprise audience evaluating compliance automation tools."],
+          missing_facts: [],
+          compliance_warnings: ["Ensure pricing commitments are omitted prior to public syndication."],
+          audit_completed: false,
+          human_approved: false,
+        },
+        {
+          id: `alt_${Date.now()}_2`,
+          content_type: contentType,
+          text: `Eliminate review bottlenecks before assets reach legal review. ${product} delivers real-time compliance guardrails tailored for ${audience}.\n\nExplore verified brand governance today: ${cta}.`,
+          creative_rationale: "Problem-Solution Contrast: Bridges workflow friction directly with automated governance speed.",
+          target_channel: channel,
+          target_audience: audience,
+          brand_tone_alignment: "Professional, solution-oriented voice maintaining respectful industry terminology.",
+          assumptions: ["Assumes team experiences compliance review friction in content lifecycle."],
+          missing_facts: [],
+          compliance_warnings: ["Terms and conditions apply. Disclose demo licensing requirements where applicable."],
+          audit_completed: false,
+          human_approved: false,
+        },
+        {
+          id: `alt_${Date.now()}_3`,
+          content_type: contentType,
+          text: `Where creative velocity meets verified compliance. Built specifically for ${audience}, ${product} guarantees continuous alignment across every customer touchpoint.\n\n${cta}.`,
+          creative_rationale: "Empowerment & Speed Hook: Inspires creative agility while reassuring risk-averse stakeholders.",
+          target_channel: channel,
+          target_audience: audience,
+          brand_tone_alignment: "Concise, forward-looking, and strictly within certified product scope.",
+          assumptions: ["Conservative baseline without uncertified performance statistics."],
+          missing_facts: [],
+          compliance_warnings: [],
+          audit_completed: false,
+          human_approved: false,
+        },
+      ],
+      brand_context: {
+        applicable_rule_names: ["Professional Tone Standard", "Approved Product Naming", "Disclaimer Placement Rule"],
+        verified_claim_keys: ["enterprise_encryption", "multi_tenant_isolation", "verified_rule_engine"],
+        required_disclosures: ["Terms and conditions apply. Consult official documentation."],
+        unverified_requested_claims: [],
+        jurisdiction: "Global",
+        knowledge_available: true,
+        limited_mode: false,
+      },
+      model_version: "inkloom-marketing-copilot-v1",
+      prompt_version: "2026.3.0",
+      notice: "AI-generated creative drafts must be audited via the AI Audit Engine and approved by an authorized human reviewer prior to public distribution.",
+    };
+  }
+
+  async saveMarketingDraft(payload: SaveDraftRequest): Promise<DraftDetailResponse> {
+    const newDraftId = `draft_${Date.now()}`;
+    const newRevId = `rev_${Date.now()}`;
+    const newDraft: DraftDetailResponse = {
+      id: newDraftId,
+      organization_id: "org_acme_cloud",
+      title: payload.title,
+      description: `Marketing Copilot Draft for ${payload.channel || "general"}`,
+      content_type: payload.content_type || "text",
+      status: "draft",
+      current_revision_id: newRevId,
+      current_text: payload.text,
+      version_number: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      revisions: [
+        {
+          id: newRevId,
+          version_number: 1,
+          raw_text: payload.text,
+          created_at: new Date().toISOString(),
+          media_metadata: payload.media_metadata || {},
+        },
+      ],
+      latest_audit: null,
+    };
+    this.mockDraftsStore.unshift(newDraft);
+    return newDraft;
+  }
+
+  async getMarketingDrafts(limit: number = 50, offset: number = 0): Promise<DraftDetailResponse[]> {
+    return this.mockDraftsStore.slice(offset, offset + limit);
+  }
+
+  async getMarketingDraft(draftId: string): Promise<DraftDetailResponse> {
+    const draft = this.mockDraftsStore.find((d) => d.id === draftId);
+    if (!draft) throw new Error(`Draft '${draftId}' not found.`);
+    return { ...draft };
+  }
+
+  async updateMarketingDraftRevision(
+    draftId: string,
+    payload: UpdateDraftRevisionRequest
+  ): Promise<DraftDetailResponse> {
+    const draft = this.mockDraftsStore.find((d) => d.id === draftId);
+    if (!draft) throw new Error(`Draft '${draftId}' not found.`);
+
+    const nextVer = draft.version_number + 1;
+    const newRevId = `rev_${Date.now()}_v${nextVer}`;
+    const newRev = {
+      id: newRevId,
+      version_number: nextVer,
+      raw_text: payload.text,
+      created_at: new Date().toISOString(),
+      media_metadata: { ...(payload.media_metadata || {}), change_summary: payload.change_summary },
+    };
+    draft.revisions.unshift(newRev);
+    draft.current_revision_id = newRevId;
+    draft.current_text = payload.text;
+    draft.version_number = nextVer;
+    draft.updated_at = new Date().toISOString();
+    return { ...draft };
+  }
+
+  async auditMarketingDraft(draftId: string, revisionId?: string): Promise<AuditResult> {
+    const draft = this.mockDraftsStore.find((d) => d.id === draftId);
+    if (!draft) throw new Error(`Draft '${draftId}' not found.`);
+
+    const targetRevId = revisionId || draft.current_revision_id || "rev_001";
+    const auditRes: AuditResult = {
+      ...MOCK_AUDIT_RESULT,
+      audit_id: `audit_mkt_${Date.now()}`,
+      content_id: draftId,
+      revision_id: targetRevId,
+      created_at: new Date().toISOString(),
+    };
+
+    draft.latest_audit = {
+      audit_id: auditRes.audit_id,
+      revision_id: targetRevId,
+      overall_status: auditRes.overall_status,
+      summary: auditRes.summary,
+      findings_count: auditRes.findings.length,
+      created_at: auditRes.created_at,
+    };
+
+    return auditRes;
+  }
+
+  async submitMarketingDraft(draftId: string): Promise<DraftDetailResponse> {
+    const draft = this.mockDraftsStore.find((d) => d.id === draftId);
+    if (!draft) throw new Error(`Draft '${draftId}' not found.`);
+    draft.status = "submitted";
+    draft.updated_at = new Date().toISOString();
+    return { ...draft };
+  }
+
+  // Designer Copilot In-Memory Mock Store
+  private mockDesignBriefsStore: DesignDraftDetailResponse[] = [];
+  private mockBrandAssetsStore: BrandAssetItem[] = [
+    {
+      id: "asset_logo_primary",
+      organization_id: "org_acme_cloud",
+      name: "Inkloom Primary Horizontal Logo",
+      asset_type: "logo",
+      file_url: "/assets/brand/inkloom-logo-horizontal.svg",
+      file_path: "brand/logos/inkloom-logo-horizontal.svg",
+      specifications: {
+        clearspace: "32px or 1x height of 'I'",
+        minimum_width_px: 120,
+        allowed_backgrounds: ["light", "dark_navy"],
+        file_format: "svg",
+      },
+      approval_status: "approved",
+      is_active: true,
+    },
+    {
+      id: "asset_logo_monogram",
+      organization_id: "org_acme_cloud",
+      name: "Inkloom Monogram Emblem",
+      asset_type: "logo",
+      file_url: "/assets/brand/inkloom-monogram.svg",
+      file_path: "brand/logos/inkloom-monogram.svg",
+      specifications: {
+        clearspace: "16px minimum",
+        usage: "Favicons, social avatars, small app icons",
+      },
+      approval_status: "approved",
+      is_active: true,
+    },
+    {
+      id: "asset_logo_restricted",
+      organization_id: "org_acme_cloud",
+      name: "Inkloom Monochromatic Wordmark",
+      asset_type: "logo",
+      file_url: "/assets/brand/inkloom-wordmark-mono.svg",
+      file_path: "brand/logos/inkloom-wordmark-mono.svg",
+      specifications: {
+        restrictions: "Strictly for high-contrast print or certified monochrome stamping.",
+      },
+      approval_status: "restricted",
+      is_active: true,
+    },
+    {
+      id: "asset_color_navy",
+      organization_id: "org_acme_cloud",
+      name: "Deep Governance Navy",
+      asset_type: "palette",
+      specifications: {
+        hex: "#0F172A",
+        role: "Primary Brand Background / Dark Surface",
+        wcag_contrast_white: "15.8:1 (AAA Pass)",
+      },
+      approval_status: "approved",
+      is_active: true,
+    },
+    {
+      id: "asset_color_indigo",
+      organization_id: "org_acme_cloud",
+      name: "Electric Indigo",
+      asset_type: "palette",
+      specifications: {
+        hex: "#6366F1",
+        role: "Primary Accent / Interactive Elements",
+        wcag_contrast_navy: "4.8:1 (AA Pass)",
+      },
+      approval_status: "approved",
+      is_active: true,
+    },
+    {
+      id: "asset_color_emerald",
+      organization_id: "org_acme_cloud",
+      name: "Compliance Teal / Emerald",
+      asset_type: "palette",
+      specifications: {
+        hex: "#10B981",
+        role: "Success & Governance Indicator",
+        wcag_contrast_navy: "6.2:1 (AA Pass)",
+      },
+      approval_status: "approved",
+      is_active: true,
+    },
+    {
+      id: "asset_font_inter",
+      organization_id: "org_acme_cloud",
+      name: "Inter Typography Standard",
+      asset_type: "typography",
+      specifications: {
+        font_family: "Inter, sans-serif",
+        heading_weights: ["600", "700"],
+        body_weights: ["400", "500"],
+      },
+      approval_status: "approved",
+      is_active: true,
+    },
+    {
+      id: "asset_badge_soc2",
+      organization_id: "org_acme_cloud",
+      name: "AICPA SOC 2 Type II Certification Badge",
+      asset_type: "badge",
+      file_url: "/assets/brand/soc2-type2.png",
+      specifications: {
+        mandatory_placement: "Footer or secondary trust section on enterprise collateral",
+      },
+      approval_status: "approved",
+      is_active: true,
+    },
+  ];
+
+  async getAuthorizedBrandAssets(assetType?: string): Promise<BrandAssetItem[]> {
+    if (!assetType) return [...this.mockBrandAssetsStore];
+    return this.mockBrandAssetsStore.filter((a) => ((a.asset_type || a.type || "") as string).toLowerCase() === assetType.toLowerCase());
+  }
+
+  async generateDesignConcepts(brief: CreativeBriefRequest): Promise<DesignConceptGenerationResponse> {
+    const channel = brief.channel || "social";
+    const format = brief.creative_format || "social_post";
+    const ratio = brief.aspect_ratio || "1:1";
+    const projectName = brief.project_name || "Enterprise Brand Creative";
+
+    const concepts: DesignConceptAlternative[] = [
+      {
+        id: "concept_opt_1",
+        concept_name: "Minimalist High-Contrast Authority",
+        creative_objective_rationale: `Positions ${brief.product || "Inkloom"} as the undisputed enterprise governance benchmark with an authoritative, restrained layout tailored for ${channel}.`,
+        visual_direction_composition: "Deep slate navy canvas (#0F172A) with generous 48px negative margins. Hero headline anchored in top-left quadrant, supported by an electric indigo accent rule line.",
+        suggested_layout_hierarchy: "Primary 44px display headline -> 18px supporting rationale -> High-contrast CTA pill button in bottom right -> Primary logo in top-right with verified 32px clearspace buffer.",
+        color_palette_tokens: [
+          { name: "Deep Navy", hex: "#0F172A", role: "Background Canvas", usage_guidance: "Dominant 70% canvas coverage", contrast_ratio_notes: "15.8:1 against White (WCAG AAA compliant)" },
+          { name: "Electric Indigo", hex: "#6366F1", role: "Primary Interactive Accent", usage_guidance: "Used for CTA background and focal graphic borders", contrast_ratio_notes: "4.8:1 against Dark Canvas (WCAG AA compliant)" },
+          { name: "Pure White", hex: "#FFFFFF", role: "High-Emphasis Typography", usage_guidance: "Headline copy and primary icons", contrast_ratio_notes: "15.8:1 contrast" },
+          { name: "Slate 300", hex: "#CBD5E1", role: "Secondary Typography", usage_guidance: "Supporting copy and metadata captions", contrast_ratio_notes: "9.2:1 contrast" },
+        ],
+        typography_recommendations: [
+          { font_family: "Inter, sans-serif", weight: "Bold (700)", role: "Headline", size_guidance: "40px - 48px, line-height 1.15" },
+          { font_family: "Inter, sans-serif", weight: "Regular (400)", role: "Body", size_guidance: "16px - 18px, line-height 1.5" },
+          { font_family: "JetBrains Mono, monospace", weight: "Medium (500)", role: "Data / Security Specs", size_guidance: "12px uppercase tracking 0.05em" },
+        ],
+        imagery_illustration_direction: "Clean vector geometry representing architectural governance nodes. Avoid stock photography or photorealistic artificial faces.",
+        logo_asset_placement: "Top-right header corner with strict 32px safe-zone boundary from canvas edges.",
+        headline_copy_suggestion: brief.required_copy || "AI Governance Without Compromise.",
+        supporting_copy_suggestion: "Automate brand compliance across every customer touchpoint with verifiable audit trails.",
+        call_to_action_placement: "Bottom right corner with high-contrast '#6366F1' button and right arrow glyph.",
+        channel_specific_considerations: `Optimized for ${channel} feed scanning: key value proposition readable within 1.5 seconds. Respects native mobile safe-zones.`,
+        accessibility_considerations: "All text elements exceed WCAG 2.1 AA 4.5:1 minimum contrast requirement. Focus outlines compatible with high-contrast display modes.",
+        relevant_brand_rules: [
+          "Inkloom Brand Standard 2.1: Logo clearspace must equal 1x logo height",
+          "Digital A11y Policy: Minimum 4.5:1 text-to-background contrast ratio",
+          "Color Architecture: Dark navy must remain primary background for technical tier collateral",
+        ],
+        assumptions: ["Standard digital RGB color profile", "Viewer device supports web-safe sans-serif fonts"],
+        missing_information: brief.brand_requirements ? [] : ["Specific campaign hashtag or legal disclaimer copy if paid media"],
+        warnings: ["Do not overlay text directly across intricate vector intersections"],
+        is_ai_generated: true,
+        is_approved: false,
+        audit_completed: false,
+      },
+      {
+        id: "concept_opt_2",
+        concept_name: "Modern Asymmetric Metric Showcase",
+        creative_objective_rationale: `Drives conversion for ${brief.target_audience || "Enterprise Stakeholders"} by elevating social proof and quantifiable metrics through an asymmetrical modular card layout.`,
+        visual_direction_composition: "Bento-style layout with rounded containment cards (16px border-radius), subtle glassmorphism border highlight, and emerald teal accents.",
+        suggested_layout_hierarchy: "Left column: Problem statement + Hero Metric (99.8% Compliance) -> Right column: Product graphic + CTA pill.",
+        color_palette_tokens: [
+          { name: "Deep Navy", hex: "#0F172A", role: "Base Canvas", usage_guidance: "Base layer background", contrast_ratio_notes: "Foundation tone" },
+          { name: "Dark Slate Surface", hex: "#1E293B", role: "Card Containers", usage_guidance: "Background for bento cards with 1px border", contrast_ratio_notes: "Card surface" },
+          { name: "Compliance Emerald", hex: "#10B981", role: "Metric & Status Indicator", usage_guidance: "Accent badge and checkmark indicators", contrast_ratio_notes: "6.2:1 against Dark Slate (WCAG AA)" },
+          { name: "Electric Indigo", hex: "#6366F1", role: "Primary Button Fill", usage_guidance: "Action trigger", contrast_ratio_notes: "4.8:1 contrast" },
+        ],
+        typography_recommendations: [
+          { font_family: "Inter, sans-serif", weight: "Semi-Bold (600)", role: "Card Headers", size_guidance: "20px - 24px" },
+          { font_family: "Inter, sans-serif", weight: "Extra-Bold (800)", role: "Metric Display", size_guidance: "56px tabular numbers" },
+          { font_family: "Inter, sans-serif", weight: "Regular (400)", role: "Captions", size_guidance: "14px muted" },
+        ],
+        imagery_illustration_direction: "Abstract UI card mockup showcasing real-time governance score gauges and verified check marks.",
+        logo_asset_placement: "Bottom left corner anchored alongside verified SOC 2 trust badge.",
+        headline_copy_suggestion: "99.8% Brand Audit Accuracy in Real Time.",
+        supporting_copy_suggestion: "Deploy autonomous visual and textual governance guards before creative content hits production.",
+        call_to_action_placement: "Floating bottom-right pill: 'Explore Interactive Demo'",
+        channel_specific_considerations: `Configured for ${ratio} viewport with responsive padding across mobile and desktop feeds.`,
+        accessibility_considerations: "Color is never used as the sole indicator of status; always accompanied by text labels or iconography.",
+        relevant_brand_rules: [
+          "Typography Standard: Metric numerals must utilize tabular figure spacing",
+          "Asset Usage: SOC 2 badge must be accompanied by active compliance year (2026)",
+        ],
+        assumptions: ["Collateral will be viewed on screen resolutions of at least 375px width"],
+        missing_information: [],
+        warnings: ["Ensure metric claims are substantiated by approved compliance reports"],
+        is_ai_generated: true,
+        is_approved: false,
+        audit_completed: false,
+      },
+    ];
+
+    return {
+      generation_id: `gen_${Date.now()}`,
+      created_at: new Date().toISOString(),
+      brief: { ...brief },
+      concepts,
+      brand_assets_used: this.mockBrandAssetsStore.slice(0, 4),
+      brand_rules_applied: [
+        "Brand Guideline v2.1: Logo clearspace equals 1x height",
+        "Color Token System: Navy (#0F172A) & Indigo (#6366F1)",
+        "WCAG 2.1 AA Accessibility Standards (4.5:1 ratio)",
+      ],
+      model_version: "gemini-1.5-pro / brand-designer-v4",
+      notice: "AI-generated design concept alternatives for exploration. Unapproved draft — subject to brand audit and human sign-off.",
+    };
+  }
+
+  async saveDesignBriefDraft(payload: SaveCreativeBriefDraftRequest): Promise<DesignDraftDetailResponse> {
+    const briefId = `brief_${Date.now()}`;
+    const revId = `rev_design_${Date.now()}_v1`;
+
+    const newDraft: DesignDraftDetailResponse = {
+      id: briefId,
+      organization_id: "org_acme_cloud",
+      creator_id: "usr_mock_designer",
+      title: payload.project_name || "Creative Design Brief",
+      description: payload.brief.design_objective || "Brand-aware creative concept development",
+      content_type: "image",
+      status: "draft",
+      current_revision_id: revId,
+      current_file_path: payload.initial_image_url || null,
+      current_file_name: payload.initial_image_url ? "initial-concept.png" : null,
+      version_number: 1,
+      brief: payload.brief as any,
+      selected_concept: (payload.selected_concept_data || null) as any,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      revisions: [
+        {
+          id: revId,
+          version_number: 1,
+          file_name: payload.initial_image_url ? "initial-concept.png" : null,
+          file_path: payload.initial_image_url || null,
+          raw_text: payload.brief.required_copy || null,
+          created_at: new Date().toISOString(),
+          media_metadata: {
+            concept_id: payload.selected_concept_id || null,
+            channel: payload.brief.channel || "social",
+            aspect_ratio: payload.brief.aspect_ratio || "1:1",
+          },
+        },
+      ],
+      latest_audit: null,
+    };
+
+    this.mockDesignBriefsStore.unshift(newDraft);
+    return newDraft;
+  }
+
+  async getDesignBriefs(limit: number = 50, offset: number = 0): Promise<DesignDraftDetailResponse[]> {
+    return this.mockDesignBriefsStore.slice(offset, offset + limit);
+  }
+
+  async getDesignBrief(briefId: string): Promise<DesignDraftDetailResponse> {
+    const draft = this.mockDesignBriefsStore.find((b) => b.id === briefId);
+    if (!draft) throw new Error(`Design brief '${briefId}' not found.`);
+    return { ...draft };
+  }
+
+  async uploadDesignVersion(
+    briefId: string,
+    file: File,
+    changeSummary?: string
+  ): Promise<DesignDraftDetailResponse> {
+    const draft = this.mockDesignBriefsStore.find((b) => b.id === briefId);
+    if (!draft) throw new Error(`Design brief '${briefId}' not found.`);
+
+    const nextVer = draft.version_number + 1;
+    const newRevId = `rev_design_${Date.now()}_v${nextVer}`;
+    const objectUrl = URL.createObjectURL(file);
+
+    const newRev: DesignRevisionItem = {
+      id: newRevId,
+      version_number: nextVer,
+      file_name: file.name,
+      file_path: objectUrl,
+      raw_text: draft.brief?.required_copy || null,
+      created_at: new Date().toISOString(),
+      media_metadata: {
+        file_size_bytes: file.size,
+        file_type: file.type,
+        change_summary: changeSummary || `Uploaded revised design iteration v${nextVer}`,
+      },
+    };
+
+    draft.revisions.unshift(newRev);
+    draft.current_revision_id = newRevId;
+    draft.current_file_path = objectUrl;
+    draft.current_file_name = file.name;
+    draft.version_number = nextVer;
+    draft.updated_at = new Date().toISOString();
+
+    return { ...draft };
+  }
+
+  async auditDesignVersion(briefId: string, revisionId?: string): Promise<AuditResult> {
+    const draft = this.mockDesignBriefsStore.find((b) => b.id === briefId);
+    if (!draft) throw new Error(`Design brief '${briefId}' not found.`);
+
+    const targetRevId = revisionId || draft.current_revision_id || "rev_design_001";
+    const currentRev = draft.revisions.find((r) => r.id === targetRevId);
+    const fileName = currentRev?.file_name || draft.current_file_name || "creative-export.png";
+
+    const auditResult: AuditResult = {
+      ...MOCK_AUDIT_RESULT,
+      schema_version: "1.0.0",
+      audit_id: `audit_design_${Date.now()}`,
+      content_id: briefId,
+      revision_id: targetRevId,
+      overall_status: "compliant",
+      summary: {
+        compliance_score: 94.0,
+        total_findings: 2,
+        critical_count: 0,
+        high_count: 0,
+        medium_count: 1,
+        low_count: 1,
+        info_count: 0,
+        human_review_required: false,
+        verdict_overview:
+          "Visual design satisfies all primary brand governance checks. Logo clearspace meets 32px safe-zone boundary, palette adheres to approved Navy (#0F172A) & Indigo (#6366F1) tokens, and text contrast complies with WCAG 2.1 AA 4.5:1 ratio.",
+      },
+      findings: [
+        {
+          id: `find_visual_${Date.now()}_1`,
+          category: "accessibility",
+          severity: "medium",
+          title: "Secondary Text Contrast Optimization",
+          message:
+            "Supporting caption text has an estimated contrast ratio of 4.6:1 against the dark background. While technically passing WCAG 2.1 AA (4.5:1), increasing font weight from 400 to 500 will significantly enhance mobile legibility.",
+          evidence: `Analyzed text layer in ${fileName}: 'Automate brand compliance across every customer touchpoint'`,
+          source_reference: {
+            guideline_id: "guide_a11y_contrast",
+            rule_name: "Text Contrast Ratio Standards",
+            section: "Accessibility & Inclusion",
+            verification_status: "verified",
+          },
+          confidence: 0.94,
+          status: "open",
+          requires_human_review: false,
+          suggested_correction: {
+            replacement_text: "Adjust secondary text color to Slate 200 (#E2E8F0) or increase font-weight to 500.",
+            rationale: "Improves legibility on low-brightness mobile displays without altering visual hierarchy.",
+          },
+          rule_reference: "VIS-A11Y-002",
+        },
+        {
+          id: `find_visual_${Date.now()}_2`,
+          category: "visual_brand",
+          severity: "low",
+          title: "Optimal Safe-Zone Clearspace",
+          message:
+            "Primary logo placed in top right quadrant maintains 34px padding from border, exceeding the 32px minimum requirement.",
+          evidence: `Logo bounding coordinates in ${fileName} show 34px margin from canvas top and right edges.`,
+          source_reference: {
+            guideline_id: "guide_brand_assets",
+            rule_name: "Inkloom Logo Clearspace Standards",
+            section: "Brand Asset Placement",
+            verification_status: "verified",
+          },
+          confidence: 0.98,
+          status: "open",
+          requires_human_review: false,
+          suggested_correction: {
+            replacement_text: "Current placement is compliant. Maintain clearspace during export downscaling.",
+            rationale: "Preserves brand integrity and visibility.",
+          },
+          rule_reference: "VIS-LOGO-001",
+        },
+      ],
+      created_at: new Date().toISOString(),
+    };
+
+    draft.latest_audit = {
+      audit_id: auditResult.audit_id,
+      revision_id: targetRevId,
+      overall_status: auditResult.overall_status,
+      summary: auditResult.summary,
+      findings_count: auditResult.findings.length,
+      created_at: auditResult.created_at,
+    };
+    draft.updated_at = new Date().toISOString();
+
+    return auditResult;
+  }
+
+  async submitDesignForReview(briefId: string): Promise<DesignDraftDetailResponse> {
+    const draft = this.mockDesignBriefsStore.find((b) => b.id === briefId);
+    if (!draft) throw new Error(`Design brief '${briefId}' not found.`);
+    draft.status = "submitted";
+    draft.updated_at = new Date().toISOString();
+    return { ...draft };
+  }
+
+  // Phase 5: Legal Copilot Implementations
+  async getLegalSources(jurisdiction?: string, regulatedCategory?: string): Promise<AuthoritativeLegalSource[]> {
+    const sources: AuthoritativeLegalSource[] = [
+      {
+        source_id: "src_ftc_act_sec5",
+        title: "Federal Trade Commission Act, Section 5(a)",
+        issuing_authority: "Federal Trade Commission (FTC)",
+        jurisdiction: "US",
+        authority_level: "binding_law",
+        citation: "15 U.S.C. § 45(a)",
+        publication_or_effective_date: "1914-09-26",
+        section_or_provision: "Section 5(a)(1)",
+        source_url: "https://www.ftc.gov/legal-library/browse/statutes/federal-trade-commission-act",
+        retrieval_timestamp: new Date().toISOString(),
+        excerpt: "Unfair methods of competition in or affecting commerce, and unfair or deceptive acts or practices in or affecting commerce, are hereby declared unlawful.",
+        is_binding: true,
+      },
+      {
+        source_id: "src_ftc_endorsements",
+        title: "Guides Concerning the Use of Endorsements and Testimonials in Advertising",
+        issuing_authority: "Federal Trade Commission (FTC)",
+        jurisdiction: "US",
+        authority_level: "official_guidance",
+        citation: "16 CFR Part 255",
+        publication_or_effective_date: "2023-07-26",
+        section_or_provision: "16 CFR § 255.1 & § 255.5",
+        source_url: "https://www.ecfr.gov/current/title-16/chapter-I/subchapter-B/part-255",
+        retrieval_timestamp: new Date().toISOString(),
+        excerpt: "Endorsements must reflect the honest opinions, findings, beliefs, or experience of the endorser. Material connections between advertiser and endorser must be clearly and conspicuously disclosed.",
+        is_binding: false,
+      },
+      {
+        source_id: "src_lanham_act_43a",
+        title: "Lanham Act, Section 43(a) (False Advertising)",
+        issuing_authority: "United States Congress",
+        jurisdiction: "US",
+        authority_level: "binding_law",
+        citation: "15 U.S.C. § 1125(a)(1)(B)",
+        publication_or_effective_date: "1946-07-05",
+        section_or_provision: "Section 43(a)(1)(B)",
+        source_url: "https://www.law.cornell.edu/uscode/text/15/1125",
+        retrieval_timestamp: new Date().toISOString(),
+        excerpt: "Any person who misrepresents the nature, characteristics, qualities, or geographic origin of his or her or another person's goods, services, or commercial activities shall be liable in a civil action.",
+        is_binding: true,
+      },
+      {
+        source_id: "src_eu_ai_act_art50",
+        title: "EU Artificial Intelligence Act (Regulation 2024/1689)",
+        issuing_authority: "European Parliament and Council of the European Union",
+        jurisdiction: "EU",
+        authority_level: "binding_law",
+        citation: "Regulation (EU) 2024/1689, Article 50",
+        publication_or_effective_date: "2024-07-12",
+        section_or_provision: "Article 50(2) & (4)",
+        source_url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=OJ:L_202401689",
+        retrieval_timestamp: new Date().toISOString(),
+        excerpt: "Deployers of an AI system that generates or manipulates image, audio or video content constituting a deep fake shall disclose that the content has been artificially generated or manipulated.",
+        is_binding: true,
+      },
+      {
+        source_id: "src_eu_ucpd_2005_29",
+        title: "Unfair Commercial Practices Directive (UCPD)",
+        issuing_authority: "European Parliament and Council of the European Union",
+        jurisdiction: "EU",
+        authority_level: "binding_law",
+        citation: "Directive 2005/29/EC",
+        publication_or_effective_date: "2005-05-11",
+        section_or_provision: "Articles 6 and 7",
+        source_url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32005L0029",
+        retrieval_timestamp: new Date().toISOString(),
+        excerpt: "A commercial practice shall be regarded as misleading if it contains false information and is therefore untruthful or in any way deceives or is likely to deceive the average consumer.",
+        is_binding: true,
+      },
+      {
+        source_id: "src_uk_cprs_2008",
+        title: "Consumer Protection from Unfair Trading Regulations 2008",
+        issuing_authority: "UK Parliament / Competition and Markets Authority (CMA)",
+        jurisdiction: "UK",
+        authority_level: "binding_law",
+        citation: "SI 2008/1277",
+        publication_or_effective_date: "2008-05-26",
+        section_or_provision: "Regulations 3, 5, and 6",
+        source_url: "https://www.legislation.gov.uk/uksi/2008/1277/contents/made",
+        retrieval_timestamp: new Date().toISOString(),
+        excerpt: "Prohibits misleading actions and omissions which cause or are likely to cause the average consumer to take a transactional decision he would not have taken otherwise.",
+        is_binding: true,
+      },
+      {
+        source_id: "src_canada_competition_act",
+        title: "Competition Act (R.S.C., 1985, c. C-34)",
+        issuing_authority: "Competition Bureau Canada",
+        jurisdiction: "CA",
+        authority_level: "binding_law",
+        citation: "R.S.C., 1985, c. C-34, Section 74.01",
+        publication_or_effective_date: "1985-12-12",
+        section_or_provision: "Section 74.01(1)(a)",
+        source_url: "https://laws-lois.justice.gc.ca/eng/acts/c-34/section-74.01.html",
+        retrieval_timestamp: new Date().toISOString(),
+        excerpt: "Prohibits making, or permitting the making of, a representation to the public that is false or misleading in a material respect.",
+        is_binding: true,
+      },
+      {
+        source_id: "src_internal_mkt_substantiation",
+        title: "Internal Policy: Marketing Claims Substantiation & Disclaimers",
+        issuing_authority: "Inkloom Legal & Compliance Department",
+        jurisdiction: "Global",
+        authority_level: "internal_policy",
+        citation: "POL-MKT-042 (Rev 3.1)",
+        publication_or_effective_date: "2025-01-15",
+        section_or_provision: "Section 4.2 & 4.5",
+        source_url: "https://internal.inkloom.ai/legal/policies/POL-MKT-042",
+        retrieval_timestamp: new Date().toISOString(),
+        excerpt: "All comparative performance metrics exceeding 20% must be supported by double-blind third-party benchmark audits less than 12 months old. Absolute guarantees ('100% uptime', 'never fails') are strictly prohibited without GC waiver.",
+        is_binding: true,
+      },
+    ];
+
+    if (!jurisdiction || jurisdiction === "Global") {
+      return sources;
+    }
+    return sources.filter((s) => s.jurisdiction === jurisdiction || s.jurisdiction === "Global");
+  }
+
+  async reviewLegalCompliance(request: LegalReviewRequest): Promise<LegalReviewReport> {
+    const text = request.content_text || "";
+    const jurisdiction = request.target_jurisdiction || "Global";
+    const availableSources = await this.getLegalSources(jurisdiction, request.regulated_category);
+
+    const claims: any[] = [];
+    const suggestions: any[] = [];
+    const highRisks: string[] = [];
+    const missingEvidence: string[] = [];
+    const legalItems: string[] = [];
+
+    // Analyze content for potential regulatory issues
+    const lower = text.toLowerCase();
+
+    // 1. Check for absolute guarantee claims
+    if (lower.includes("100%") || lower.includes("guarantee") || lower.includes("zero error") || lower.includes("never fail") || lower.includes("completely eliminate")) {
+      claims.push({
+        id: `clm_${Date.now()}_1`,
+        claim_text: "Absolute performance promise or guarantee",
+        location: "Paragraph 1 / Header",
+        category: "absolute_guarantee",
+        severity: "critical",
+        issue_explanation: "Contains absolute guarantees or promises of zero downtime/error, which are legally indefensible and expose the organization to breach of contract and deceptive marketing claims under trade practices legislation.",
+        applicable_jurisdiction: jurisdiction,
+        supporting_citations: availableSources.filter((s) => s.source_id === "src_ftc_act_sec5" || s.source_id === "src_internal_mkt_substantiation"),
+        evidence_status: "contradicted",
+        confidence: 0.95,
+        suggested_correction: "Replace absolute guarantees with qualified target commitments (e.g., 'Engineered for high availability with 99.9% target SLA').",
+        question_for_content_owner: "Do you have an approved General Counsel SLA waiver for this unqualified uptime guarantee?",
+        requires_qualified_legal_review: true,
+        uncertainty_or_limitation: "If qualified with an explicit SLA asterisk disclaimer immediately adjacent, severity may reduce to Medium.",
+      });
+
+      suggestions.push({
+        id: `rev_${Date.now()}_1`,
+        original_text: "Guarantees 100% error-free execution and zero downtime.",
+        proposed_text: "Designed to deliver enterprise-grade reliability with target 99.9% uptime and proactive error monitoring.",
+        material_change_explanation: "Removed absolute guarantee of perfection; introduced verifiable SLA target and realistic capability statement.",
+        supporting_evidence_rationale: "Aligns with FTC Act § 5 and internal policy POL-MKT-042 prohibiting unhedged guarantee representations.",
+        remaining_assumptions: ["Assumes product architecture supports standard 99.9% SLA."],
+        is_ai_generated: true,
+        is_approved: false,
+      });
+
+      highRisks.push("Absolute performance guarantee violates FTC Section 5 and internal substantiation standards.");
+      legalItems.push("Verify SLA commitment language against enterprise Master Services Agreement (MSA).");
+    }
+
+    // 2. Check for unsubstantiated statistics / metrics
+    if (lower.includes("300%") || lower.includes("10x") || lower.includes("5x") || lower.includes("99.999%") || lower.includes("proven")) {
+      claims.push({
+        id: `clm_${Date.now()}_2`,
+        claim_text: "Specific performance multiplier or speed improvement claim",
+        location: "Body Copy",
+        category: "unsubstantiated_statistic",
+        severity: "high",
+        issue_explanation: "Quantitative performance claim requires documented substantiation based on reliable and rigorous benchmarking methodology prior to publication.",
+        applicable_jurisdiction: jurisdiction,
+        supporting_citations: availableSources.filter((s) => s.source_id === "src_lanham_act_43a" || s.source_id === "src_internal_mkt_substantiation"),
+        evidence_status: "insufficient_evidence",
+        confidence: 0.88,
+        suggested_correction: "Reference the specific benchmark study (e.g., 'Up to 3x faster based on 2025 internal workload test suite of 10,000 requests').",
+        question_for_content_owner: "Where is the benchmark documentation or third-party audit verifying this performance improvement metric?",
+        requires_qualified_legal_review: true,
+        uncertainty_or_limitation: "Substantiation adequacy depends on whether internal or independent third-party testing was conducted.",
+      });
+
+      suggestions.push({
+        id: `rev_${Date.now()}_2`,
+        original_text: "Proves 300% faster processing than all competing tools.",
+        proposed_text: "Demonstrated up to 3x faster processing in internal benchmark tests on representative enterprise workloads.",
+        material_change_explanation: "Restricted broad superiority claim to documented internal test parameters and inserted 'up to' qualification.",
+        supporting_evidence_rationale: "Meets Lanham Act § 43(a) reasonable basis doctrine for commercial advertising claims.",
+        remaining_assumptions: ["Assumes internal benchmark test results are documented and reproducible."],
+        is_ai_generated: true,
+        is_approved: false,
+      });
+
+      highRisks.push("Quantitative efficiency metric requires verifiable testing methodology documentation.");
+      missingEvidence.push("Formal benchmark audit report or test methodology White Paper supporting numerical multiplier claim.");
+    }
+
+    // 3. Check for AI transparency disclosure (EU AI Act requirement)
+    if (jurisdiction === "EU" || jurisdiction === "Global") {
+      if (lower.includes("ai") || lower.includes("artificial intelligence") || lower.includes("generative") || lower.includes("copilot")) {
+        claims.push({
+          id: `clm_${Date.now()}_3`,
+          claim_text: "AI-generated content or synthetic output capabilities",
+          location: "Product Capability Description",
+          category: "ai_transparency_disclosure",
+          severity: "medium",
+          issue_explanation: "EU AI Act Article 50 mandates clear transparency disclosures when AI systems generate or manipulate content or interact with natural persons.",
+          applicable_jurisdiction: "EU",
+          supporting_citations: availableSources.filter((s) => s.source_id === "src_eu_ai_act_art50"),
+          evidence_status: "supported",
+          confidence: 0.92,
+          suggested_correction: "Include a prominent transparency notice stating that AI tools assist in content formulation and require human oversight.",
+          question_for_content_owner: "Will European deployers be informed that this feature uses generative AI and synthetic models?",
+          requires_qualified_legal_review: false,
+          uncertainty_or_limitation: "Exemptions apply for minor automated filtering, but generative systems require direct disclosure.",
+        });
+
+        suggestions.push({
+          id: `rev_${Date.now()}_3`,
+          original_text: "Automated AI engine publishes all your legal filings instantly.",
+          proposed_text: "AI-powered governance assistant streamlines draft review, providing decision support for human legal and compliance teams.",
+          material_change_explanation: "Clarified human-in-the-loop requirement and transparent decision-support role.",
+          supporting_evidence_rationale: "Complies with EU AI Act Article 50 transparency mandates.",
+          remaining_assumptions: ["Deployer interface includes AI disclosure label."],
+          is_ai_generated: true,
+          is_approved: false,
+        });
+      }
+    }
+
+    // If text was very clean, provide standard review baseline
+    if (claims.length === 0) {
+      claims.push({
+        id: `clm_${Date.now()}_baseline`,
+        claim_text: text.slice(0, 80) + (text.length > 80 ? "..." : ""),
+        location: "Lead Statement",
+        category: "unsupported_performance",
+        severity: "low",
+        issue_explanation: "Draft copy appears generally aligned with standard commercial practice. Ensure all specific capability mentions correspond to live production feature releases.",
+        applicable_jurisdiction: jurisdiction,
+        supporting_citations: availableSources.slice(0, 2),
+        evidence_status: "supported",
+        confidence: 0.85,
+        suggested_correction: "Ensure version footnotes are included if features are rolling out in waves.",
+        question_for_content_owner: "Are all described features currently generally available (GA)?",
+        requires_qualified_legal_review: false,
+        uncertainty_or_limitation: "Review based on current brief text only; visual asset context not evaluated.",
+      });
+    }
+
+    const complianceScore = Math.max(35, 100 - (claims.filter(c => c.severity === "critical").length * 25) - (claims.filter(c => c.severity === "high").length * 15) - (claims.filter(c => c.severity === "medium").length * 5));
+    const overallVerdict = complianceScore >= 85 ? "Low Risk / Conditionally Approved" : complianceScore >= 60 ? "Requires Revisions & Evidence Substantiation" : "High Legal & Regulatory Risk";
+
+    const report: LegalReviewReport = {
+      report_id: `rep_${Date.now()}`,
+      review_id: `rev_chk_${Date.now()}`,
+      created_at: new Date().toISOString(),
+      submission_id: request.submission_id || null,
+      revision_id: request.revision_id || null,
+      executive_summary: `Evidence-grounded compliance review conducted for target jurisdiction '${jurisdiction}'. The assessment identified ${claims.length} claim(s) requiring attention, with ${highRisks.length} high-priority risk flag(s). Overall verdict: ${overallVerdict}.`,
+      overall_risk_verdict: overallVerdict,
+      compliance_score: complianceScore,
+      campaign_context: {
+        product_name: request.product_name || "Inkloom Platform",
+        intended_audience: request.intended_audience || "Enterprise B2B",
+        marketing_channel: request.marketing_channel || "Digital / Omnichannel",
+        regulated_category: request.regulated_category || "b2b_enterprise_saas",
+        campaign_objective: request.campaign_objective || "General Market Awareness",
+        content_word_count: text.split(/\s+/).filter(Boolean).length,
+      },
+      jurisdictions_and_assumptions: {
+        target_jurisdiction: jurisdiction,
+        statutory_scope: availableSources.map((s) => `${s.citation} (${s.issuing_authority})`),
+        assumptions_made: [
+          "Target audience possesses standard commercial sophistication for enterprise procurement.",
+          "Claims are intended for distribution within the specified jurisdiction without localized cross-border retransmission.",
+        ],
+        uncertainties: [
+          "Absence of technical white paper or benchmark protocol limits verification of performance claims.",
+          "State/provincial consumer protection statutes may impose additional disclosure formatting requirements.",
+        ],
+      },
+      high_priority_risks: highRisks.length > 0 ? highRisks : ["No critical statutory prohibitions detected in current copy draft."],
+      claims_analysis: claims,
+      authoritative_sources_register: availableSources,
+      suggested_wording_revisions: suggestions,
+      missing_evidence_and_questions: missingEvidence.length > 0 ? missingEvidence : ["Verify all claims against verified product facts in knowledge repository."],
+      items_requiring_human_legal_counsel: legalItems.length > 0 ? legalItems : ["Final commercial sign-off by designated in-house compliance officer."],
+      limitations_and_disclaimers: "This compliance review is an AI-assisted decision-support evaluation and DOES NOT constitute formal legal advice, attorney-client privileged communication, or a guarantee of non-infringement. In-house legal counsel must review and authorize all regulated marketing claims prior to publication.",
+      review_date: new Date().toISOString().split("T")[0],
+    };
+
+    return report;
+  }
+
+  async getSubmissionLegalReport(submissionId: string, jurisdiction: string = "Global"): Promise<LegalReviewReport> {
+    const subs = getStoredSubmissions();
+    const item = subs.find((s) => s.id === submissionId);
+    const contentText = item?.raw_text || "Inkloom Enterprise Cloud provides automated brand intelligence and content governance across marketing workflows.";
+    return this.reviewLegalCompliance({
+      submission_id: submissionId,
+      content_text: contentText,
+      target_jurisdiction: jurisdiction as any,
+      product_name: item?.title || "Content Submission",
+    });
+  }
+
+  async applyLegalRevision(submissionId: string, payload: ApplyRevisionRequest): Promise<any> {
+    const subs = getStoredSubmissions();
+    const idx = subs.findIndex((s) => s.id === submissionId);
+    const newRevId = `rev_${Date.now()}`;
+    if (idx !== -1) {
+      subs[idx].raw_text = payload.updated_text;
+      subs[idx].current_revision_id = newRevId;
+      subs[idx].status = "pending_approval";
+      subs[idx].updated_at = new Date().toISOString();
+      saveStoredSubmissions(subs);
+    }
+    return {
+      submission_id: submissionId,
+      new_revision_id: newRevId,
+      version_number: 2,
+      applied_text: payload.updated_text,
+      change_summary: payload.change_summary || "Applied conservative revision recommended by Legal Copilot.",
+      status: "applied",
+    };
+  }
+
+  async recordLegalDecision(submissionId: string, payload: RecordLegalFeedbackRequest): Promise<any> {
+    const subs = getStoredSubmissions();
+    const idx = subs.findIndex((s) => s.id === submissionId);
+    if (idx !== -1) {
+      if (payload.action === "approve") {
+        subs[idx].status = "approved";
+      } else if (payload.action === "reject") {
+        subs[idx].status = "rejected";
+      } else {
+        subs[idx].status = "changes_requested";
+      }
+      subs[idx].updated_at = new Date().toISOString();
+      saveStoredSubmissions(subs);
+    }
+    return {
+      decision_id: `dec_${Date.now()}`,
+      submission_id: submissionId,
+      action: payload.action,
+      comments: payload.comments || "Reviewed and recorded by Compliance Officer.",
+      conditions: payload.conditions_or_stipulations || [],
+      created_at: new Date().toISOString(),
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // Phase 6: Unified Campaign Workflow & Orchestration Mock Implementation
+  // -------------------------------------------------------------------------
+
+  private getStoredCampaigns(): Campaign[] {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = localStorage.getItem("inkloom_mock_campaigns");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {
+      // fallback
+    }
+    const defaultCampaigns: Campaign[] = [
+      {
+        id: "cmp_mock_101",
+        organization_id: "org_default_mock",
+        name: "Enterprise Governance Launch 2026",
+        description: "Unified cross-copilot launch campaign for Inkloom Governance Hub v2.4.",
+        campaign_objective: "Establish market leadership in enterprise AI governance and brand safety.",
+        target_audience: "Enterprise CMOs, General Counsels, and VP Brand Stewards",
+        product_name: "Inkloom Governance Hub",
+        target_channel: "omnichannel",
+        target_jurisdiction: "US",
+        regulated_category: "b2b_enterprise_saas",
+        priority: "high",
+        deadline: new Date(Date.now() + 86400000 * 7).toISOString(),
+        owner_id: "usr_mock_mkt_1",
+        assigned_reviewer_id: "usr_mock_comp_1",
+        status: "human_review_pending",
+        version: 2,
+        creative_brief: "Core narrative: AI governance without velocity penalty. Strict substantiation on all performance metrics.",
+        policy_config: {
+          required_reviews: ["marketing", "visual", "legal"],
+          require_legal_signoff: true,
+          require_visual_signoff: true,
+        },
+        campaign_metadata: {},
+        submissions: [],
+        review_tracks: {
+          marketing: {
+            track_name: "marketing",
+            status: "completed",
+            score: 95.0,
+            findings_count: 1,
+            critical_findings_count: 0,
+            last_run_at: new Date().toISOString(),
+            summary_message: "Marketing copy passed brand voice and tone checks with 1 minor terminology warning.",
+          },
+          visual: {
+            track_name: "visual",
+            status: "completed",
+            score: 91.0,
+            findings_count: 0,
+            critical_findings_count: 0,
+            last_run_at: new Date().toISOString(),
+            summary_message: "Visual assets conform to Q1 design system color tokens and typography rules.",
+          },
+          legal: {
+            track_name: "legal",
+            status: "completed_with_warnings",
+            score: 87.5,
+            findings_count: 2,
+            critical_findings_count: 0,
+            last_run_at: new Date().toISOString(),
+            summary_message: "Legal Copilot flagged 1 unsubstantiated efficacy assertion. Footnote disclaimer added.",
+          },
+        },
+        readiness: {
+          campaign_id: "cmp_mock_101",
+          workflow_state: "human_review_pending",
+          ai_checks_completed: true,
+          human_review_completed: false,
+          required_approvals_completed: false,
+          outstanding_blockers: [
+            "Mandatory human compliance review sign-off is pending from designated reviewer.",
+          ],
+          review_tracks: {},
+          is_ready_for_release: false,
+          compliance_disclaimer:
+            "READINESS NOTICE: Campaign readiness indicates completion of internal brand, visual, and legal governance checks. It does NOT guarantee judicial compliance or eliminate external regulatory dispute risks.",
+        },
+        created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ];
+    return defaultCampaigns;
+  }
+
+  private saveStoredCampaigns(campaigns: Campaign[]): void {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem("inkloom_mock_campaigns", JSON.stringify(campaigns));
+    } catch (e) {
+      console.error("Failed to save mock campaigns:", e);
+    }
+  }
+
+  private getStoredNotifications(): NotificationItem[] {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = localStorage.getItem("inkloom_mock_notifications");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {
+      // fallback
+    }
+    return [
+      {
+        id: "notif_mock_001",
+        organization_id: "org_default_mock",
+        recipient_id: "usr_mock_comp_1",
+        sender_id: "system_governance_engine",
+        title: "Campaign Ready for Approval Sign-Off",
+        message: "All automated checks completed for 'Enterprise Governance Launch 2026'. Human compliance sign-off requested.",
+        notification_type: "review_requested",
+        link_url: "/campaigns",
+        is_read: false,
+        created_at: new Date(Date.now() - 3600000).toISOString(),
+      },
+    ];
+  }
+
+  private saveStoredNotifications(notifs: NotificationItem[]): void {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem("inkloom_mock_notifications", JSON.stringify(notifs));
+    } catch (e) {
+      console.error("Failed to save mock notifications:", e);
+    }
+  }
+
+  async getCampaigns(status?: string, priority?: string): Promise<Campaign[]> {
+    let campaigns = this.getStoredCampaigns();
+    if (status) {
+      campaigns = campaigns.filter((c) => c.status === status);
+    }
+    if (priority) {
+      campaigns = campaigns.filter((c) => c.priority === priority);
+    }
+    return campaigns;
+  }
+
+  async getCampaign(campaignId: string): Promise<Campaign> {
+    const campaigns = this.getStoredCampaigns();
+    const found = campaigns.find((c) => c.id === campaignId);
+    if (!found) {
+      throw new Error(`Campaign '${campaignId}' not found.`);
+    }
+    return found;
+  }
+
+  async createCampaign(payload: CampaignCreate): Promise<Campaign> {
+    const campaigns = this.getStoredCampaigns();
+    const newCampaign: Campaign = {
+      id: `cmp_${Date.now()}`,
+      organization_id: "org_default_mock",
+      name: payload.name,
+      description: payload.description || "",
+      campaign_objective: payload.campaign_objective || "",
+      target_audience: payload.target_audience || "",
+      product_name: payload.product_name || "",
+      target_channel: payload.target_channel || "omnichannel",
+      target_jurisdiction: payload.target_jurisdiction || "Global",
+      regulated_category: payload.regulated_category || "general_commercial",
+      priority: payload.priority || "medium",
+      deadline: payload.deadline,
+      assigned_reviewer_id: payload.assigned_reviewer_id,
+      status: "draft",
+      version: 1,
+      creative_brief: payload.creative_brief || "",
+      policy_config: payload.policy_config || {
+        required_reviews: ["marketing", "visual", "legal"],
+      },
+      campaign_metadata: {},
+      submissions: [],
+      review_tracks: {},
+      readiness: {
+        campaign_id: `cmp_${Date.now()}`,
+        workflow_state: "draft",
+        ai_checks_completed: false,
+        human_review_completed: false,
+        required_approvals_completed: false,
+        outstanding_blockers: ["Campaign is currently in draft. Automated AI reviews have not been executed."],
+        review_tracks: {},
+        is_ready_for_release: false,
+        compliance_disclaimer:
+          "READINESS NOTICE: Campaign readiness indicates completion of internal brand, visual, and legal governance checks. It does NOT guarantee judicial compliance or eliminate external regulatory dispute risks.",
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    campaigns.unshift(newCampaign);
+    this.saveStoredCampaigns(campaigns);
+    return newCampaign;
+  }
+
+  async updateCampaign(campaignId: string, payload: CampaignUpdate): Promise<Campaign> {
+    const campaigns = this.getStoredCampaigns();
+    const idx = campaigns.findIndex((c) => c.id === campaignId);
+    if (idx === -1) throw new Error(`Campaign '${campaignId}' not found.`);
+
+    if (payload.version !== undefined && campaigns[idx].version !== payload.version) {
+      throw new Error("Concurrency Conflict: Campaign has been modified by another user.");
+    }
+
+    Object.assign(campaigns[idx], payload, {
+      version: campaigns[idx].version + 1,
+      updated_at: new Date().toISOString(),
+    });
+    this.saveStoredCampaigns(campaigns);
+    return campaigns[idx];
+  }
+
+  async associateSubmissionsToCampaign(campaignId: string, submissionIds: string[]): Promise<Campaign> {
+    const campaign = await this.getCampaign(campaignId);
+    const allSubs = getStoredSubmissions();
+    const matched = allSubs.filter((s) => submissionIds.includes(s.id));
+    campaign.submissions = matched;
+    campaign.version += 1;
+    campaign.updated_at = new Date().toISOString();
+
+    const campaigns = this.getStoredCampaigns();
+    const idx = campaigns.findIndex((c) => c.id === campaignId);
+    if (idx !== -1) {
+      campaigns[idx] = campaign;
+      this.saveStoredCampaigns(campaigns);
+    }
+    return campaign;
+  }
+
+  async runCampaignReviews(campaignId: string): Promise<Campaign> {
+    const campaign = await this.getCampaign(campaignId);
+    campaign.status = "human_review_pending";
+    campaign.version += 1;
+    campaign.review_tracks = {
+      marketing: {
+        track_name: "marketing",
+        status: "completed",
+        score: 96.0,
+        findings_count: 0,
+        critical_findings_count: 0,
+        last_run_at: new Date().toISOString(),
+        summary_message: "Marketing brand audit passed with zero violations.",
+      },
+      visual: {
+        track_name: "visual",
+        status: "completed",
+        score: 92.5,
+        findings_count: 0,
+        critical_findings_count: 0,
+        last_run_at: new Date().toISOString(),
+        summary_message: "Visual media passed layout and contrast checks.",
+      },
+      legal: {
+        track_name: "legal",
+        status: "completed",
+        score: 90.0,
+        findings_count: 1,
+        critical_findings_count: 0,
+        last_run_at: new Date().toISOString(),
+        summary_message: "Statutory review passed. Footnote disclaimer verified.",
+      },
+    };
+    campaign.readiness = {
+      campaign_id: campaign.id,
+      workflow_state: "human_review_pending",
+      ai_checks_completed: true,
+      human_review_completed: false,
+      required_approvals_completed: false,
+      outstanding_blockers: [
+        "Mandatory human compliance review sign-off is pending from designated reviewer.",
+      ],
+      review_tracks: campaign.review_tracks,
+      is_ready_for_release: false,
+      compliance_disclaimer:
+        "READINESS NOTICE: Campaign readiness indicates completion of internal brand, visual, and legal governance checks. It does NOT guarantee judicial compliance or eliminate external regulatory dispute risks.",
+    };
+
+    const campaigns = this.getStoredCampaigns();
+    const idx = campaigns.findIndex((c) => c.id === campaignId);
+    if (idx !== -1) {
+      campaigns[idx] = campaign;
+      this.saveStoredCampaigns(campaigns);
+    }
+
+    // Dispatch notification
+    const notifs = this.getStoredNotifications();
+    notifs.unshift({
+      id: `notif_${Date.now()}`,
+      organization_id: campaign.organization_id,
+      recipient_id: campaign.assigned_reviewer_id || "reviewer",
+      sender_id: "system",
+      title: "Campaign Ready for Approval Sign-Off",
+      message: `Automated checks completed for '${campaign.name}'. Human compliance sign-off requested.`,
+      notification_type: "review_requested",
+      link_url: `/campaigns?id=${campaign.id}`,
+      is_read: false,
+      created_at: new Date().toISOString(),
+    });
+    this.saveStoredNotifications(notifs);
+
+    return campaign;
+  }
+
+  async submitCampaignDecision(campaignId: string, payload: CampaignDecisionRequest): Promise<Campaign> {
+    const campaign = await this.getCampaign(campaignId);
+    if (payload.action === "approve") {
+      campaign.status = "approved";
+      campaign.readiness = {
+        campaign_id: campaign.id,
+        workflow_state: "approved",
+        ai_checks_completed: true,
+        human_review_completed: true,
+        required_approvals_completed: true,
+        outstanding_blockers: [],
+        review_tracks: campaign.review_tracks || {},
+        is_ready_for_release: true,
+        compliance_disclaimer:
+          "READINESS NOTICE: Campaign readiness indicates completion of internal brand, visual, and legal governance checks. It does NOT guarantee judicial compliance or eliminate external regulatory dispute risks.",
+      };
+    } else if (payload.action === "reject") {
+      campaign.status = "rejected";
+    } else {
+      campaign.status = "changes_requested";
+    }
+    campaign.version += 1;
+    campaign.updated_at = new Date().toISOString();
+
+    const campaigns = this.getStoredCampaigns();
+    const idx = campaigns.findIndex((c) => c.id === campaignId);
+    if (idx !== -1) {
+      campaigns[idx] = campaign;
+      this.saveStoredCampaigns(campaigns);
+    }
+    return campaign;
+  }
+
+  async getCampaignReadiness(campaignId: string): Promise<CampaignReadinessEvaluation> {
+    const campaign = await this.getCampaign(campaignId);
+    return (
+      campaign.readiness || {
+        campaign_id: campaign.id,
+        workflow_state: campaign.status,
+        ai_checks_completed: false,
+        human_review_completed: false,
+        required_approvals_completed: false,
+        outstanding_blockers: ["Evaluation in progress."],
+        review_tracks: {},
+        is_ready_for_release: false,
+        compliance_disclaimer:
+          "READINESS NOTICE: Campaign readiness indicates completion of internal brand, visual, and legal governance checks. It does NOT guarantee judicial compliance or eliminate external regulatory dispute risks.",
+      }
+    );
+  }
+
+  async getCampaignActivity(campaignId: string): Promise<any[]> {
+    return [
+      {
+        id: "act_001",
+        event_type: "campaign_created",
+        actor_id: "usr_mock_mkt_1",
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        details: { action: "Campaign created with multi-track policy requirements." },
+      },
+      {
+        id: "act_002",
+        event_type: "campaign_reviews_orchestrated",
+        actor_id: "system",
+        created_at: new Date(Date.now() - 3600000).toISOString(),
+        details: { action: "Multi-track AI reviews executed across Marketing, Visual, and Legal tracks." },
+      },
+    ];
+  }
+
+  async getNotifications(unreadOnly?: boolean): Promise<NotificationItem[]> {
+    let notifs = this.getStoredNotifications();
+    if (unreadOnly) {
+      notifs = notifs.filter((n) => !n.is_read);
+    }
+    return notifs;
+  }
+
+  async markNotificationRead(notificationId: string): Promise<any> {
+    const notifs = this.getStoredNotifications();
+    const target = notifs.find((n) => n.id === notificationId);
+    if (target) {
+      target.is_read = true;
+      target.read_at = new Date().toISOString();
+      this.saveStoredNotifications(notifs);
+    }
+    return { success: true };
+  }
+
+  async markAllNotificationsRead(): Promise<any> {
+    const notifs = this.getStoredNotifications();
+    notifs.forEach((n) => {
+      n.is_read = true;
+      n.read_at = new Date().toISOString();
+    });
+    this.saveStoredNotifications(notifs);
+    return { success: true };
+  }
 }
 
 export const mockApi = new MockApiService();
+

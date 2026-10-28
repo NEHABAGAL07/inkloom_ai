@@ -25,6 +25,7 @@ class ProvenanceRecord(BaseModel):
     source_type: KnowledgeSourceType
     title: str
     authoritative_source: Optional[str] = None
+    responsible_owner: Optional[str] = None
     source_reference: Optional[str] = None
     source_url: Optional[str] = None
     jurisdiction: str = "Global"
@@ -35,6 +36,17 @@ class ProvenanceRecord(BaseModel):
     verified_by: Optional[str] = None
     verified_at: Optional[datetime] = None
     is_binding: bool = False
+
+
+class BrandAssetContext(BaseModel):
+    asset_id: str
+    asset_name: str
+    asset_type: str  # logo, color_palette, typography, verified_claim, boilerplate, visual_asset
+    file_url: Optional[str] = None
+    file_path: Optional[str] = None
+    specifications: Dict[str, Any] = Field(default_factory=dict)
+    is_active: bool = True
+    provenance: ProvenanceRecord
 
 
 class BrandRuleContext(BaseModel):
@@ -112,6 +124,8 @@ class RuleConflictDetail(BaseModel):
     explanation: str
     escalate_to_human: bool = True
     remediation_suggestion: Optional[str] = None
+    higher_priority_provenance: Optional[ProvenanceRecord] = None
+    lower_priority_provenance: Optional[ProvenanceRecord] = None
 
 
 class OrganizationScopeContext(BaseModel):
@@ -194,6 +208,7 @@ class SharedAIContext(BaseModel):
     applicable_rules: List[BrandRuleContext] = Field(default_factory=list)
     verified_facts: List[VerifiedFactContext] = Field(default_factory=list)
     legal_sources: List[LegalSourceContext] = Field(default_factory=list)
+    brand_assets: List[BrandAssetContext] = Field(default_factory=list)
     previous_findings: List[PreviousFindingContext] = Field(default_factory=list)
     reviewer_decisions: List[ReviewerDecisionContext] = Field(default_factory=list)
     conflicts_detected: List[RuleConflictDetail] = Field(default_factory=list)

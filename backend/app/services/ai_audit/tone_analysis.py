@@ -23,7 +23,7 @@ from app.schemas.audit_contract import (
 TONE_PATTERNS = [
     {
         "id": "tone_fud_01",
-        "pattern": r"\b(before your competitors crush you|or face utter ruin|act now or perish|before it'?s too late)\b",
+        "pattern": r"\b(before your competitors crush you|crush (your|the) competitors|or face utter ruin|act now or perish|before it('?s|\s+is) too late)\b",
         "severity": FindingSeverity.MEDIUM,
         "title": "Fear-Inducing (FUD) Tone Detected",
         "message": "Brand guidelines emphasize empowering and forward-looking messaging rather than fear or coercion.",

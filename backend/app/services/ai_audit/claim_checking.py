@@ -48,12 +48,39 @@ UNVERIFIED_CLAIM_PATTERNS = [
         "severity": FindingSeverity.HIGH,
     },
     {
-        "pattern": r"\b(the world'?s only|the number one brand governance|ranked #1 globally)\b",
+        "pattern": r"\b(\d{2,4}%)\s+(faster|reduction|increase|cheaper|better|within|guaranteed)\b|\b(boosts?|increases?|reduces?)\b[^\.\,\;\:\n]{0,40}\b(\d{2,4}%)\b",
+        "metric_type": "extreme_percentage",
+        "title": "Unverified Quantitative Percentage Claim",
+        "message": "High-magnitude quantitative percentage claim asserts performance metric without recorded enterprise benchmark dossier.",
+        "replacement": "measurably improves performance based on enterprise benchmark testing",
+        "rationale": "Replaces unverified percentage multiplier with qualified performance statement.",
+        "severity": FindingSeverity.CRITICAL,
+    },
+    {
+        "pattern": r"\b(the world'?s only|the number one brand governance|ranked #1 globally|rated #1|ranked #1|#1 brand management|#1 in user satisfaction)\b",
         "metric_type": "market_ranking",
         "title": "Unsubstantiated Market Leadership Claim",
         "message": "Superlative market ranking claims require independent third-party analyst citation (e.g., Gartner/Forrester) under advertising standards.",
         "replacement": "a leading enterprise brand governance platform",
         "rationale": "Adheres to legal advertising guidelines by removing unverified #1 claims.",
+        "severity": FindingSeverity.HIGH,
+    },
+    {
+        "pattern": r"\b(permanently miss your chance|act now or miss out)\b",
+        "metric_type": "urgency_tone",
+        "title": "High-Pressure Urgency Phrasing",
+        "message": "High-pressure urgency phrasing conflicts with enterprise brand voice guidelines.",
+        "replacement": "learn how automated governance can support your team",
+        "rationale": "Softens high-pressure urgency to professional consultative tone.",
+        "severity": FindingSeverity.MEDIUM,
+    },
+    {
+        "pattern": r"\bunlike\s+\w+\s+which\s+is\s+(insecure|corrupt|illegal|dangerous)\b|\bcompetitors?\s+(?:is|are)\s+(?:insecure|corrupt|illegal)\b",
+        "metric_type": "competitor_disparagement",
+        "title": "Prohibited Competitor Disparagement",
+        "message": "Explicit competitor disparagement asserting unsubstantiated negative claims violates brand ethics and advertising law.",
+        "replacement": "delivers verifiable enterprise security and governance controls",
+        "rationale": "Focuses on positive brand differentiation rather than competitor disparagement.",
         "severity": FindingSeverity.HIGH,
     },
 ]
@@ -68,7 +95,16 @@ CONTRADICTED_CLAIM_PATTERNS = [
         "rationale": "Corrects false factual claim to match real architectural specifications.",
         "severity": FindingSeverity.CRITICAL,
         "certified_doc": "Inkloom Architecture Spec V3.4, Section 5.1",
-    }
+    },
+    {
+        "pattern": r"\b(?:exclusively offline desktop utility.*cloud storage|offline.*stores data exclusively in the cloud)\b",
+        "title": "Contradictory Product Architecture Claim",
+        "message": "Claim is self-contradictory: a product cannot operate as an exclusively offline utility while synchronizing data in real-time to multi-tenant cloud storage.",
+        "replacement": "cloud-connected platform with local client workflows",
+        "rationale": "Eliminates contradictory factual statements.",
+        "severity": FindingSeverity.HIGH,
+        "certified_doc": "Inkloom System Architecture Overview",
+    },
 ]
 
 
