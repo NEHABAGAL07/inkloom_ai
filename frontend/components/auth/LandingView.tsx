@@ -1,491 +1,779 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/services/auth-context";
 import { InkloomLogo } from "@/components/layout/InkloomLogo";
 import { ThemeToggle } from "@/services/theme-context";
 import {
-  Shield,
   ArrowRight,
-  Lock,
-  Mail,
-  AlertCircle,
-  Eye,
-  EyeOff,
   Sparkles,
-  Palette,
-  FileText,
-  Scale,
-  Loader2,
-  BookOpen,
-  UserCheck,
   ShieldCheck,
   Check,
-  Edit2,
+  Building,
+  Palette,
+  FileText,
+  UserCheck,
+  Lock,
+  Clock,
+  CheckCircle2,
+  Scale,
+  Sliders,
 } from "lucide-react";
 
-interface QuickDept {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  badge: string;
-  icon: React.ComponentType<{ className?: string }>;
+import { motion, MotionConfig } from "motion/react";
+
+/**
+ * High-performance, accessible Scroll Reveal component powered by Motion
+ * - Automatically respects prefers-reduced-motion via MotionConfig
+ * - Uses hardware-accelerated transforms and springs
+ */
+interface RevealProps {
+  children: React.ReactNode;
+  className?: string;
+  delayMs?: number;
+  durationMs?: number;
+  yOffset?: number;
 }
 
-const QUICK_DEPARTMENTS: QuickDept[] = [
-  {
-    id: "admin",
-    name: "Alex Mercer",
-    role: "Brand Admin",
-    email: "admin@acmecloud.com",
-    badge: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-[#272727] dark:text-[#FFAA35] dark:border-[#383838]",
-    icon: Shield,
-  },
-  {
-    id: "designer",
-    name: "Leo Vance",
-    role: "Brand Designer",
-    email: "designer@acmecloud.com",
-    badge: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-[#272727] dark:text-[#C084FC] dark:border-[#383838]",
-    icon: Palette,
-  },
-  {
-    id: "marketing",
-    name: "Maya Lin",
-    role: "Marketing Lead",
-    email: "marketing@acmecloud.com",
-    badge: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-[#272727] dark:text-[#FFD84D] dark:border-[#383838]",
-    icon: FileText,
-  },
-  {
-    id: "compliance",
-    name: "Elena Rostova",
-    role: "Legal & Regulatory",
-    email: "compliance@acmecloud.com",
-    badge: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-[#272727] dark:text-[#72D6A1] dark:border-[#383838]",
-    icon: Scale,
-  },
-];
+function Reveal({
+  children,
+  className = "",
+  delayMs = 0,
+  durationMs = 500,
+  yOffset = 20,
+}: RevealProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: yOffset }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{
+        duration: durationMs / 1000,
+        delay: delayMs / 1000,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export function LandingView() {
-  const { login } = useAuth();
-  const router = useRouter();
+  const [heroMounted, setHeroMounted] = useState(false);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [signingInDept, setSigningInDept] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showDemoPersonas, setShowDemoPersonas] = useState(false);
-
-  const handleQuickDeptLogin = async (deptEmail: string, deptId: string) => {
-    setSigningInDept(deptId);
-    setErrorMessage(null);
-    try {
-      await login(deptEmail, "demo123456", true);
-      router.push("/");
-    } catch (err: any) {
-      console.error("Department login failure:", err);
-      setErrorMessage(err.message || "Failed to sign into workspace.");
-    } finally {
-      setSigningInDept(null);
+  useEffect(() => {
+    // Check reduced motion preference for hero entrance
+    if (typeof window !== "undefined") {
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReduced) {
+        setHeroMounted(true);
+        return;
+      }
     }
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      setErrorMessage("Please enter both email and password.");
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      await login(email.trim(), password, rememberMe);
-      router.push("/");
-    } catch (err: any) {
-      console.error("Sign-in failure:", err);
-      setErrorMessage(err.message || "Invalid credentials. Try instant department access.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Trigger hero entrance transition on initial load
+    const timer = setTimeout(() => {
+      setHeroMounted(true);
+    }, 40);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#111111] text-slate-800 dark:text-ink-primary flex flex-col justify-between selection:bg-[#10B981]/30 selection:text-white transition-colors duration-150">
-      {/* Top Navbar (Image 2 reference) */}
-      <header className="px-6 lg:px-12 py-4 flex items-center justify-between border-b border-slate-200 dark:border-[#292929] bg-white dark:bg-[#111111] sticky top-0 z-40 transition-colors duration-150">
-        <div className="flex items-center gap-2">
-          <InkloomLogo size="md" showSubtitle={false} />
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 uppercase tracking-wider dark:bg-[#202020] dark:text-[#FFAA35] dark:border-[#383838]">
-            BETA
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="hidden md:inline italic font-serif text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
-            A little more clarity in every message.
-          </span>
-          <ThemeToggle className="!w-8 !h-8 !rounded-full bg-white dark:bg-[#1C1C1C] border-slate-300 dark:border-[#383838] shadow-xs" />
-        </div>
-      </header>
-
-      {/* Split-Screen Main Hero (Image 2 reference) */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex items-center justify-center">
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* ========================================================
-              LEFT COLUMN: Gradient Editorial Hero & Floating Review Card (Image 2)
-              ======================================================== */}
-          <div className="lg:col-span-7 rounded-3xl p-8 sm:p-12 bg-gradient-to-br from-[#10B981] via-[#0D9488] to-[#0284C7] dark:from-[#1A1A1A] dark:to-[#141414] text-white flex flex-col justify-between space-y-7 shadow-xl relative overflow-hidden">
-            {/* Background ambient accents */}
-            <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-white/10 filter blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-[#0284C7]/20 filter blur-3xl pointer-events-none" />
-
-            <div className="relative z-10 space-y-6">
-              {/* Top Tag Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#064E3B]/35 border border-white/20 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur-sm shadow-2xs">
-                <span>CONTENT GOVERNANCE FOR TEAMS</span>
-              </div>
-
-              {/* Headline */}
-              <h1 className="text-3xl sm:text-5xl font-heading font-extrabold tracking-tight text-white leading-tight">
-                Good content. <br />
-                <span className="text-[#A7F3D0] dark:text-[#FFAA35]">On brand.</span> By design.
-              </h1>
-
-              {/* Subtitle */}
-              <p className="text-sm text-white/90 leading-relaxed max-w-lg">
-                Bring brand standards, clear feedback, and thoughtful human approval into one calm workspace.
-              </p>
-
-              {/* 3 Translucent Feature Badges */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
-                <div className="p-3.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-start gap-2.5 shadow-2xs">
-                  <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <Sparkles className="w-3.5 h-3.5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-white">Clear guidance</h3>
-                    <p className="text-[10.5px] text-white/80 mt-0.5 leading-snug">
-                      Explainable content checks
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-start gap-2.5 shadow-2xs">
-                  <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-white">Human approval</h3>
-                    <p className="text-[10.5px] text-white/80 mt-0.5 leading-snug">
-                      People make the final call
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-start gap-2.5 shadow-2xs">
-                  <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-white">Brand standards</h3>
-                    <p className="text-[10.5px] text-white/80 mt-0.5 leading-snug">
-                      Approved rules, all together
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating Content Review Card (Image 2 reference) */}
-              <div className="rounded-2xl bg-white dark:bg-[#1C1C1C] p-5 shadow-2xl border border-white/40 dark:border-[#383838] text-slate-900 dark:text-[#F7F3ED] space-y-3 relative z-20">
-                <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-[#272727]">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#06B6D4]" />
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#0284C7]" />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400 dark:text-[#85817D] tracking-wider uppercase ml-1">
-                      CONTENT REVIEW
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#10B981] dark:text-[#72D6A1]">
-                    <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
-                    <span>Ready to review</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1 items-center">
-                  <div className="sm:col-span-7 space-y-1.5">
-                    <div className="text-[9px] font-bold text-slate-400 dark:text-[#85817D] uppercase tracking-wider">
-                      CAMPAIGN DRAFT • WEB PAGE
-                    </div>
-                    <div className="text-sm font-serif font-bold text-slate-900 dark:text-white">
-                      Make room for better work.
-                    </div>
-                    <div className="space-y-1 pt-1">
-                      <div className="h-1.5 bg-slate-100 dark:bg-[#272727] rounded-full w-full" />
-                      <div className="h-1.5 bg-slate-100 dark:bg-[#272727] rounded-full w-3/4" />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-5">
-                    <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex items-start gap-2">
-                      <div className="w-5 h-5 rounded-full bg-[#10B981] text-white flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-slate-900 dark:text-white">Voice looks good</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">Brand tone aligned</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 dark:border-[#272727] flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-[#FB923C] text-white flex items-center justify-center font-bold text-[9px]">
-                      JD
-                    </div>
-                    <span>Human review stays in control</span>
-                  </div>
-                  <Edit2 className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#FFAA35]" />
-                </div>
-              </div>
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#111111] text-slate-800 dark:text-ink-primary flex flex-col selection:bg-[#10B981]/30 selection:text-white transition-colors duration-150">
+        {/* ========================================================
+            1. Header Navigation
+            ======================================================== */}
+        <header className="px-4 sm:px-6 lg:px-12 py-3.5 border-b border-slate-200 dark:border-[#292929] bg-white/95 dark:bg-[#111111]/95 backdrop-blur-md sticky top-0 z-40 transition-colors duration-150">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            {/* Logo & Brand Identity */}
+            <div className="flex items-center gap-2.5 shrink-0">
+              <InkloomLogo size="md" showSubtitle={false} />
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 uppercase tracking-wider dark:bg-[#202020] dark:text-[#FFAA35] dark:border-[#383838]">
+                BETA
+              </span>
             </div>
 
-            {/* Bottom Tagline */}
-            <div className="text-xs text-white/90 font-medium tracking-wide pt-2">
-              Clear feedback. Confident teams. Better drafts.
+            {/* Slogan on wider viewports */}
+            <span className="hidden lg:inline italic font-serif text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
+              A little more clarity in every message.
+            </span>
+
+            {/* Navigation Controls */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <ThemeToggle className="!w-8 !h-8 !rounded-full bg-white dark:bg-[#1C1C1C] border-slate-300 dark:border-[#383838] shadow-xs" />
+
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link
+                  href="/register"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1F1F1F] border border-transparent hover:border-slate-300 dark:hover:border-[#383838] transition"
+                >
+                  <Building className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                  <span>Create workspace</span>
+                </Link>
+              </motion.div>
+
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  href="/login"
+                  className="px-3.5 sm:px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white text-xs font-bold hover:opacity-95 shadow-sm transition inline-flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#0284C7] focus:ring-offset-2 dark:focus:ring-offset-[#111111]"
+                >
+                  <span>Sign In</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </motion.div>
             </div>
           </div>
+        </header>
 
+        {/* ========================================================
+            Main Content Container
+            ======================================================== */}
+        <main className="flex-1 w-full">
           {/* ========================================================
-              RIGHT COLUMN: Clean Sign-In Form (Image 2)
+              2. Hero Section (Centered Dominant Headline & Motion Entrance)
               ======================================================== */}
-          <div className="lg:col-span-5 flex items-center justify-center">
-            <div className="bg-white dark:bg-[#1C1C1C] rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 dark:border-[#383838] w-full max-w-md space-y-5 relative">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-[#85817D]">
-                  YOUR WORKSPACE AWAITS
-                </span>
-                <div className="flex items-center gap-2.5 pt-1">
-                  <div className="w-7 h-7 shrink-0">
-                    <img src="/inkloom-feather-cute@2x.png" alt="Inkloom" className="w-full h-full object-contain" />
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#0F172A] dark:text-[#F7F3ED] tracking-tight">
-                    Welcome back<span className="text-[#2563EB] dark:text-[#FFAA35]">.</span>
-                  </h2>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-[#85817D] pt-0.5">
-                  Sign in to pick up where you left off.
-                </p>
-              </div>
+          <section className="relative overflow-hidden pt-16 sm:pt-20 lg:pt-24 pb-16 sm:pb-20 lg:pb-24 border-b border-slate-200/80 dark:border-[#222222]">
+            {/* Subtle Atmospheric Ambient Glow with Slow Breathing Pulse */}
+            <motion.div
+              aria-hidden="true"
+              animate={{
+                opacity: [0.25, 0.4, 0.25],
+                scale: [1, 1.05, 1],
+              }}
+              transition={{
+                duration: 9,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-[650px] sm:w-[960px] h-[380px] pointer-events-none select-none filter blur-[95px] rounded-full bg-gradient-to-tr from-[#10B981]/30 via-[#0284C7]/20 to-[#FFAA35]/30"
+            />
 
-              {errorMessage && (
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-[#272727] border border-rose-200 dark:border-[#FF6B78]/40 text-rose-700 dark:text-[#FF6B78] text-xs flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-[#FF6B78] shrink-0 mt-0.5" />
-                  <span>{errorMessage}</span>
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-7">
+              {/* Category Pill with Spring Entrance */}
+              <motion.div
+                initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.05, ease: "easeOut" }}
+                className="flex justify-center"
+              >
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 dark:bg-[#1E2724] border border-emerald-200/80 dark:border-[#2B3B36] text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-[#72D6A1] shadow-2xs">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-[#FFAA35]" />
+                  <span>Content Governance & AI Brand Copilot</span>
                 </div>
-              )}
+              </motion.div>
 
-              {/* Credentials Form */}
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED] mb-1.5">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 dark:text-[#85817D] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@company.com"
-                      className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-slate-400 dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] transition shadow-2xs"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED] mb-1.5">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 dark:text-[#85817D] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl pl-10 pr-10 py-2.5 text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-slate-400 dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] transition shadow-2xs"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:text-[#85817D] dark:hover:text-[#F7F3ED] transition"
+              {/* Main Headline with Animated Wavy Underline */}
+              <motion.div
+                initial={{ opacity: 0, y: 22 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.65, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[80px] font-heading font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.08] max-w-5xl mx-auto">
+                  <span>Great content. </span>
+                  <span className="relative inline-block text-[#059669] dark:text-[#FFAA35]">
+                    <span>On brand.</span>
+                    {/* Animated SVG Wavy Path */}
+                    <svg
+                      className="absolute -bottom-2 sm:-bottom-3 left-0 w-full h-3 sm:h-4 text-[#10B981] dark:text-[#FFAA35] overflow-visible pointer-events-none"
+                      viewBox="0 0 160 14"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
+                      <motion.path
+                        d="M2 8C20 2 30 13 50 7C70 2 80 13 100 7C120 2 130 13 150 7C154 5.5 158 6 158 6"
+                        stroke="currentColor"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{ duration: 0.85, delay: 0.45, ease: "easeOut" }}
+                      />
+                    </svg>
+                  </span>{" "}
+                  <br className="hidden sm:inline" />
+                  <span className="inline-block">Ready for review.</span>
+                </h1>
+              </motion.div>
 
-                <div className="flex items-center justify-between text-xs pt-0.5">
-                  <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600 dark:text-[#B8B2AC]">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="rounded border-slate-300 dark:border-[#383838] bg-white dark:bg-[#141414] text-[#2563EB] focus:ring-[#2563EB] w-3.5 h-3.5"
-                    />
-                    <span>Remember me</span>
-                  </label>
-                  <Link
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setShowDemoPersonas(true);
-                    }}
-                    className="text-xs text-[#2563EB] dark:text-[#FFAA35] font-semibold hover:underline"
+              {/* Concise Supporting Sentence */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.3, ease: "easeOut" }}
+              >
+                <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-[#B8B2AC] leading-relaxed max-w-2xl mx-auto">
+                  Inkloom AI helps teams create, review, and improve content with brand-aware AI and human approval.
+                </p>
+              </motion.div>
+
+              {/* Core Pillars Quick Badge Strip with Spring Hover */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.42, ease: "easeOut" }}
+                className="pt-3"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto text-left">
+                  <motion.div
+                    whileHover={{ y: -3, scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 20 }}
+                    className="p-3.5 rounded-xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#282828] flex items-center gap-2.5 shadow-2xs hover:border-[#10B981]/50 dark:hover:border-[#72D6A1]/40 transition cursor-default"
                   >
-                    Forgot password?
-                  </Link>
-                </div>
+                    <div className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      Explainable AI checks
+                    </span>
+                  </motion.div>
 
-                {/* Primary Turquoise-to-Royal-Blue Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isLoading || !!signingInDept}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white dark:btn-gradient-warm rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-md hover:opacity-95 disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>Authenticating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Sign in</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {/* Divider */}
-              <div className="relative flex items-center justify-center pt-1">
-                <div className="border-t border-slate-200 dark:border-[#383838] w-full" />
-                <span className="bg-white dark:bg-[#1C1C1C] px-3 text-[10px] text-slate-400 dark:text-[#85817D] tracking-wide uppercase font-semibold absolute">
-                  or continue with
-                </span>
-              </div>
-
-              {/* Google & GitHub Buttons */}
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => handleQuickDeptLogin("admin@acmecloud.com", "admin")}
-                  className="p-2.5 rounded-xl border border-slate-200 dark:border-[#383838] bg-white hover:bg-slate-50 dark:bg-[#202020] dark:hover:bg-[#272727] flex items-center justify-center gap-2 text-xs font-semibold text-slate-700 dark:text-[#F7F3ED] transition shadow-2xs"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                    />
-                  </svg>
-                  <span>Google</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickDeptLogin("marketing@acmecloud.com", "marketing")}
-                  className="p-2.5 rounded-xl border border-slate-200 dark:border-[#383838] bg-white hover:bg-slate-50 dark:bg-[#202020] dark:hover:bg-[#272727] flex items-center justify-center gap-2 text-xs font-semibold text-slate-700 dark:text-[#F7F3ED] transition shadow-2xs"
-                >
-                  <svg className="w-4 h-4 fill-slate-800 dark:fill-white" viewBox="0 0 24 24">
-                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                  </svg>
-                  <span>GitHub</span>
-                </button>
-              </div>
-
-              {/* 1-Click Instant Department Persona Switcher */}
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowDemoPersonas(!showDemoPersonas)}
-                  className="w-full text-center text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition"
-                >
-                  {showDemoPersonas ? "Hide 1-Click Demo Personas ▲" : "Show 1-Click Demo Personas ▼"}
-                </button>
-
-                {showDemoPersonas && (
-                  <div className="grid grid-cols-2 gap-2 pt-2 animate-in fade-in duration-150">
-                    {QUICK_DEPARTMENTS.map((dept) => (
-                      <button
-                        key={dept.id}
-                        type="button"
-                        disabled={!!signingInDept || isLoading}
-                        onClick={() => handleQuickDeptLogin(dept.email, dept.id)}
-                        className="p-2.5 rounded-xl border border-slate-200 dark:border-[#383838] bg-slate-50 hover:bg-slate-100 dark:bg-[#202020] text-left transition disabled:opacity-50"
-                      >
-                        <div className="text-[10px] font-bold text-[#10B981] dark:text-[#FFAA35]">{dept.role}</div>
-                        <div className="text-xs font-bold text-slate-800 dark:text-white truncate">{dept.name}</div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Footer text */}
-              <div className="pt-2 text-center text-xs space-y-1">
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400">New to Inkloom? </span>
-                  <Link
-                    href="/register"
-                    className="font-bold text-[#2563EB] dark:text-[#FFAA35] hover:underline"
+                  <motion.div
+                    whileHover={{ y: -3, scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 20 }}
+                    className="p-3.5 rounded-xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#282828] flex items-center gap-2.5 shadow-2xs hover:border-blue-500/50 dark:hover:border-blue-400/40 transition cursor-default"
                   >
-                    Create an account →
-                  </Link>
+                    <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                      <UserCheck className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      People make final calls
+                    </span>
+                  </motion.div>
+
+                  <motion.div
+                    whileHover={{ y: -3, scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 20 }}
+                    className="p-3.5 rounded-xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#282828] flex items-center gap-2.5 shadow-2xs hover:border-[#FFAA35]/50 dark:hover:border-[#FFAA35]/40 transition cursor-default"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-[#FFAA35] flex items-center justify-center shrink-0">
+                      <Palette className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      Central brand standards
+                    </span>
+                  </motion.div>
                 </div>
-                <div className="text-[10.5px] text-slate-400 dark:text-slate-500">
-                  Thoughtful content review, with people in control.
-                </div>
+              </motion.div>
+            </div>
+          </section>
+
+        {/* ========================================================
+            3. "What Inkloom AI Does" Section (Scroll Animated)
+            ======================================================== */}
+        <section className="py-16 sm:py-20 lg:py-24 border-b border-slate-200/80 dark:border-[#222222]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            {/* Section Header */}
+            <Reveal className="text-center max-w-2xl mx-auto space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-[#1C242C] border border-blue-200 dark:border-[#2A3742] text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
+                <Sliders className="w-3.5 h-3.5" />
+                <span>What Inkloom AI Does</span>
               </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-heading font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Clear governance for every piece of content
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                Connect brand guidelines directly to day-to-day creative work with explainable automated checks and transparent review channels.
+              </p>
+            </Reveal>
+
+            {/* Three Feature Cards with Staggered Entrance */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Card 1: Brand-aware content creation */}
+              <Reveal delayMs={100} durationMs={550}>
+                <motion.div
+                  whileHover={{ y: -6 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2E2E2E] shadow-sm hover:border-[#10B981]/50 dark:hover:border-[#FFAA35]/40 transition space-y-4 flex flex-col justify-between"
+                >
+                  <div className="space-y-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-[#72D6A1] border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-[#72D6A1]">
+                        Marketing & Copy
+                      </span>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1">
+                        Brand-aware content creation
+                      </h3>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                      Help marketing teams create and refine messaging that follows approved brand guidelines. Automatically detect voice mismatches, inconsistent terminology, and unverified claims before submitting for review.
+                    </p>
+                  </div>
+
+                  <ul className="pt-4 border-t border-slate-100 dark:border-[#262626] space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] dark:text-[#72D6A1] shrink-0" />
+                      <span>Brand voice and tone alignment scores</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] dark:text-[#72D6A1] shrink-0" />
+                      <span>Prohibited terminology and claim alerts</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] dark:text-[#72D6A1] shrink-0" />
+                      <span>Actionable replacement suggestions</span>
+                    </li>
+                  </ul>
+                </motion.div>
+              </Reveal>
+
+              {/* Card 2: Visual design review */}
+              <Reveal delayMs={220} durationMs={550}>
+                <motion.div
+                  whileHover={{ y: -6 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2E2E2E] shadow-sm hover:border-[#0284C7]/50 dark:hover:border-blue-400/40 transition space-y-4 flex flex-col justify-between"
+                >
+                  <div className="space-y-4">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center">
+                      <Palette className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                        Design & Assets
+                      </span>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1">
+                        Visual design review
+                      </h3>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                      Help designers evaluate creative assets and identify relevant brand, readability, and accessibility issues where supported. Check approved color palettes, image clearspace, and text contrast.
+                    </p>
+                  </div>
+
+                  <ul className="pt-4 border-t border-slate-100 dark:border-[#262626] space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0284C7] dark:text-blue-400 shrink-0" />
+                      <span>Brand palette adherence evaluation</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0284C7] dark:text-blue-400 shrink-0" />
+                      <span>WCAG color contrast and legibility checks</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#0284C7] dark:text-blue-400 shrink-0" />
+                      <span>Logo clearspace and layout guidance</span>
+                    </li>
+                  </ul>
+                </motion.div>
+              </Reveal>
+
+              {/* Card 3: Compliance and human approval */}
+              <Reveal delayMs={340} durationMs={550}>
+                <motion.div
+                  whileHover={{ y: -6 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2E2E2E] shadow-sm hover:border-[#FFAA35]/50 dark:hover:border-[#FFAA35]/40 transition space-y-4 flex flex-col justify-between"
+                >
+                  <div className="space-y-4">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-[#FFAA35] border border-amber-200 dark:border-amber-800/40 flex items-center justify-center">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-[#FFAA35]">
+                        Compliance & Governance
+                      </span>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1">
+                        Compliance & human approval
+                      </h3>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                      Help teams identify potential content risks, review evidence, and route content to authorized human reviewers. Every decision is recorded with complete audit trails and role-based permissions.
+                    </p>
+                  </div>
+
+                  <ul className="pt-4 border-t border-slate-100 dark:border-[#262626] space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 dark:text-[#FFAA35] shrink-0" />
+                      <span>Multi-stage role routing (Legal, Brand, Lead)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 dark:text-[#FFAA35] shrink-0" />
+                      <span>Complete timestamped decision audit trails</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 dark:text-[#FFAA35] shrink-0" />
+                      <span>Human judgment always remains in control</span>
+                    </li>
+                  </ul>
+                </motion.div>
+              </Reveal>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* ========================================================
+            4. "How It Works" Section (Sequential Step Reveal)
+            ======================================================== */}
+        <section className="py-16 sm:py-20 lg:py-24 border-b border-slate-200/80 dark:border-[#222222] bg-slate-50/50 dark:bg-[#141414]/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            {/* Section Header */}
+            <Reveal className="text-center max-w-2xl mx-auto space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-[#1B2722] border border-emerald-200 dark:border-[#263C34] text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-[#72D6A1]">
+                <Clock className="w-3.5 h-3.5" />
+                <span>Three Easy Steps</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-heading font-extrabold text-slate-900 dark:text-white tracking-tight">
+                How it works
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                A calm, predictable workflow that lets creators move quickly without risking brand integrity or compliance.
+              </p>
+            </Reveal>
+
+            {/* Three Step Flow Sequence with Smooth Stagger */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 relative">
+              {/* Step 1 */}
+              <Reveal delayMs={100} durationMs={550}>
+                <motion.div
+                  whileHover={{ y: -5 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2E2E2E] shadow-sm relative flex flex-col justify-between space-y-4 hover:border-[#10B981]/40 transition"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-heading font-extrabold text-slate-300 dark:text-[#383838]">
+                        01
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#252525] text-slate-600 dark:text-slate-400">
+                        CREATOR PHASE
+                      </span>
+                    </div>
+
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#10B981]/20 to-[#0284C7]/20 text-[#10B981] flex items-center justify-center">
+                      <FileText className="w-5 h-5" />
+                    </div>
+
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                        1. Create
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-[#B8B2AC] mt-1.5 leading-relaxed">
+                        Start with a campaign brief, marketing draft, or design. Upload text, documents, or creative files directly into your workspace project.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-[#262626]">
+                    Marketing, copywriters, and agency partners
+                  </div>
+                </motion.div>
+              </Reveal>
+
+              {/* Step 2 */}
+              <Reveal delayMs={240} durationMs={550}>
+                <motion.div
+                  whileHover={{ y: -5 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2E2E2E] shadow-sm relative flex flex-col justify-between space-y-4 hover:border-blue-500/40 transition"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-heading font-extrabold text-slate-300 dark:text-[#383838]">
+                        02
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#252525] text-slate-600 dark:text-slate-400">
+                        AI CHECK PHASE
+                      </span>
+                    </div>
+
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0284C7]/20 to-[#2563EB]/20 text-[#0284C7] flex items-center justify-center">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                        2. Review
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-[#B8B2AC] mt-1.5 leading-relaxed">
+                        Use available AI checks and relevant brand knowledge to identify tone deviations, prohibited claims, and visual issues with clear explanations.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-[#262626]">
+                    Automated guidelines & brand memory verification
+                  </div>
+                </motion.div>
+              </Reveal>
+
+              {/* Step 3 */}
+              <Reveal delayMs={380} durationMs={550}>
+                <motion.div
+                  whileHover={{ y: -5 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2E2E2E] shadow-sm relative flex flex-col justify-between space-y-4 hover:border-[#FFAA35]/40 transition"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-heading font-extrabold text-slate-300 dark:text-[#383838]">
+                        03
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#252525] text-slate-600 dark:text-slate-400">
+                        APPROVAL PHASE
+                      </span>
+                    </div>
+
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#FFAA35]/20 to-[#FF7A36]/20 text-amber-600 dark:text-[#FFAA35] flex items-center justify-center">
+                      <UserCheck className="w-5 h-5" />
+                    </div>
+
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                        3. Approve
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-[#B8B2AC] mt-1.5 leading-relaxed">
+                        Let the appropriate people review findings, request changes, or approve the content with traceable approval logs and governance assurance.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-[#262626]">
+                    Design leads, legal officers, and brand managers
+                  </div>
+                </motion.div>
+              </Reveal>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================
+            5. Value & Benefits Section (Smooth Entrance Transitions)
+            ======================================================== */}
+        <section className="py-16 sm:py-20 lg:py-24 border-b border-slate-200/80 dark:border-[#222222]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            {/* Section Header */}
+            <Reveal className="text-center max-w-2xl mx-auto space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-[#201A29] border border-purple-200 dark:border-[#35254A] text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Why Teams Choose Inkloom AI</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-heading font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Designed for high-trust brand operations
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                Bring clarity and coordination to teams where every published claim, visual, and message counts.
+              </p>
+            </Reveal>
+
+            {/* 6 Value Cards Grid with Staggered Entrance */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Benefit 1 */}
+              <Reveal delayMs={60} durationMs={500}>
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2C2C2C] space-y-2.5 hover:border-[#10B981]/40 transition"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-[#72D6A1] flex items-center justify-center">
+                    <Check className="w-4 h-4 stroke-[3]" />
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    Consistent brand messaging
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                    Keep all campaigns aligned with published brand voice and guidelines across different authors and departments.
+                  </p>
+                </motion.div>
+              </Reveal>
+
+              {/* Benefit 2 */}
+              <Reveal delayMs={130} durationMs={500}>
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2C2C2C] space-y-2.5 hover:border-blue-500/40 transition"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    Clear, actionable feedback
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                    Every flagged issue includes specific guideline citations and suggested replacements so creators know how to improve.
+                  </p>
+                </motion.div>
+              </Reveal>
+
+              {/* Benefit 3 */}
+              <Reveal delayMs={200} durationMs={500}>
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2C2C2C] space-y-2.5 hover:border-[#FFAA35]/40 transition"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-[#FFAA35] flex items-center justify-center">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    Less repetitive manual checking
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                    Catch routine guideline and terminology violations early so reviewers can spend their time on strategic decisions.
+                  </p>
+                </motion.div>
+              </Reveal>
+
+              {/* Benefit 4 */}
+              <Reveal delayMs={270} durationMs={500}>
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2C2C2C] space-y-2.5 hover:border-[#10B981]/40 transition"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-[#152B25] text-[#10B981] flex items-center justify-center">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    Better team coordination
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                    Connect marketing, design, and compliance in one shared workspace instead of scattered chat threads and emails.
+                  </p>
+                </motion.div>
+              </Reveal>
+
+              {/* Benefit 5 */}
+              <Reveal delayMs={340} durationMs={500}>
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2C2C2C] space-y-2.5 hover:border-purple-500/40 transition"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-300 flex items-center justify-center">
+                    <Scale className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    Traceable review decisions
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                    Maintain historical audit logs of revisions, review notes, and final sign-offs for accountability and governance.
+                  </p>
+                </motion.div>
+              </Reveal>
+
+              {/* Benefit 6 */}
+              <Reveal delayMs={410} durationMs={500}>
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 20 }}
+                  className="h-full p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2C2C2C] space-y-2.5 hover:border-rose-500/40 transition"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    Human control over final approval
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-[#B8B2AC] leading-relaxed">
+                    AI provides intelligent pre-checks, but human reviewers always hold the authority to approve, reject, or override.
+                  </p>
+                </motion.div>
+              </Reveal>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================
+            6. Final Call to Action Section (Smooth Entrance Transition)
+            ======================================================== */}
+        <section className="py-16 sm:py-20 lg:py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Reveal durationMs={650} yOffset={24}>
+              <div className="rounded-3xl p-8 sm:p-12 lg:p-16 bg-gradient-to-br from-[#10B981] via-[#0D9488] to-[#0284C7] dark:from-[#1C1C1C] dark:to-[#141414] text-white border border-white/20 dark:border-[#333333] shadow-2xl relative overflow-hidden text-center space-y-6">
+                {/* Background ambient accents */}
+                <div
+                  aria-hidden="true"
+                  className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-white/10 dark:bg-[#FFAA35]/10 filter blur-3xl pointer-events-none"
+                />
+                <div
+                  aria-hidden="true"
+                  className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-[#0284C7]/30 dark:bg-[#10B981]/10 filter blur-3xl pointer-events-none"
+                />
+
+                <div className="relative z-10 max-w-2xl mx-auto space-y-4">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 dark:bg-[#272727] border border-white/30 dark:border-[#3E3E3E] text-[11px] font-bold uppercase tracking-wider text-white dark:text-[#FFAA35]">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Get Started With Inkloom AI</span>
+                  </div>
+
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-heading font-extrabold text-white tracking-tight leading-tight">
+                    Bring your team&rsquo;s content into one clearer workflow.
+                  </h2>
+
+                  <p className="text-xs sm:text-sm text-white/90 dark:text-slate-300 leading-relaxed max-w-xl mx-auto">
+                    Create a dedicated workspace for your brand guidelines, campaign drafts, and review pipelines, or sign in to your existing team account.
+                  </p>
+
+                  {/* Final Action Buttons */}
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+                    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full sm:w-auto">
+                      <Link
+                        href="/register"
+                        className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-xs sm:text-sm shadow-md transition inline-flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-white"
+                      >
+                        <Building className="w-4 h-4 text-[#10B981]" />
+                        <span>Create a workspace</span>
+                      </Link>
+                    </motion.div>
+
+                    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full sm:w-auto">
+                      <Link
+                        href="/login"
+                        className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white/15 dark:bg-[#252525] hover:bg-white/25 dark:hover:bg-[#2F2F2F] text-white font-semibold text-xs sm:text-sm border border-white/30 dark:border-[#404040] backdrop-blur-md transition inline-flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-white"
+                      >
+                        <span>Sign in to existing workspace</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </motion.div>
+                  </div>
+
+                  <div className="pt-2 text-[11px] text-white/80 dark:text-slate-400">
+                    Role-based permissions • Complete audit trails • Tenant zero-trust data isolation
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="px-6 lg:px-12 py-3.5 border-t border-slate-200 dark:border-[#292929] bg-white dark:bg-[#111111] text-[11px] text-slate-500 dark:text-[#85817D] flex flex-col sm:flex-row items-center justify-between gap-2 transition-colors duration-150">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
-          <span>Tenant Zero-Trust Isolation Active</span>
+      {/* ========================================================
+          7. Footer
+          ======================================================== */}
+      <footer className="px-4 sm:px-6 lg:px-12 py-8 border-t border-slate-200 dark:border-[#222222] bg-white dark:bg-[#111111] text-xs text-slate-500 dark:text-[#85817D] transition-colors duration-150">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <InkloomLogo size="sm" showSubtitle={false} />
+            <span className="text-slate-400 dark:text-[#444444]">|</span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+              <span className="text-[11px]">Tenant Zero-Trust Isolation Active</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[11px]">
+            <Link href="/login" className="hover:text-slate-900 dark:hover:text-white transition">
+              Sign In
+            </Link>
+            <Link href="/register" className="hover:text-slate-900 dark:hover:text-white transition">
+              Create Workspace
+            </Link>
+            <Link href="/login" className="hover:text-slate-900 dark:hover:text-white transition">
+              Explore Demo
+            </Link>
+          </div>
+
+          <div className="text-[11px] text-center md:text-right">
+            Inkloom AI Brand Governance &copy; 2026. All rights reserved.
+          </div>
         </div>
-        <div>Inkloom AI Brand Governance © 2026. All rights reserved.</div>
       </footer>
     </div>
+  </MotionConfig>
   );
 }

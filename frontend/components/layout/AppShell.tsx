@@ -32,6 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Public routes that don't require the dashboard shell or auth
   const isPublicRoute =
+    (!isAuthenticated && pathname === "/") ||
     pathname?.startsWith("/invite") ||
     pathname === "/login" ||
     pathname === "/signin" ||
