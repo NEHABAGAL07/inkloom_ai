@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class AdaptCampaignRequest(BaseModel):
+    content_id: str = Field(..., description="ID of the approved content submission to adapt.")
     platforms: List[str] = Field(
         ...,
         description="List of target platforms to adapt content for (e.g. ['instagram', 'linkedin', 'youtube', 'website']).",

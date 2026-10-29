@@ -823,9 +823,9 @@ export class ApiService implements IApiService {
   async adaptCampaign(contentId: string, platforms: string[]): Promise<CampaignAdaptation[]> {
     if (USE_MOCK) return mockApi.adaptCampaign(contentId, platforms);
     try {
-      return await this.fetchJson<CampaignAdaptation[]>(`/campaigns/${contentId}/adapt`, {
+      return await this.fetchJson<CampaignAdaptation[]>("/adaptations", {
         method: "POST",
-        body: JSON.stringify({ platforms }),
+        body: JSON.stringify({ content_id: contentId, platforms }),
       });
     } catch {
       return mockApi.adaptCampaign(contentId, platforms);
@@ -835,7 +835,7 @@ export class ApiService implements IApiService {
   async getCampaignAdaptations(contentId: string): Promise<CampaignAdaptation[]> {
     if (USE_MOCK) return mockApi.getCampaignAdaptations(contentId);
     try {
-      return await this.fetchJson<CampaignAdaptation[]>(`/campaigns/${contentId}/adaptations`);
+      return await this.fetchJson<CampaignAdaptation[]>(`/adaptations?content_id=${encodeURIComponent(contentId)}`);
     } catch {
       return mockApi.getCampaignAdaptations(contentId);
     }

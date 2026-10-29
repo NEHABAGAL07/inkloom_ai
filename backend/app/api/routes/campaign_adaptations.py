@@ -61,12 +61,11 @@ def _check_adaptation_role(auth: AuthContext):
 
 
 @router.post(
-    "/campaigns/{content_id}/adapt",
+    "/adaptations",
     response_model=List[CampaignAdaptationResponse],
     summary="Adapt approved content across target platforms",
 )
 def adapt_campaign(
-    content_id: str,
     payload: AdaptCampaignRequest,
     db: Session = Depends(get_db),
     auth: AuthContext = Depends(get_current_auth_context),
@@ -75,7 +74,7 @@ def adapt_campaign(
     _check_adaptation_rate_limit(auth.user_id)
 
     return CampaignAdaptationService.adapt_campaign(
-        content_id=content_id,
+        content_id=payload.content_id,
         platforms=payload.platforms,
         db=db,
         user_id=auth.user_id,
@@ -84,7 +83,7 @@ def adapt_campaign(
 
 
 @router.get(
-    "/campaigns/{content_id}/adaptations",
+    "/adaptations",
     response_model=List[CampaignAdaptationResponse],
     summary="Get all campaign adaptations for a source content item",
 )

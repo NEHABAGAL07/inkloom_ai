@@ -16,6 +16,14 @@ from app.services.ai_audit.llm_adapter import GeminiAdapter, FallbackAdapter, Of
 import app.services.campaign_adaptation.service as adaptation_service_module
 
 
+@pytest.fixture(autouse=True)
+def clear_rate_limits():
+    import app.api.routes.campaign_adaptations as routes_module
+    routes_module._USER_RATE_LIMITS.clear()
+    yield
+    routes_module._USER_RATE_LIMITS.clear()
+
+
 @pytest.fixture
 def test_setup(db_session):
     """Sets up primary organization, other organization, users, and approved content."""
@@ -149,12 +157,15 @@ def test_non_approved_content_rejected(db_session, test_setup):
         roles=[UserRole.MARKETING],
     )
 
-    res = client.post(
-        f"/api/v1/campaigns/{test_setup['draft_sub'].id}/adapt",
-        json={"platforms": ["linkedin"]},
-    )
-    assert res.status_code == 400
-    assert "Only content with status 'approved' can be adapted" in res.json()["detail"]
+    for invalid_status in ["draft", "in_review", "rejected", "changes_requested"]:
+        test_setup["draft_sub"].status = invalid_status
+        db_session.commit()
+        res = client.post(
+            "/api/v1/adaptations",
+            json={"content_id": test_setup["draft_sub"].id, "platforms": ["linkedin"]},
+        )
+        assert res.status_code == 400
+        assert "Only content with status 'approved' can be adapted" in res.json()["detail"]
 
 
 # -------------------------------------------------------------
@@ -170,8 +181,8 @@ def test_cross_org_access_denied(db_session, test_setup):
 
     # Attempt to adapt other organization's submission
     res = client.post(
-        f"/api/v1/campaigns/{test_setup['other_sub'].id}/adapt",
-        json={"platforms": ["linkedin"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["other_sub"].id, "platforms": ["linkedin"]},
     )
     assert res.status_code == 404
 
@@ -188,8 +199,8 @@ def test_viewer_role_rejected(db_session, test_setup):
     )
 
     res = client.post(
-        f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-        json={"platforms": ["instagram"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["instagram"]},
     )
     assert res.status_code == 403
     assert "Your role does not have permission" in res.json()["detail"]
@@ -207,8 +218,8 @@ def test_limits_respected_and_fallback_without_key(db_session, test_setup):
     )
 
     res = client.post(
-        f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-        json={"platforms": ["instagram", "linkedin", "youtube", "website"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["instagram", "linkedin", "youtube", "website"]},
     )
     assert res.status_code == 200
     data = res.json()
@@ -246,8 +257,8 @@ def test_numbers_preserved_and_brand_check(db_session, test_setup):
     )
 
     res = client.post(
-        f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-        json={"platforms": ["linkedin"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["linkedin"]},
     )
     assert res.status_code == 200
     adaptation = res.json()[0]
@@ -273,8 +284,8 @@ def test_flagged_when_facts_differ(db_session, test_setup):
 
     # First create adaptation
     res = client.post(
-        f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-        json={"platforms": ["linkedin"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["linkedin"]},
     )
     adapt_id = res.json()[0]["id"]
 
@@ -322,8 +333,8 @@ def test_injection_text_in_source_ignored(db_session, test_setup):
     )
 
     res = client.post(
-        f"/api/v1/campaigns/{injected_sub.id}/adapt",
-        json={"platforms": ["instagram"]},
+        "/api/v1/adaptations",
+        json={"content_id": injected_sub.id, "platforms": ["instagram"]},
     )
     assert res.status_code == 200
     caption = res.json()[0]["content"]["caption"]
@@ -375,8 +386,8 @@ def test_mock_transport_llm_json_mode(db_session, test_setup, monkeypatch):
     )
 
     res = client.post(
-        f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-        json={"platforms": ["linkedin"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["linkedin"]},
     )
     assert res.status_code == 200
     data = res.json()[0]
@@ -398,8 +409,8 @@ def test_submit_for_review_creates_new_draft(db_session, test_setup):
 
     # 1. Adapt
     res = client.post(
-        f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-        json={"platforms": ["website"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["website"]},
     )
     adapt_id = res.json()[0]["id"]
 
@@ -433,8 +444,8 @@ def test_cross_org_actions_denied(db_session, test_setup):
         roles=[UserRole.MARKETING],
     )
     res = creator_client.post(
-        f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-        json={"platforms": ["linkedin"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["linkedin"]},
     )
     assert res.status_code == 200
     adapt_id = res.json()[0]["id"]
@@ -483,8 +494,8 @@ def test_rate_limit_returns_429(db_session, test_setup, monkeypatch):
 
     for i in range(3):
         r = client.post(
-            f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-            json={"platforms": ["instagram"]},
+            "/api/v1/adaptations",
+            json={"content_id": test_setup["approved_sub"].id, "platforms": ["instagram"]},
         )
         assert r.status_code == 200
 
@@ -492,8 +503,8 @@ def test_rate_limit_returns_429(db_session, test_setup, monkeypatch):
 
     # 4th request must exceed rate limit on adapt (LLM endpoint)
     exceeded_res = client.post(
-        f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-        json={"platforms": ["instagram"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["instagram"]},
     )
     assert exceeded_res.status_code == 429
     assert "Rate limit exceeded" in exceeded_res.json()["detail"]
@@ -525,8 +536,8 @@ def test_flagged_variant_stays_flagged_in_draft_submit(db_session, test_setup):
 
     # 1. Adapt
     res = client.post(
-        f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-        json={"platforms": ["linkedin"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["linkedin"]},
     )
     adapt_id = res.json()[0]["id"]
 
@@ -569,8 +580,8 @@ def test_caplog_never_contains_source_or_api_key(db_session, test_setup, caplog)
     )
 
     client.post(
-        f"/api/v1/campaigns/{test_setup['approved_sub'].id}/adapt",
-        json={"platforms": ["instagram", "linkedin"]},
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["instagram", "linkedin"]},
     )
 
     log_text = caplog.text
@@ -641,4 +652,79 @@ def test_migration_fresh_and_existing_db():
             assert rows[0][2] is None  # source_content_id is nullable and NULL for existing rows
             adapt_cnt = conn.execute(text("SELECT COUNT(*) FROM campaign_adaptations")).scalar()
             assert adapt_cnt == 0
+
+
+# -------------------------------------------------------------
+# Test 16: GET /api/v1/adaptations?content_id=...
+# -------------------------------------------------------------
+def test_get_campaign_adaptations(db_session, test_setup):
+    client = make_auth_client(
+        db_session,
+        user_id=test_setup["user_creator"].id,
+        org_id=test_setup["org"].id,
+        roles=[UserRole.MARKETING],
+    )
+
+    # Adapt
+    client.post(
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["instagram", "linkedin"]},
+    )
+
+    # GET adaptations
+    get_res = client.get(f"/api/v1/adaptations?content_id={test_setup['approved_sub'].id}")
+    assert get_res.status_code == 200
+    items = get_res.json()
+    assert len(items) == 2
+    platforms = [i["platform"] for i in items]
+    assert "instagram" in platforms
+    assert "linkedin" in platforms
+
+
+# -------------------------------------------------------------
+# Test 17: Adaptation service audits through AIAuditEngine.run_audit
+# without writing audit records or changing any status
+# -------------------------------------------------------------
+def test_adaptation_service_run_audit_no_db_records_and_status_unchanged(db_session, test_setup):
+    """
+    Verify the adaptation service audits through AIAuditEngine.run_audit without
+    writing audit records or changing any status of the source ContentSubmission.
+    """
+    from app.models.audit import AuditRun, AuditFinding
+
+    client = make_auth_client(
+        db_session,
+        user_id=test_setup["user_creator"].id,
+        org_id=test_setup["org"].id,
+        roles=[UserRole.MARKETING],
+    )
+
+    initial_audit_run_count = db_session.query(AuditRun).count()
+    initial_audit_finding_count = db_session.query(AuditFinding).count()
+    initial_sub = db_session.query(ContentSubmission).filter(ContentSubmission.id == test_setup["approved_sub"].id).first()
+    assert initial_sub.status == "approved"
+
+    res = client.post(
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["instagram", "linkedin", "youtube", "website"]},
+    )
+    assert res.status_code == 200
+    adaptations = res.json()
+    assert len(adaptations) == 4
+
+    # Every adaptation has an audit_result populated from AIAuditEngine.run_audit
+    for item in adaptations:
+        assert item["audit_result"] is not None
+        assert "overall_status" in item["audit_result"] or "overall_score" in item["audit_result"]
+
+    # Verify no AuditRun or AuditFinding rows were written to the database during adaptation
+    final_audit_run_count = db_session.query(AuditRun).count()
+    final_audit_finding_count = db_session.query(AuditFinding).count()
+    assert final_audit_run_count == initial_audit_run_count
+    assert final_audit_finding_count == initial_audit_finding_count
+
+    # Verify source submission status is completely unchanged ("approved")
+    db_session.refresh(initial_sub)
+    assert initial_sub.status == "approved"
+
 
