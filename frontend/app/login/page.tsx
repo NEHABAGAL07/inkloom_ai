@@ -96,9 +96,9 @@ function LoginContent() {
     setErrorMessage(null);
     try {
       try {
-        await login(deptEmail, "demo123456", true);
-      } catch {
         await login(deptEmail, "password123", true);
+      } catch {
+        await login(deptEmail, "demo123456", true);
       }
       router.push(redirectUrl);
     } catch (err: any) {
