@@ -12,6 +12,8 @@ from app.schemas.submission import (
     ContentRevisionResponse,
 )
 from app.workflow.state_machine import WorkflowState
+from app.schemas.audit_contract import AuditResult
+from app.services.audit_orchestrator import AuditOrchestrator
 
 router = APIRouter(prefix="/submissions", tags=["Content Submissions"])
 
@@ -151,3 +153,30 @@ def create_revision(
     db.commit()
     db.refresh(revision)
     return revision
+
+
+@router.post("/{submission_id}/audit", response_model=AuditResult, status_code=status.HTTP_201_CREATED)
+def audit_submission(
+    submission_id: str,
+    revision_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+    auth: AuthContext = Depends(get_current_auth_context),
+):
+    """Triggers brand governance audit for submission."""
+    submission = (
+        db.query(ContentSubmission)
+        .filter(
+            ContentSubmission.id == submission_id,
+            ContentSubmission.organization_id == auth.organization_id,
+        )
+        .first()
+    )
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found.")
+
+    return AuditOrchestrator.execute_audit_for_submission(
+        db=db,
+        submission_id=submission.id,
+        revision_id=revision_id,
+        actor_id=auth.user_id,
+    )

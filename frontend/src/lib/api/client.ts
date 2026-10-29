@@ -8,6 +8,14 @@ import {
   ReviewDecision,
   AnalyticsOverview,
   HealthStatus,
+  KnowledgeItem,
+  SharedAIContext,
+  BrandRuleContext,
+  VerifiedFactContext,
+  LegalSourceContext,
+  BrandAssetContext,
+  RuleConflictDetail,
+  UnifiedRetrievalResponse,
 } from '../../types';
 
 const MOCK_STORAGE_KEY = 'inkloom_mock_mode_enabled';
@@ -633,5 +641,115 @@ export const api = {
       }
       throw new Error(`Failed to submit revision for ${contentId}`);
     }
+  },
+};
+
+export const knowledgeApi = {
+  async listKnowledgeItems(params?: Record<string, any>): Promise<KnowledgeItem[]> {
+    const query = new URLSearchParams(params || {}).toString();
+    const endpoint = `/knowledge${query ? `?${query}` : ''}`;
+    try {
+      return await apiFetch<KnowledgeItem[]>(endpoint);
+    } catch {
+      return [];
+    }
+  },
+
+  async getKnowledgeItem(itemId: string): Promise<KnowledgeItem> {
+    return await apiFetch<KnowledgeItem>(`/knowledge/${itemId}`);
+  },
+
+  async createKnowledgeItem(payload: Partial<KnowledgeItem>): Promise<KnowledgeItem> {
+    return await apiFetch<KnowledgeItem>('/knowledge', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async updateKnowledgeItem(itemId: string, payload: Partial<KnowledgeItem>): Promise<KnowledgeItem> {
+    return await apiFetch<KnowledgeItem>(`/knowledge/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async verifyKnowledgeItem(
+    itemId: string,
+    verificationRationale: string,
+    verificationStatus: string = 'verified'
+  ): Promise<KnowledgeItem> {
+    return await apiFetch<KnowledgeItem>(`/knowledge/${itemId}/verify`, {
+      method: 'POST',
+      body: JSON.stringify({
+        verification_status: verificationStatus,
+        verification_rationale: verificationRationale,
+      }),
+    });
+  },
+
+  async deleteKnowledgeItem(itemId: string): Promise<void> {
+    await apiFetch<void>(`/knowledge/${itemId}`, { method: 'DELETE' });
+  },
+};
+
+export const sharedIntelligenceApi = {
+  async assembleSharedAIContext(payload: {
+    content_text?: string;
+    submission_id?: string;
+    revision_id?: string;
+    target_channel?: string;
+    target_jurisdiction?: string;
+    query_topics?: string[];
+  }): Promise<SharedAIContext> {
+    return await apiFetch<SharedAIContext>('/intelligence/context', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async retrieveBrandRules(channel: string = 'web', jurisdiction: string = 'Global'): Promise<BrandRuleContext[]> {
+    return await apiFetch<BrandRuleContext[]>(`/intelligence/retrieve/rules?channel=${channel}&jurisdiction=${jurisdiction}`, {
+      method: 'POST',
+    });
+  },
+
+  async retrieveVerifiedFacts(queryText?: string, category?: string): Promise<VerifiedFactContext[]> {
+    const params = new URLSearchParams();
+    if (queryText) params.append('query_text', queryText);
+    if (category) params.append('category', category);
+    return await apiFetch<VerifiedFactContext[]>(`/intelligence/retrieve/facts?${params.toString()}`, {
+      method: 'POST',
+    });
+  },
+
+  async retrieveLegalSources(jurisdiction: string = 'Global', industry?: string): Promise<LegalSourceContext[]> {
+    const params = new URLSearchParams({ jurisdiction });
+    if (industry) params.append('industry', industry);
+    return await apiFetch<LegalSourceContext[]>(`/intelligence/retrieve/legal?${params.toString()}`, {
+      method: 'POST',
+    });
+  },
+
+  async retrieveBrandAssets(assetType?: string, nameQuery?: string): Promise<BrandAssetContext[]> {
+    const params = new URLSearchParams();
+    if (assetType) params.append('asset_type', assetType);
+    if (nameQuery) params.append('name_query', nameQuery);
+    return await apiFetch<BrandAssetContext[]>(`/intelligence/retrieve/assets?${params.toString()}`, {
+      method: 'POST',
+    });
+  },
+
+  async unifiedSearch(query: string, filters?: Record<string, any>): Promise<UnifiedRetrievalResponse> {
+    return await apiFetch<UnifiedRetrievalResponse>('/intelligence/retrieve/search', {
+      method: 'POST',
+      body: JSON.stringify({ query, ...filters }),
+    });
+  },
+
+  async scanConflicts(draftData?: any, targetJurisdiction: string = 'Global'): Promise<RuleConflictDetail[]> {
+    return await apiFetch<RuleConflictDetail[]>('/intelligence/conflicts', {
+      method: 'POST',
+      body: JSON.stringify({ draft_data: draftData, target_jurisdiction: targetJurisdiction }),
+    });
   },
 };

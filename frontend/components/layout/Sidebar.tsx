@@ -16,6 +16,10 @@ import {
   ChevronRight,
   Shield,
   Bot,
+  Sparkles,
+  Palette,
+  Scale,
+  Briefcase,
 } from "lucide-react";
 
 interface NavItem {
@@ -56,6 +60,10 @@ export function Sidebar() {
 
     if (isMarketing) {
       return [
+        { name: "Campaigns & Workflows", href: "/campaigns", icon: Briefcase },
+        { name: "Marketing Copilot", href: "/marketing", icon: Sparkles },
+        { name: "Designer Copilot", href: "/designer", icon: Palette },
+        { name: "Legal Copilot", href: "/legal", icon: Scale },
         { name: "Marketing Station", href: "/", icon: LayoutDashboard },
         { name: "Brand Assistant", href: "/assistant", icon: Bot },
         { name: "My Audit Results", href: "/audits", icon: ShieldCheck },
@@ -65,6 +73,9 @@ export function Sidebar() {
 
     if (isDesigner) {
       return [
+        { name: "Campaigns & Workflows", href: "/campaigns", icon: Briefcase },
+        { name: "Designer Copilot", href: "/designer", icon: Palette },
+        { name: "Legal Copilot", href: "/legal", icon: Scale },
         { name: "Design Studio", href: "/", icon: LayoutDashboard },
         { name: "Brand Assistant", href: "/assistant", icon: Bot },
         { name: "Visual Brand Standards", href: "/guidelines", icon: BookOpen },
@@ -75,6 +86,8 @@ export function Sidebar() {
 
     if (isLegal) {
       return [
+        { name: "Campaign Workflows", href: "/campaigns", icon: Briefcase },
+        { name: "Legal Copilot", href: "/legal", icon: Scale },
         { name: "Compliance Station", href: "/", icon: LayoutDashboard },
         { name: "Brand Assistant", href: "/assistant", icon: Bot },
         { name: "Review & Approval Queue", href: "/reviews", icon: ClipboardCheck },
@@ -86,7 +99,11 @@ export function Sidebar() {
 
     // Default / Admin full executive suite
     return [
+      { name: "Campaigns & Workflows", href: "/campaigns", icon: Briefcase },
       { name: "Executive Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Marketing Copilot", href: "/marketing", icon: Sparkles },
+      { name: "Designer Copilot", href: "/designer", icon: Palette },
+      { name: "Legal Copilot", href: "/legal", icon: Scale },
       { name: "Brand Assistant", href: "/assistant", icon: Bot },
       { name: "Brand Guidelines & Rules", href: "/guidelines", icon: BookOpen },
       { name: "Governance Analytics", href: "/analytics", icon: BarChart3 },

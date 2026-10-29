@@ -1,37 +1,39 @@
 """
-AI Brand Governance Audit Engine
-
-Callable entrypoint that coordinates guideline retrieval, tone analysis,
-terminology compliance, claim verification, and published brand profile standards.
-Produces validated AuditResult objects strictly adhering to the shared contract.
+AI Brand Governance Audit Engine — Phase 2 Architecture
+Coordinates the 12-stage evidence-grounded brand audit pipeline:
+1. Context validation & immutable content version resolution
+2. Channel, audience, product, and jurisdiction profiling
+3. Approved brand rules retrieval
+4. Authorized verified facts & benchmark retrieval (supported, contradicted, unverified, unavailable)
+5. Authoritative statutory and regulatory references retrieval (distinguishing binding law from recommendations)
+6. Deterministic pattern matching (terminology, forbidden words, warranty liabilities, mandatory disclosures)
+7. Semantic contextual analysis with prompt-injection neutralization & safe LLM fallback
+8. Media, visual branding, and accessibility evaluation (contrast ratio WCAG AA, logo clearspace)
+9. Marketing effectiveness, message quality, and alternative punchlines
+10. Cross-rule conflict detection and precedence resolution
+11. Intelligent, intent-preserving correction generation & re-validation
+12. Finding deduplication, compliance scoring, and validated report assembly
 """
 import time
-import uuid
-import re
-from datetime import datetime, timezone
+import logging
 from typing import List, Dict, Any, Optional
 
-from app.schemas.audit_contract import (
-    AuditResult,
-    AuditSummary,
-    EngineMetadata,
-    OverallAuditStatus,
-    Finding,
-    FindingCategory,
-    FindingSeverity,
-    FindingStatus,
-    SourceReference,
-    SuggestedCorrection,
-    VerificationStatus,
-)
-from app.services.ai_audit.guideline_retrieval import GuidelineRetriever
-from app.services.ai_audit.tone_analysis import ToneAnalyzer
-from app.services.ai_audit.terminology import TerminologyChecker
-from app.services.ai_audit.claim_checking import ClaimVerifier
+from app.schemas.audit_contract import AuditResult
+from app.services.ai_audit.context_resolver import AuditContextResolver
+from app.services.ai_audit.evidence_retriever import EvidenceRetriever
+from app.services.ai_audit.deterministic_checker import DeterministicChecker
+from app.services.ai_audit.semantic_analyzer import SemanticAnalyzer
+from app.services.ai_audit.media_evaluator import MediaAuditEvaluator
+from app.services.ai_audit.marketing_evaluator import MarketingQualityEvaluator
+from app.services.ai_audit.cross_rule_checker import CrossRuleConflictChecker
+from app.services.ai_audit.intelligent_corrector import IntelligentCorrector
+from app.services.ai_audit.result_validator import AuditResultValidator
+
+logger = logging.getLogger("inkloom.ai_audit_engine")
 
 
 class AIAuditEngine:
-    ENGINE_VERSION = "0.2.0-brand-governance"
+    ENGINE_VERSION = "0.3.0-governance-engine"
 
     @classmethod
     def run_audit(
@@ -44,258 +46,165 @@ class AIAuditEngine:
         context: Optional[Dict[str, Any]] = None,
         guideline_version: Optional[str] = None,
         guideline_profile: Optional[Dict[str, Any]] = None,
+        organization_id: Optional[str] = None,
+        db: Optional[Any] = None,
+        file_path: Optional[str] = None,
+        channel: Optional[str] = None,
+        target_audience: Optional[str] = None,
+        jurisdiction: Optional[str] = None,
+        product: Optional[str] = None,
+        llm_adapter: Optional[Any] = None,
     ) -> AuditResult:
         """
-        Executes complete brand governance audit pass on provided text and context,
-        evaluating against the published brand guideline version and rules.
+        Executes a 12-stage multi-layer governance audit pass on provided text and context,
+        evaluating against published brand guidelines, verified facts, and legal requirements.
         """
         start_time = time.perf_counter()
         modules_executed: List[str] = []
-        all_findings: List[Finding] = []
+        models_used: List[str] = ["deterministic_rules_v1", "claim_benchmark_registry"]
+        warnings: List[str] = []
+        raw_findings = []
 
         g_version = guideline_version or "1.0.0"
 
-        # 1. Guideline Retrieval
-        modules_executed.append("guideline_retrieval")
-        relevant_rules = []
-        if active_guidelines:
-            relevant_rules = GuidelineRetriever.filter_relevant_rules(
-                rules=active_guidelines,
-                content_text=content_text,
-                media_type=media_type,
-            )
-
-        # 2. Terminology Checks (Base dictionary)
-        modules_executed.append("terminology_checker")
-        term_findings = TerminologyChecker.check(text=content_text)
-        all_findings.extend(term_findings)
-
-        # 3. Tone and Voice Analysis (Base analyzer)
-        modules_executed.append("tone_analyzer")
-        tone_findings = ToneAnalyzer.analyze(text=content_text)
-        all_findings.extend(tone_findings)
-
-        # 4. Fact and Claim Verification
-        modules_executed.append("claim_verifier")
-        claim_findings = ClaimVerifier.verify(text=content_text)
-        all_findings.extend(claim_findings)
-
-        # 5. Dynamic Evaluation against Published Brand Profile Guidelines
-        if guideline_profile:
-            modules_executed.append("published_brand_rules_evaluator")
-
-            # A. Evaluate Forbidden Words from Brand Voice
-            voice_data = guideline_profile.get("voice", {})
-            words_to_avoid = voice_data.get("words_to_avoid", [])
-            for word in words_to_avoid:
-                if not word or not str(word).strip():
-                    continue
-                pattern = rf"\b{re.escape(str(word).strip())}\b"
-                match = re.search(pattern, content_text, re.IGNORECASE)
-                if match:
-                    all_findings.append(
-                        Finding(
-                            id=f"find_term_avoid_{uuid.uuid4().hex[:8]}",
-                            category=FindingCategory.TERMINOLOGY,
-                            severity=FindingSeverity.HIGH,
-                            title=f"Forbidden Brand Vocabulary: '{match.group(0)}'",
-                            message=(
-                                f"The term '{match.group(0)}' violates published brand voice rules. "
-                                f"Published Brand Guidelines (v{g_version}) explicitly prohibit this phrasing."
-                            ),
-                            evidence=match.group(0),
-                            source_reference=SourceReference(
-                                guideline_id=f"guideline_v{g_version}",
-                                section="Brand Voice: Words to Avoid",
-                                rule_name="Forbidden Brand Vocabulary",
-                                verification_status=VerificationStatus.CONTRADICTED,
-                            ),
-                            confidence=0.98,
-                            suggested_correction=SuggestedCorrection(
-                                replacement_text="Replace with approved brand vocabulary",
-                                rationale="Adheres to published brand communication guidelines.",
-                                preserves_intent=True,
-                            ),
-                            status=FindingStatus.OPEN,
-                            requires_human_review=False,
-                        )
-                    )
-
-            # B. Evaluate Prohibited Copy Examples
-            prohibited_copy = voice_data.get("prohibited_copy_examples", [])
-            for ex in prohibited_copy:
-                snippet = ex.get("text", "")
-                if snippet and snippet.lower() in content_text.lower():
-                    all_findings.append(
-                        Finding(
-                            id=f"find_copy_prohib_{uuid.uuid4().hex[:8]}",
-                            category=FindingCategory.TONE_VOICE,
-                            severity=FindingSeverity.HIGH,
-                            title="Prohibited Messaging Phrasing Detected",
-                            message=f"Disallowed copy pattern detected: '{snippet}'. Reason: {ex.get('reason', 'Contradicts brand positioning.')}",
-                            evidence=snippet,
-                            source_reference=SourceReference(
-                                guideline_id=f"guideline_v{g_version}",
-                                section="Voice & Communication: Prohibited Examples",
-                                rule_name="Prohibited Messaging Patterns",
-                                verification_status=VerificationStatus.CONTRADICTED,
-                            ),
-                            confidence=0.95,
-                            suggested_correction=SuggestedCorrection(
-                                replacement_text="Refer to approved copy examples in Brand Guidelines",
-                                rationale="Aligns messaging with corporate tone guidelines.",
-                            ),
-                            status=FindingStatus.OPEN,
-                            requires_human_review=True,
-                        )
-                    )
-
-            # C. Evaluate Do's and Don'ts rules
-            dos_donts = guideline_profile.get("dos_and_donts", [])
-            for rule in dos_donts:
-                if rule.get("type") in ["prohibited", "common_mistake"]:
-                    title_keywords = [w.lower() for w in rule.get("title", "").split() if len(w) > 4]
-                    if any(kw in content_text.lower() for kw in title_keywords):
-                        severity_str = rule.get("priority", "medium").lower()
-                        sev = FindingSeverity.MEDIUM
-                        if severity_str == "critical":
-                            sev = FindingSeverity.CRITICAL
-                        elif severity_str == "high":
-                            sev = FindingSeverity.HIGH
-
-                        all_findings.append(
-                            Finding(
-                                id=f"find_dodont_{rule.get('id', uuid.uuid4().hex[:8])}",
-                                category=FindingCategory.POLICY,
-                                severity=sev,
-                                title=f"Brand Policy Check: {rule.get('title')}",
-                                message=rule.get("description", "Violates published brand policy rules."),
-                                evidence=rule.get("title"),
-                                source_reference=SourceReference(
-                                    guideline_id=f"guideline_v{g_version}",
-                                    section="General Brand Do's and Don'ts",
-                                    rule_name=rule.get("title", "Governance Rule"),
-                                    verification_status=VerificationStatus.VERIFIED,
-                                ),
-                                confidence=0.90,
-                                status=FindingStatus.OPEN,
-                                requires_human_review=sev in [FindingSeverity.CRITICAL, FindingSeverity.HIGH],
-                            )
-                        )
-
-            # D. Evaluate Mandatory Compliance Requirements
-            compliance_rules = guideline_profile.get("compliance", [])
-            for comp in compliance_rules:
-                if comp.get("requirement_level") == "mandatory":
-                    rule_text = comp.get("rule_text", "")
-                    # If document is substantial (> 100 chars) and mentions claims, verify mandatory disclaimers
-                    if len(content_text) > 100 and "guarantee" in content_text.lower() and rule_text.lower() not in content_text.lower():
-                        all_findings.append(
-                            Finding(
-                                id=f"find_comp_req_{comp.get('id', uuid.uuid4().hex[:8])}",
-                                category=FindingCategory.CLAIM_VERIFICATION,
-                                severity=FindingSeverity.HIGH,
-                                title=f"Missing Mandatory Disclosure: {comp.get('title')}",
-                                message=f"Content makes assertions requiring the mandatory statement: '{rule_text}'.",
-                                evidence="Omitted disclaimer",
-                                source_reference=SourceReference(
-                                    guideline_id=f"guideline_v{g_version}",
-                                    section="Mandatory Compliance & Disclosures",
-                                    rule_name=comp.get("title", "Mandatory Disclaimer"),
-                                    verification_status=VerificationStatus.UNVERIFIED,
-                                ),
-                                confidence=0.92,
-                                suggested_correction=SuggestedCorrection(
-                                    replacement_text=rule_text,
-                                    rationale="Mandatory regulatory disclosure required by published brand guidelines.",
-                                ),
-                                status=FindingStatus.OPEN,
-                                requires_human_review=True,
-                            )
-                        )
-
-        # 6. Aggregate Findings & Calculate Scores
-        critical_count = sum(1 for f in all_findings if f.severity == FindingSeverity.CRITICAL)
-        high_count = sum(1 for f in all_findings if f.severity == FindingSeverity.HIGH)
-        medium_count = sum(1 for f in all_findings if f.severity == FindingSeverity.MEDIUM)
-        low_count = sum(1 for f in all_findings if f.severity == FindingSeverity.LOW)
-        info_count = sum(1 for f in all_findings if f.severity == FindingSeverity.INFO)
-
-        # Weighted penalty deduction from 100
-        penalty = (critical_count * 30.0) + (high_count * 15.0) + (medium_count * 8.0) + (low_count * 3.0)
-        compliance_score = max(0.0, round(100.0 - penalty, 1))
-
-        # Overall Status Determination
-        if critical_count > 0 or compliance_score < 60.0:
-            overall_status = OverallAuditStatus.NON_COMPLIANT
-        elif high_count > 0 or medium_count > 0 or compliance_score < 90.0:
-            overall_status = OverallAuditStatus.NEEDS_REVIEW
-        else:
-            overall_status = OverallAuditStatus.COMPLIANT
-
-        human_review_required = any(f.requires_human_review for f in all_findings) or overall_status != OverallAuditStatus.COMPLIANT
-
-        verdict_overview = cls._generate_verdict_overview(
-            overall_status=overall_status,
-            total=len(all_findings),
-            critical=critical_count,
-            high=high_count,
-            medium=medium_count,
-            guideline_version=g_version,
-        )
-
-        elapsed_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
-
-        summary = AuditSummary(
-            compliance_score=compliance_score,
-            total_findings=len(all_findings),
-            critical_count=critical_count,
-            high_count=high_count,
-            medium_count=medium_count,
-            low_count=low_count,
-            info_count=info_count,
-            human_review_required=human_review_required,
-            verdict_overview=verdict_overview,
-        )
-
-        engine_metadata = EngineMetadata(
-            engine_version=cls.ENGINE_VERSION,
-            execution_time_ms=elapsed_ms,
-            modules_executed=modules_executed,
-            models_used=["published_brand_rules_evaluator", "rule_engine_v1", "deterministic_tone_parser"],
-            warnings=[],
-        )
-
-        return AuditResult(
-            schema_version="1.0.0",
-            audit_id=str(uuid.uuid4()),
-            content_id=content_id,
+        # -------------------------------------------------------------
+        # Stages 1 & 2: Context Resolution & Audience Profiling
+        # -------------------------------------------------------------
+        modules_executed.append("context_resolver")
+        resolved_text, submission, target_revision, metadata = AuditContextResolver.resolve_target_content(
+            db=db,
+            submission_id=content_id,
             revision_id=revision_id,
-            overall_status=overall_status,
-            summary=summary,
-            findings=all_findings,
-            created_at=datetime.now(timezone.utc),
-            engine_metadata=engine_metadata,
+            provided_text=content_text,
+            provided_metadata={
+                "channel": channel or (context.get("channel") if context else "web"),
+                "target_audience": target_audience or (context.get("target_audience") if context else "enterprise"),
+                "jurisdiction": jurisdiction or (context.get("jurisdiction") if context else "Global"),
+                "product": product or (context.get("product") if context else "Inkloom AI"),
+                "content_type": media_type,
+            },
+        )
+        final_text = resolved_text or content_text
+        target_channel = metadata.get("channel", "web")
+        target_audience_val = metadata.get("target_audience", "enterprise")
+        target_jurisdiction = metadata.get("jurisdiction", "Global")
+
+        # -------------------------------------------------------------
+        # Stages 3, 4, 5: Evidence & Legal Source Retrieval
+        # -------------------------------------------------------------
+        modules_executed.append("evidence_retrieval")
+        brand_rules = EvidenceRetriever.retrieve_brand_rules(
+            db=db,
+            organization_id=organization_id,
+            content_text=final_text,
+            channel=target_channel,
+            jurisdiction=target_jurisdiction,
+            active_guidelines=active_guidelines,
+            guideline_version=g_version,
+            guideline_profile=guideline_profile,
         )
 
-    @staticmethod
-    def _generate_verdict_overview(
-        overall_status: OverallAuditStatus,
-        total: int,
-        critical: int,
-        high: int,
-        medium: int,
-        guideline_version: str = "1.0.0",
-    ) -> str:
-        if total == 0:
-            return f"Content successfully conforms to all verified brand guidelines (v{guideline_version}), terminology standards, and tone requirements."
-        parts = []
-        if critical > 0:
-            parts.append(f"{critical} critical policy violation(s)")
-        if high > 0:
-            parts.append(f"{high} high-severity issue(s)")
-        if medium > 0:
-            parts.append(f"{medium} moderate guideline divergence(s)")
+        verified_facts = EvidenceRetriever.retrieve_verified_facts(
+            db=db,
+            organization_id=organization_id,
+            query_text=final_text[:200] if final_text else None,
+        )
 
-        summary_clause = ", ".join(parts) if parts else f"{total} finding(s)"
-        return f"Evaluated against Brand Guidelines v{guideline_version}: identified {summary_clause}. Human reviewer validation recommended prior to external release."
+        legal_references = EvidenceRetriever.retrieve_legal_references(
+            db=db,
+            organization_id=organization_id,
+            jurisdiction=target_jurisdiction,
+        )
+
+        # -------------------------------------------------------------
+        # Stage 6: Deterministic Checks (Brand, Lexicon, Absolute Claims)
+        # -------------------------------------------------------------
+        modules_executed.append("deterministic_checker")
+        det_findings = DeterministicChecker.evaluate(
+            text=final_text,
+            guideline_version=g_version,
+            guideline_profile=guideline_profile,
+        )
+        raw_findings.extend(det_findings)
+
+        # -------------------------------------------------------------
+        # Stage 7: Semantic Analysis (Tone, Nuance, Prompt Injection)
+        # -------------------------------------------------------------
+        modules_executed.append("semantic_analyzer")
+        models_used.append("tone_analyzer_v1")
+        sem_findings, sem_warnings = SemanticAnalyzer.evaluate(
+            text=final_text,
+            rules=brand_rules,
+            facts=verified_facts,
+            legal_sources=legal_references,
+            llm_adapter=llm_adapter,
+            channel=target_channel,
+            target_audience=target_audience_val,
+        )
+        raw_findings.extend(sem_findings)
+        warnings.extend(sem_warnings)
+
+        # -------------------------------------------------------------
+        # Stage 8: Media & Visual Accessibility Checks (WCAG AA, Logo)
+        # -------------------------------------------------------------
+        modules_executed.append("media_evaluator")
+        target_file = file_path or (target_revision.file_path if target_revision else None)
+        media_findings = MediaAuditEvaluator.evaluate(
+            file_path=target_file,
+            media_type=media_type,
+            brand_palette=guideline_profile.get("colors", {}).get("primary_palette") if guideline_profile else None,
+            extraction_warnings=metadata.get("extraction_warnings"),
+        )
+        raw_findings.extend(media_findings)
+
+        # -------------------------------------------------------------
+        # Stage 9: Marketing Quality & Message Effectiveness
+        # -------------------------------------------------------------
+        modules_executed.append("marketing_quality_evaluator")
+        mkt_findings = MarketingQualityEvaluator.evaluate(
+            text=final_text,
+            channel=target_channel,
+            target_audience=target_audience_val,
+        )
+        raw_findings.extend(mkt_findings)
+
+        # -------------------------------------------------------------
+        # Stage 10: Cross-Rule Conflicts & Precedence Detection
+        # -------------------------------------------------------------
+        modules_executed.append("cross_rule_conflict_checker")
+        conflict_findings = CrossRuleConflictChecker.evaluate(
+            text=final_text,
+            rules=brand_rules,
+            legal_sources=legal_references,
+            findings_so_far=raw_findings,
+            guideline_profile=guideline_profile,
+        )
+        raw_findings.extend(conflict_findings)
+
+        # -------------------------------------------------------------
+        # Stage 11: Intelligent Correction Generation & Re-validation
+        # -------------------------------------------------------------
+        modules_executed.append("intelligent_corrector")
+        IntelligentCorrector.enhance_and_validate_corrections(
+            findings=raw_findings,
+            full_text=final_text,
+            channel=target_channel,
+        )
+
+        # -------------------------------------------------------------
+        # Stage 12: Result Validation, Deduplication & Report Persistence
+        # -------------------------------------------------------------
+        modules_executed.append("result_validator")
+        audit_result = AuditResultValidator.process_and_assemble(
+            raw_findings=raw_findings,
+            content_id=content_id,
+            revision_id=revision_id or (target_revision.id if target_revision else None),
+            modules_executed=modules_executed,
+            models_used=models_used,
+            warnings=warnings,
+            start_time=start_time,
+            guideline_version=g_version,
+            engine_version=cls.ENGINE_VERSION,
+        )
+
+        return audit_result

@@ -87,6 +87,7 @@ class ConflictDetector:
         """
         Detects conflicts between rules and legal requirements.
         Preserves both sources and formats escalation for human review.
+        Updates conflicting rules' applicability status to CONFLICTING_REQUIREMENTS.
         """
         conflicts: List[RuleConflictDetail] = []
 
@@ -99,6 +100,28 @@ class ConflictDetector:
             min_normal = contrast_rules.get("min_ratio_normal", 4.5)
 
             if min_normal < 4.5:
+                wcag_provenance = ProvenanceRecord(
+                    source_id="wcag_21_aa_sc_143",
+                    source_type=KnowledgeSourceType.OFFICIAL_GUIDANCE,
+                    title="W3C WCAG 2.1 AA Success Criterion 1.4.3 (Contrast Minimum)",
+                    authoritative_source="W3C Web Accessibility Initiative",
+                    source_reference="WCAG 2.1 SC 1.4.3",
+                    source_url="https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html",
+                    jurisdiction="Global",
+                    version="2.1",
+                    verification_status=VerificationStatus.VERIFIED,
+                    is_binding=True,
+                )
+                brand_draft_provenance = ProvenanceRecord(
+                    source_id="brand_palette_draft",
+                    source_type=KnowledgeSourceType.BRAND_RULE,
+                    title="Draft Brand Color Palette Specifications",
+                    authoritative_source="Brand Design Team",
+                    source_reference="Color Specifications Section",
+                    jurisdiction="Global",
+                    verification_status=VerificationStatus.UNVERIFIED,
+                    is_binding=False,
+                )
                 conflicts.append(
                     RuleConflictDetail(
                         conflict_id=f"conf_wcag_{uuid.uuid4().hex[:8]}",
@@ -116,50 +139,98 @@ class ConflictDetector:
                         ),
                         escalate_to_human=True,
                         remediation_suggestion="Increase minimum text contrast standard to at least 4.5:1.",
+                        higher_priority_provenance=wcag_provenance,
+                        lower_priority_provenance=brand_draft_provenance,
                     )
                 )
 
         # -------------------------------------------------------------
         # 2. Inter-Rule Priority Conflicts (Level 1/2 vs Level 3/4/5)
         # -------------------------------------------------------------
-        # Check for rules with opposing directives in the same category
         for i, rule_a in enumerate(rules):
             for rule_b in rules[i + 1 :]:
                 if rule_a.category != rule_b.category:
                     continue
 
-                # Check if one is legal mandatory and the other is lower priority brand rule
-                if rule_a.priority_level != rule_b.priority_level:
-                    higher, lower = (rule_a, rule_b) if rule_a.priority_level < rule_b.priority_level else (rule_b, rule_a)
-                    
-                    # Inspect forbidden vs allowed terminology or claim rules
-                    def_h = higher.rule_definition or {}
-                    def_l = lower.rule_definition or {}
+                def_a = rule_a.rule_definition or {}
+                def_b = rule_b.rule_definition or {}
 
-                    h_forbidden = set(def_h.get("forbidden_terms", []))
-                    l_preferred = set(def_l.get("preferred_terms", []) or def_l.get("words_to_use", []))
+                # Check for opposing terminology/phrasing rules
+                a_forbidden = set(def_a.get("forbidden_terms", []))
+                a_preferred = set(def_a.get("preferred_terms", []) or def_a.get("words_to_use", []))
+                b_forbidden = set(def_b.get("forbidden_terms", []))
+                b_preferred = set(def_b.get("preferred_terms", []) or def_b.get("words_to_use", []))
 
-                    overlap = h_forbidden.intersection(l_preferred)
-                    if overlap:
-                        conflicts.append(
-                            RuleConflictDetail(
-                                conflict_id=f"conf_term_{uuid.uuid4().hex[:8]}",
-                                higher_priority_rule=higher.rule_name,
-                                higher_priority_level=higher.priority_level,
-                                higher_priority_source=higher.provenance.title,
-                                lower_priority_rule=lower.rule_name,
-                                lower_priority_level=lower.priority_level,
-                                lower_priority_source=lower.provenance.title,
-                                category=higher.category,
-                                explanation=(
-                                    f"Higher priority rule '{higher.rule_name}' (Priority {higher.priority_level}) "
-                                    f"prohibits terms {list(overlap)}, but lower priority rule '{lower.rule_name}' "
-                                    f"(Priority {lower.priority_level}) marks them as preferred. "
-                                    "Higher priority requirement must be upheld."
-                                ),
-                                escalate_to_human=True,
-                                remediation_suggestion=f"Remove {list(overlap)} from preferred terms in {lower.rule_name}.",
-                            )
+                overlap_a_forbids_b = a_forbidden.intersection(b_preferred)
+                overlap_b_forbids_a = b_forbidden.intersection(a_preferred)
+
+                if overlap_a_forbids_b or overlap_b_forbids_a:
+                    if rule_a.priority_level <= rule_b.priority_level:
+                        higher, lower = rule_a, rule_b
+                        overlap = overlap_a_forbids_b or overlap_b_forbids_a
+                    else:
+                        higher, lower = rule_b, rule_a
+                        overlap = overlap_b_forbids_a or overlap_a_forbids_b
+
+                    # Flag lower priority rule applicability as conflicting
+                    lower.applicability = RuleApplicability.CONFLICTING_REQUIREMENTS
+                    lower.applicability_reason = (
+                        f"Conflicting requirement with higher priority rule '{higher.rule_name}' "
+                        f"(Priority {higher.priority_level}): prohibited vs preferred terms {list(overlap)}."
+                    )
+
+                    conflicts.append(
+                        RuleConflictDetail(
+                            conflict_id=f"conf_term_{uuid.uuid4().hex[:8]}",
+                            higher_priority_rule=higher.rule_name,
+                            higher_priority_level=higher.priority_level,
+                            higher_priority_source=higher.provenance.title,
+                            lower_priority_rule=lower.rule_name,
+                            lower_priority_level=lower.priority_level,
+                            lower_priority_source=lower.provenance.title,
+                            category=higher.category,
+                            explanation=(
+                                f"Higher priority rule '{higher.rule_name}' (Priority {higher.priority_level}) "
+                                f"prohibits terms {list(overlap)}, but lower priority rule '{lower.rule_name}' "
+                                f"(Priority {lower.priority_level}) marks them as preferred. "
+                                "Higher priority requirement must be upheld."
+                            ),
+                            escalate_to_human=True,
+                            remediation_suggestion=f"Remove {list(overlap)} from preferred terms in {lower.rule_name}.",
+                            higher_priority_provenance=higher.provenance,
+                            lower_priority_provenance=lower.provenance,
                         )
+                    )
+
+                # Check for mandatory disclosure conflict
+                a_disclosure = def_a.get("required_disclosure")
+                b_disallows_disclaimer = def_b.get("prohibit_disclaimers", False) or def_b.get("no_fine_print", False)
+
+                if a_disclosure and b_disallows_disclaimer:
+                    higher, lower = (rule_a, rule_b) if rule_a.priority_level <= rule_b.priority_level else (rule_b, rule_a)
+                    lower.applicability = RuleApplicability.CONFLICTING_REQUIREMENTS
+                    lower.applicability_reason = f"Statutory disclosure required by '{higher.rule_name}' cannot be omitted."
+
+                    conflicts.append(
+                        RuleConflictDetail(
+                            conflict_id=f"conf_disc_{uuid.uuid4().hex[:8]}",
+                            higher_priority_rule=higher.rule_name,
+                            higher_priority_level=higher.priority_level,
+                            higher_priority_source=higher.provenance.title,
+                            lower_priority_rule=lower.rule_name,
+                            lower_priority_level=lower.priority_level,
+                            lower_priority_source=lower.provenance.title,
+                            category="legal_compliance",
+                            explanation=(
+                                f"Mandatory legal rule '{higher.rule_name}' requires specific disclosure "
+                                f"('{a_disclosure}'), but lower priority rule '{lower.rule_name}' restricts disclaimers. "
+                                "Statutory consumer protection disclosures cannot be bypassed."
+                            ),
+                            escalate_to_human=True,
+                            remediation_suggestion=f"Incorporate required disclosure: '{a_disclosure}'.",
+                            higher_priority_provenance=higher.provenance,
+                            lower_priority_provenance=lower.provenance,
+                        )
+                    )
 
         return conflicts

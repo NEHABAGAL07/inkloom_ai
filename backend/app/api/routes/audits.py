@@ -89,6 +89,7 @@ def get_audit(
 
     findings_list = []
     for f in audit_run.findings:
+        details = getattr(f, "details", {}) or {}
         findings_list.append(
             Finding(
                 id=f.finding_id,
@@ -103,6 +104,15 @@ def get_audit(
                 status=f.status,
                 location=f.location,
                 requires_human_review=f.requires_human_review,
+                rule_reference=getattr(f, "rule_reference", None),
+                evidence_status=getattr(f, "evidence_status", None),
+                jurisdiction=getattr(f, "jurisdiction", None),
+                original_text=details.get("original_text", f.evidence),
+                explanation=details.get("explanation", f.message),
+                evidence_references=details.get("evidence_references", []),
+                correction_rationale=details.get("correction_rationale"),
+                limitations=details.get("limitations"),
+                alternative_punchlines=details.get("alternative_punchlines"),
             )
         )
 

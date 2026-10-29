@@ -3,6 +3,7 @@ Model Adapter Interface for External AI Providers & Grounded Q&A
 Supports Google Gemini REST API, deterministic offline fallback, and FallbackAdapter.
 Strictly adheres to multi-tenant isolation, prompt-injection defense, and privacy constraints.
 """
+import time
 import re
 import json
 import logging
@@ -20,6 +21,86 @@ class LLMAdapterError(Exception):
     pass
 
 
+class LLMUsageTracker:
+    """
+    Monitors request volume, error rates, token throughput, and estimated cost.
+    Configurable cost rates per 1k input/output tokens prevent hardcoded assumptions.
+    """
+    def __init__(
+        self,
+        cost_per_1k_input: float = 0.000125,
+        cost_per_1k_output: float = 0.000375,
+    ):
+        self.total_requests = 0
+        self.successful_requests = 0
+        self.failed_requests = 0
+        self.prompt_tokens_estimated = 0
+        self.completion_tokens_estimated = 0
+        self.total_latency_ms = 0.0
+        self.cost_per_1k_input = cost_per_1k_input
+        self.cost_per_1k_output = cost_per_1k_output
+
+    def record_request(
+        self,
+        prompt_len: int,
+        completion_len: int,
+        latency_ms: float,
+        success: bool = True,
+    ) -> None:
+        self.total_requests += 1
+        if success:
+            self.successful_requests += 1
+        else:
+            self.failed_requests += 1
+
+        prompt_tokens = max(1, prompt_len // 4)
+        completion_tokens = max(1, completion_len // 4) if completion_len > 0 else 0
+
+        self.prompt_tokens_estimated += prompt_tokens
+        self.completion_tokens_estimated += completion_tokens
+        self.total_latency_ms += latency_ms
+
+    def get_metrics(self) -> Dict[str, Any]:
+        avg_latency = (
+            (self.total_latency_ms / self.total_requests)
+            if self.total_requests > 0
+            else 0.0
+        )
+        input_cost = (self.prompt_tokens_estimated / 1000.0) * self.cost_per_1k_input
+        output_cost = (self.completion_tokens_estimated / 1000.0) * self.cost_per_1k_output
+        total_cost = input_cost + output_cost
+
+        return {
+            "total_requests": self.total_requests,
+            "successful_requests": self.successful_requests,
+            "failed_requests": self.failed_requests,
+            "error_rate": (
+                round(self.failed_requests / self.total_requests, 4)
+                if self.total_requests > 0
+                else 0.0
+            ),
+            "prompt_tokens_estimated": self.prompt_tokens_estimated,
+            "completion_tokens_estimated": self.completion_tokens_estimated,
+            "avg_latency_ms": round(avg_latency, 2),
+            "estimated_cost_usd": round(total_cost, 6),
+            "pricing_rates": {
+                "input_per_1k": self.cost_per_1k_input,
+                "output_per_1k": self.cost_per_1k_output,
+            },
+        }
+
+    def reset(self) -> None:
+        self.total_requests = 0
+        self.successful_requests = 0
+        self.failed_requests = 0
+        self.prompt_tokens_estimated = 0
+        self.completion_tokens_estimated = 0
+        self.total_latency_ms = 0.0
+
+
+global_usage_tracker = LLMUsageTracker()
+
+
 class BaseLLMAdapter(ABC):
     @abstractmethod
     def complete(
@@ -31,6 +112,22 @@ class BaseLLMAdapter(ABC):
     ) -> str:
         """Executes raw completion with system and user prompts."""
         pass
+
+    def generate_response(
+        self,
+        prompt: str,
+        system_instruction: str = "",
+        temperature: float = 0.2,
+        max_output_tokens: int = 1000,
+    ) -> str:
+        """Executes direct text or JSON generation with system instruction and temperature controls."""
+        json_mode = "json" in system_instruction.lower() or "{" in prompt
+        return self.complete(
+            system=system_instruction,
+            user=prompt,
+            max_tokens=max_output_tokens,
+            json_mode=json_mode,
+        )
 
     @abstractmethod
     def generate_explanation(self, rule_context: str, excerpt: str) -> str:
@@ -74,12 +171,39 @@ class OfflineRuleAdapter(BaseLLMAdapter):
         max_tokens: int = 600,
         json_mode: bool = False,
     ) -> str:
+        global_usage_tracker.record_request(
+            prompt_len=len(user) + len(system),
+            completion_len=60,
+            latency_ms=1.0,
+            success=True,
+        )
         if json_mode:
             return json.dumps({
                 "answer": "I couldn't find this in your uploaded documents.",
                 "used_passage_ids": [],
             })
         return "Deterministic offline completion."
+
+    def generate_response(
+        self,
+        prompt: str,
+        system_instruction: str = "",
+        temperature: float = 0.2,
+        max_output_tokens: int = 1000,
+    ) -> str:
+        global_usage_tracker.record_request(
+            prompt_len=len(prompt) + len(system_instruction),
+            completion_len=80,
+            latency_ms=1.2,
+            success=True,
+        )
+        if "claims" in prompt.lower() or "{" in prompt or "json" in system_instruction.lower():
+            return json.dumps({
+                "claims": [],
+                "revisions": [],
+                "summary": "Deterministic offline rule analysis evaluated content against stored policy guidelines."
+            })
+        return "Deterministic offline analysis: Content evaluated against brand compliance policies."
 
     def generate_explanation(self, rule_context: str, excerpt: str) -> str:
         return f"Violation detected: Excerpt '{excerpt}' conflicts with established rule: {rule_context}."
@@ -184,45 +308,129 @@ class GeminiAdapter(BaseLLMAdapter):
         if json_mode:
             payload["generationConfig"]["responseMimeType"] = "application/json"
 
-        try:
-            if self.client is not None:
-                res = self.client.post(url, headers=headers, json=payload, timeout=self.timeout)
-            else:
-                with httpx.Client(timeout=self.timeout) as http_client:
-                    res = http_client.post(url, headers=headers, json=payload)
-        except httpx.TimeoutException as exc:
-            raise LLMAdapterError(f"Gemini API request timed out after {self.timeout}s") from exc
-        except httpx.HTTPError as exc:
-            raise LLMAdapterError(f"Gemini API HTTP transport error: {type(exc).__name__}") from exc
+        start_time = time.perf_counter()
+        res = None
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            try:
+                if self.client is not None:
+                    res = self.client.post(url, headers=headers, json=payload, timeout=self.timeout)
+                else:
+                    with httpx.Client(timeout=self.timeout) as http_client:
+                        res = http_client.post(url, headers=headers, json=payload)
 
-        if res.status_code != 200:
-            raise LLMAdapterError(f"Gemini API returned HTTP status {res.status_code}")
+                if res.status_code in (429, 502, 503, 504) and attempt < max_retries:
+                    time.sleep(0.5 * (2 ** attempt))
+                    continue
+                break
+            except (httpx.TimeoutException, httpx.HTTPError) as exc:
+                if attempt < max_retries:
+                    time.sleep(0.5 * (2 ** attempt))
+                    continue
+                latency_ms = (time.perf_counter() - start_time) * 1000.0
+                global_usage_tracker.record_request(
+                    prompt_len=len(user) + len(system),
+                    completion_len=0,
+                    latency_ms=latency_ms,
+                    success=False,
+                )
+                if isinstance(exc, httpx.TimeoutException):
+                    raise LLMAdapterError(f"Gemini API request timed out after {self.timeout}s") from exc
+                raise LLMAdapterError(f"Gemini API HTTP transport error: {type(exc).__name__}") from exc
+
+        latency_ms = (time.perf_counter() - start_time) * 1000.0
+        if res is None or res.status_code != 200:
+            status_code = res.status_code if res else "unknown"
+            global_usage_tracker.record_request(
+                prompt_len=len(user) + len(system),
+                completion_len=0,
+                latency_ms=latency_ms,
+                success=False,
+            )
+            raise LLMAdapterError(f"Gemini API returned HTTP status {status_code}")
 
         try:
             data = res.json()
         except Exception as exc:
+            global_usage_tracker.record_request(
+                prompt_len=len(user) + len(system),
+                completion_len=0,
+                latency_ms=latency_ms,
+                success=False,
+            )
             raise LLMAdapterError("Gemini response is not valid JSON") from exc
 
         candidates = data.get("candidates") or []
         if not candidates:
             block_reason = data.get("promptFeedback", {}).get("blockReason")
+            global_usage_tracker.record_request(
+                prompt_len=len(user) + len(system),
+                completion_len=0,
+                latency_ms=latency_ms,
+                success=False,
+            )
             raise LLMAdapterError(f"Gemini returned empty candidates (blockReason: {block_reason})")
 
         candidate = candidates[0]
         finish_reason = candidate.get("finishReason")
         if finish_reason != "STOP":
+            global_usage_tracker.record_request(
+                prompt_len=len(user) + len(system),
+                completion_len=0,
+                latency_ms=latency_ms,
+                success=False,
+            )
             raise LLMAdapterError(f"Gemini response ended with finishReason: {finish_reason}")
 
         content = candidate.get("content") or {}
         parts = content.get("parts") or []
         if not parts:
+            global_usage_tracker.record_request(
+                prompt_len=len(user) + len(system),
+                completion_len=0,
+                latency_ms=latency_ms,
+                success=False,
+            )
             raise LLMAdapterError("Gemini candidate content contains no parts")
 
         text = parts[0].get("text", "").strip()
         if not text:
+            global_usage_tracker.record_request(
+                prompt_len=len(user) + len(system),
+                completion_len=0,
+                latency_ms=latency_ms,
+                success=False,
+            )
             raise LLMAdapterError("Gemini returned empty text content")
 
+        global_usage_tracker.record_request(
+            prompt_len=len(user) + len(system),
+            completion_len=len(text),
+            latency_ms=latency_ms,
+            success=True,
+        )
         return text
+
+    def generate_response(
+        self,
+        prompt: str,
+        system_instruction: str = "",
+        temperature: float = 0.2,
+        max_output_tokens: int = 1000,
+    ) -> str:
+        # Prompt injection protection: sanitize instruction boundary tags
+        sanitized_prompt = (
+            prompt.replace("<system_instruction>", "")
+            .replace("</system_instruction>", "")
+            .replace("=== USER CONTENT ===", "")
+        )
+        json_mode = "json" in system_instruction.lower() or "{" in prompt
+        return self.complete(
+            system=system_instruction,
+            user=sanitized_prompt,
+            max_tokens=max_output_tokens,
+            json_mode=json_mode,
+        )
 
     def generate_explanation(self, rule_context: str, excerpt: str) -> str:
         system = "You are an enterprise brand compliance auditor. Explain concisely why the excerpt violates the rule."
@@ -397,6 +605,29 @@ class FallbackAdapter(BaseLLMAdapter):
             logger.warning("Primary LLM completion failed (%s); falling back to offline adapter.", type(exc).__name__)
             return self.fallback.complete(system, user, max_tokens=max_tokens, json_mode=json_mode)
 
+    def generate_response(
+        self,
+        prompt: str,
+        system_instruction: str = "",
+        temperature: float = 0.2,
+        max_output_tokens: int = 1000,
+    ) -> str:
+        try:
+            return self.primary.generate_response(
+                prompt=prompt,
+                system_instruction=system_instruction,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+            )
+        except Exception as exc:
+            logger.warning("Primary LLM generate_response failed (%s); falling back to offline adapter.", type(exc).__name__)
+            return self.fallback.generate_response(
+                prompt=prompt,
+                system_instruction=system_instruction,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+            )
+
     def generate_explanation(self, rule_context: str, excerpt: str) -> str:
         try:
             return self.primary.generate_explanation(rule_context, excerpt)
@@ -442,6 +673,20 @@ class ExternalLLMAdapter(BaseLLMAdapter):
         json_mode: bool = False,
     ) -> str:
         return self.offline_fallback.complete(system, user, max_tokens, json_mode)
+
+    def generate_response(
+        self,
+        prompt: str,
+        system_instruction: str = "",
+        temperature: float = 0.2,
+        max_output_tokens: int = 1000,
+    ) -> str:
+        return self.offline_fallback.generate_response(
+            prompt=prompt,
+            system_instruction=system_instruction,
+            temperature=temperature,
+            max_output_tokens=max_output_tokens,
+        )
 
     def generate_explanation(self, rule_context: str, excerpt: str) -> str:
         return f"AI Analysis ({self.model_name}): Content segment violates brand policy '{rule_context}'."

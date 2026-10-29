@@ -52,6 +52,13 @@ class SharedIntelligenceService:
         Assembles unified, typed SharedAIContext for AI capabilities.
         Enforces tenant isolation, role authorization, and prompt containment.
         """
+        # Check permission to generate AI context
+        if not auth_context.has_permission(Permission.GENERATE_AI_CONTEXT):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Missing required permission 'generate_ai_context'.",
+            )
+
         org_id = auth_context.organization_id
         org = db.query(Organization).filter(Organization.id == org_id).first()
         if not org:
@@ -124,7 +131,13 @@ class SharedIntelligenceService:
             industry=industry,
         )
 
-        # 6. Retrieve Content Version & History (if submission_id provided)
+        # 6. Retrieve Brand Assets
+        brand_assets = KnowledgeRetriever.retrieve_brand_assets(
+            db=db,
+            organization_id=org_id,
+        )
+
+        # 7. Retrieve Content Version & History (if submission_id provided)
         content_version = None
         previous_findings = []
         reviewer_decisions = []
@@ -140,13 +153,13 @@ class SharedIntelligenceService:
             if not content_text and content_version and content_version.raw_text:
                 content_text = content_version.raw_text
 
-        # 7. Evaluate Rule & Statutory Conflicts
+        # 8. Evaluate Rule & Statutory Conflicts
         conflicts = ConflictDetector.detect_conflicts(
             rules=applicable_rules,
             legal_sources=legal_sources,
         )
 
-        # 8. Wrap User Content in Untrusted Container (Prompt Injection Neutralization)
+        # 9. Wrap User Content in Untrusted Container (Prompt Injection Neutralization)
         untrusted_container = None
         if content_text:
             untrusted_container = UntrustedContentContainer.wrap_untrusted_content(
@@ -162,6 +175,7 @@ class SharedIntelligenceService:
             applicable_rules=applicable_rules,
             verified_facts=verified_facts,
             legal_sources=legal_sources,
+            brand_assets=brand_assets,
             previous_findings=previous_findings,
             reviewer_decisions=reviewer_decisions,
             conflicts_detected=conflicts,
@@ -178,10 +192,10 @@ class SharedIntelligenceService:
         Creates a new knowledge item with provenance metadata.
         Strictly enforces tenant isolation and authorized role access.
         """
-        if not auth_context.has_role(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER):
+        if not auth_context.has_permission(Permission.MANAGE_KNOWLEDGE):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only Organization Admins and Compliance Officers may register knowledge items.",
+                detail="Access denied: Registering knowledge items requires MANAGE_KNOWLEDGE permission.",
             )
 
         # Principle: Never mark verified without explicit human certification
@@ -190,6 +204,8 @@ class SharedIntelligenceService:
         if payload.verification_status == VerificationStatus.VERIFIED:
             verified_by = auth_context.email or auth_context.user_id
             verified_at = datetime.now(timezone.utc)
+
+        responsible_owner = payload.responsible_owner or auth_context.email or auth_context.user_id
 
         item = KnowledgeItem(
             organization_id=auth_context.organization_id,
@@ -212,6 +228,7 @@ class SharedIntelligenceService:
             rule_type=payload.rule_type.value,
             priority_level=payload.priority_level,
             authoritative_source=payload.authoritative_source,
+            responsible_owner=responsible_owner,
             verified_by=verified_by,
             verified_at=verified_at,
             is_active=payload.is_active,
@@ -234,6 +251,7 @@ class SharedIntelligenceService:
                 "category": item.category,
                 "priority_level": item.priority_level,
                 "verification_status": item.verification_status,
+                "responsible_owner": item.responsible_owner,
             },
         )
         db.add(event)
@@ -253,10 +271,10 @@ class SharedIntelligenceService:
         Updates human verification status for an existing knowledge item.
         Requires Compliance Officer or Admin authorization.
         """
-        if not auth_context.has_role(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER):
+        if not auth_context.has_permission(Permission.VERIFY_KNOWLEDGE):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Verification requires Compliance Officer or Organization Admin authority.",
+                detail="Verification requires VERIFY_KNOWLEDGE authority.",
             )
 
         item = (
@@ -310,10 +328,10 @@ class SharedIntelligenceService:
         payload: KnowledgeItemUpdate,
     ) -> KnowledgeItem:
         """Updates a knowledge item preserving tenant boundaries and audit logs."""
-        if not auth_context.has_role(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER):
+        if not auth_context.has_permission(Permission.MANAGE_KNOWLEDGE):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Editing knowledge items requires Admin or Compliance Officer role.",
+                detail="Editing knowledge items requires MANAGE_KNOWLEDGE permission.",
             )
 
         item = (
@@ -331,10 +349,24 @@ class SharedIntelligenceService:
             )
 
         update_dict = payload.model_dump(exclude_unset=True)
+        updated_fields = list(update_dict.keys())
         for key, value in update_dict.items():
             if hasattr(item, key):
                 setattr(item, key, value.value if hasattr(value, "value") else value)
 
+        # Audit Event Log
+        event = AuditEvent(
+            organization_id=auth_context.organization_id,
+            actor_id=auth_context.user_id,
+            entity_type="knowledge_item",
+            entity_id=item.id,
+            event_type="knowledge_updated",
+            details={
+                "title": item.title,
+                "updated_fields": updated_fields,
+            },
+        )
+        db.add(event)
         db.commit()
         db.refresh(item)
         return item
@@ -347,10 +379,10 @@ class SharedIntelligenceService:
         item_id: str,
     ) -> bool:
         """Deletes a knowledge item, recording an audit event."""
-        if not auth_context.has_role(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER):
+        if not auth_context.has_permission(Permission.MANAGE_KNOWLEDGE):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Deleting knowledge items requires Admin or Compliance Officer role.",
+                detail="Deleting knowledge items requires MANAGE_KNOWLEDGE permission.",
             )
 
         item = (

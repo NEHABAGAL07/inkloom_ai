@@ -24,6 +24,15 @@ from app.schemas.chat import (
     ChatStatusResponse,
 )
 from app.services.document_intelligence.retrieval import DocumentRetrievalService
+from app.services.shared_intelligence.retrieval import KnowledgeRetriever
+from app.services.shared_intelligence.orchestration import SharedIntelligenceEngine
+from app.schemas.orchestration import (
+    CopilotType,
+    CopilotRequest,
+    CopilotResponse,
+    CopilotFeedbackCreate,
+    CopilotFeedbackResponse,
+)
 from app.services.ai_audit.llm_adapter import get_llm_adapter
 
 router = APIRouter(prefix="/chat", tags=["Brand Guideline Assistant"])
@@ -391,3 +400,79 @@ def submit_message_feedback(
     }
     db.commit()
     return {"status": "success", "message_id": message_id, "feedback": msg.feedback}
+
+
+@router.post("/orchestrate", response_model=CopilotResponse)
+def orchestrate_copilot(
+    payload: CopilotRequest,
+    auth_context: AuthContext = Depends(get_current_auth_context),
+    db: Session = Depends(get_db),
+):
+    """
+    Intelligent Copilot Orchestration endpoint.
+    Supports Brand Assistant, Marketing Copilot, Designer Copilot, and Legal Copilot
+    with intent decomposition, multi-tool execution, conversational continuity,
+    consequential action gates, and truthful observability.
+    """
+    _check_rate_limit(auth_context.user_id)
+    return SharedIntelligenceEngine.orchestrate(
+        db=db,
+        auth_context=auth_context,
+        request=payload,
+    )
+
+
+@router.post("/feedback", response_model=CopilotFeedbackResponse)
+def record_copilot_feedback(
+    payload: CopilotFeedbackCreate,
+    auth_context: AuthContext = Depends(get_current_auth_context),
+    db: Session = Depends(get_db),
+):
+    """
+    Records reviewable user feedback on copilot responses.
+    Captures rating category (solved_task, generic_or_irrelevant, missed_context,
+    unsupported_claim, suggestion_needs_improvement, tool_failed), comments, and tenant ID.
+    """
+    msg = db.query(ChatMessage).filter(ChatMessage.id == payload.message_id).first()
+    if not msg:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found.",
+        )
+
+    session = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.id == payload.session_id,
+            ChatSession.organization_id == auth_context.organization_id,
+            ChatSession.user_id == auth_context.user_id,
+        )
+        .first()
+    )
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to session.",
+        )
+
+    feedback_dict = {
+        "helpful": payload.helpful,
+        "rating_category": payload.rating_category.value if payload.rating_category else None,
+        "comment": payload.comment,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "user_id": auth_context.user_id,
+    }
+    msg.feedback = feedback_dict
+    db.commit()
+
+    return CopilotFeedbackResponse(
+        id=msg.id,
+        organization_id=auth_context.organization_id,
+        user_id=auth_context.user_id,
+        session_id=session.id,
+        message_id=msg.id,
+        helpful=payload.helpful,
+        rating_category=feedback_dict["rating_category"],
+        comment=payload.comment,
+        created_at=datetime.now(timezone.utc),
+    )

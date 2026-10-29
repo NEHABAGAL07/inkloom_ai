@@ -24,6 +24,7 @@ class UserRole(str, Enum):
     ADMIN = "admin"  # Manager / Organization Admin
     DESIGNER = "designer"  # Designer / Creative Asset Manager
     COMPLIANCE_OFFICER = "compliance_officer"  # Legal / Compliance Reviewer
+    LEGAL = "legal"  # In-House Legal Counsel / Compliance Officer
     MARKETING = "marketing"  # Marketing Content Creator
     # Backwards compatibility
     REVIEWER = "reviewer"
@@ -66,6 +67,23 @@ ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
         Permission.GENERATE_AI_CONTEXT,
     },
     UserRole.COMPLIANCE_OFFICER: {
+        Permission.VIEW_ACTIVE_GUIDELINES,
+        Permission.CREATE_BRAND_DRAFTS,
+        Permission.EDIT_BRAND_RULES,
+        Permission.PROPOSE_LEGAL_RULES,
+        Permission.REVIEW_LEGAL_CHANGES,
+        Permission.APPROVE_LEGAL_CHANGES,
+        Permission.PUBLISH_GUIDELINES,
+        Permission.VIEW_AUDIT_HISTORY,
+        Permission.CONFIGURE_HUMAN_REVIEW,
+        Permission.AUDIT_CONTENT,
+        Permission.APPROVE_CONTENT_PUBLICATION,
+        Permission.VIEW_KNOWLEDGE,
+        Permission.MANAGE_KNOWLEDGE,
+        Permission.VERIFY_KNOWLEDGE,
+        Permission.GENERATE_AI_CONTEXT,
+    },
+    UserRole.LEGAL: {
         Permission.VIEW_ACTIVE_GUIDELINES,
         Permission.CREATE_BRAND_DRAFTS,
         Permission.EDIT_BRAND_RULES,

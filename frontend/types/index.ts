@@ -237,12 +237,17 @@ export interface BrandComplianceRule {
 export interface BrandAssetItem {
   id: string;
   name: string;
-  type: "logo" | "photo" | "illustration" | "template" | "reference_design" | "video" | "product_image" | "document";
-  file_url: string;
-  description: string;
+  organization_id?: string;
+  type?: "logo" | "photo" | "illustration" | "template" | "reference_design" | "video" | "product_image" | "document" | string;
+  asset_type?: string;
+  file_url?: string;
+  file_path?: string | null;
+  description?: string;
   usage_restrictions?: string;
   campaign?: string;
-  approval_status: "approved" | "pending" | "deprecated";
+  specifications?: Record<string, any>;
+  approval_status?: "approved" | "pending" | "deprecated" | "restricted" | "expired" | "pending_review" | string;
+  is_active?: boolean;
 }
 
 export interface PlatformPlacementSpec {
@@ -638,3 +643,682 @@ export interface DocumentListResponse {
   total: number;
 }
 
+export type MarketingContentType =
+  | "caption"
+  | "headline"
+  | "punchline"
+  | "slogan"
+  | "cta"
+  | "product_description"
+  | "campaign_concept"
+  | "audience_variation"
+  | "short_copy"
+  | "long_copy"
+  | "rewrite"
+  | "copy_improvement";
+
+export type MarketingChannel = "instagram" | "linkedin" | "website" | "email" | "ad" | "print" | "general";
+export type DesiredLength = "short" | "medium" | "long";
+
+export interface CampaignBriefRequest {
+  product?: string;
+  campaign_objective?: string;
+  target_audience?: string;
+  channel?: MarketingChannel;
+  preferred_tone?: string;
+  desired_length?: DesiredLength;
+  call_to_action?: string;
+  context_constraints?: string;
+  supporting_references?: string;
+  content_type?: MarketingContentType;
+  existing_content?: string;
+  num_alternatives?: number;
+}
+
+export interface MarketingAlternative {
+  id: string;
+  content_type: string;
+  text: string;
+  creative_rationale: string;
+  target_channel: string;
+  target_audience: string;
+  brand_tone_alignment: string;
+  assumptions: string[];
+  missing_facts: string[];
+  compliance_warnings: string[];
+  audit_completed: boolean;
+  human_approved: boolean;
+}
+
+export interface BrandContextSummary {
+  applicable_rule_names: string[];
+  verified_claim_keys: string[];
+  required_disclosures: string[];
+  unverified_requested_claims: string[];
+  jurisdiction: string;
+  knowledge_available: boolean;
+  limited_mode: boolean;
+  limited_mode_reason?: string | null;
+}
+
+export interface MarketingGenerationResponse {
+  generation_id: string;
+  created_at: string;
+  brief: CampaignBriefRequest;
+  alternatives: MarketingAlternative[];
+  brand_context: BrandContextSummary;
+  model_version: string;
+  prompt_version: string;
+  notice: string;
+}
+
+export interface SaveDraftRequest {
+  title: string;
+  text: string;
+  content_type?: string;
+  channel?: string;
+  target_audience?: string;
+  campaign_objective?: string;
+  generation_id?: string;
+  alternative_id?: string;
+  media_metadata?: Record<string, any>;
+}
+
+export interface UpdateDraftRevisionRequest {
+  text: string;
+  change_summary?: string;
+  media_metadata?: Record<string, any>;
+}
+
+export interface DraftDetailResponse {
+  id: string;
+  organization_id: string;
+  creator_id?: string;
+  title: string;
+  description?: string;
+  content_type: string;
+  status: string;
+  current_revision_id?: string;
+  current_text?: string;
+  version_number: number;
+  created_at: string;
+  updated_at: string;
+  revisions: Array<{
+    id: string;
+    version_number: number;
+    raw_text?: string;
+    created_at?: string;
+    media_metadata?: Record<string, any>;
+  }>;
+  latest_audit?: {
+    audit_id: string;
+    revision_id?: string;
+    overall_status: string;
+    summary: Record<string, any>;
+    findings_count: number;
+    created_at?: string;
+  } | null;
+}
+
+// ==========================================
+// Phase 4: Designer Copilot Types
+// ==========================================
+export type CreativeFormat =
+  | "social_post"
+  | "banner"
+  | "poster"
+  | "ad"
+  | "landing_page_visual"
+  | "presentation"
+  | "infographic"
+  | "email_header"
+  | "collateral";
+
+export type DesignPlacementChannel =
+  | "instagram"
+  | "linkedin"
+  | "website"
+  | "email"
+  | "ad"
+  | "print"
+  | "presentation"
+  | "general";
+
+export type DesignAspectRatio =
+  | "1:1"
+  | "16:9"
+  | "9:16"
+  | "4:5"
+  | "1.91:1"
+  | "728:90"
+  | "300:250"
+  | "custom";
+
+export type AssetApprovalStatus = "approved" | "restricted" | "expired" | "pending_review";
+
+export interface CreativeBriefRequest {
+  project_name?: string;
+  product?: string;
+  design_objective?: string;
+  target_audience?: string;
+  channel?: DesignPlacementChannel;
+  creative_format?: CreativeFormat;
+  visual_style_tone?: string;
+  brand_requirements?: string;
+  required_copy?: string;
+  call_to_action?: string;
+  aspect_ratio?: DesignAspectRatio;
+  custom_dimensions?: string;
+  selected_asset_ids?: string[];
+  reference_notes?: string;
+  num_concepts?: number;
+}
+
+export interface ColorTokenRecommendation {
+  name: string;
+  hex: string;
+  role: string;
+  usage_guidance: string;
+  contrast_ratio_notes?: string | null;
+}
+
+export interface TypographyRecommendation {
+  font_family: string;
+  weight: string;
+  role: string;
+  size_guidance: string;
+}
+
+export interface DesignConceptAlternative {
+  id: string;
+  concept_name: string;
+  creative_objective_rationale: string;
+  visual_direction_composition: string;
+  suggested_layout_hierarchy: string;
+  color_palette_tokens: ColorTokenRecommendation[];
+  typography_recommendations: TypographyRecommendation[];
+  imagery_illustration_direction: string;
+  logo_asset_placement: string;
+  headline_copy_suggestion: string;
+  supporting_copy_suggestion?: string | null;
+  call_to_action_placement: string;
+  channel_specific_considerations: string;
+  accessibility_considerations: string;
+  relevant_brand_rules: string[];
+  assumptions: string[];
+  missing_information: string[];
+  warnings: string[];
+  is_ai_generated: boolean;
+  is_approved: boolean;
+  audit_completed: boolean;
+}
+
+export interface DesignConceptGenerationResponse {
+  generation_id: string;
+  created_at: string;
+  brief: CreativeBriefRequest;
+  concepts: DesignConceptAlternative[];
+  brand_assets_used: BrandAssetItem[];
+  brand_rules_applied: string[];
+  model_version: string;
+  notice: string;
+}
+
+export interface SaveCreativeBriefDraftRequest {
+  project_name: string;
+  brief: CreativeBriefRequest;
+  selected_concept_id?: string;
+  selected_concept_data?: Record<string, any>;
+  initial_image_url?: string;
+}
+
+export interface DesignRevisionItem {
+  id: string;
+  version_number: number;
+  file_name?: string | null;
+  file_path?: string | null;
+  raw_text?: string | null;
+  created_at?: string | null;
+  media_metadata: Record<string, any>;
+}
+
+export interface DesignDraftDetailResponse {
+  id: string;
+  organization_id: string;
+  creator_id?: string;
+  title: string;
+  description?: string;
+  content_type: string;
+  status: string;
+  current_revision_id?: string;
+  current_file_path?: string | null;
+  current_file_name?: string | null;
+  version_number: number;
+  brief?: Record<string, any> | null;
+  selected_concept?: Record<string, any> | null;
+  created_at: string;
+  updated_at: string;
+  revisions: DesignRevisionItem[];
+  latest_audit?: {
+    audit_id: string;
+    revision_id?: string;
+    overall_status: string;
+    summary: Record<string, any>;
+    findings_count: number;
+    created_at?: string;
+  } | null;
+}
+
+// ==========================================
+// Phase 5: Legal Copilot Types
+// ==========================================
+export type LegalAuthorityLevel =
+  | "binding_law"
+  | "official_guidance"
+  | "enforcement_material"
+  | "internal_policy"
+  | "commentary"
+  | "best_practice";
+
+export type EvidenceVerificationStatus =
+  | "supported"
+  | "contradicted"
+  | "insufficient_evidence"
+  | "not_checked"
+  | "conflicting_sources";
+
+export type LegalFindingCategory =
+  | "unsupported_performance"
+  | "absolute_guarantee"
+  | "misleading_comparison"
+  | "unsubstantiated_statistic"
+  | "inadequate_disclosure"
+  | "endorsement_testimonial"
+  | "environmental_claim"
+  | "pricing_promotional"
+  | "sensitive_regulated"
+  | "product_fact_conflict"
+  | "visual_disclaimer_mismatch"
+  | "ai_transparency_disclosure";
+
+export type TargetJurisdiction = "Global" | "US" | "US-CA" | "EU" | "UK" | "CA" | "AU";
+
+export type RegulatedProductCategory =
+  | "b2b_enterprise_saas"
+  | "financial_services"
+  | "healthcare_life_sciences"
+  | "consumer_tech_ai"
+  | "general_commercial";
+
+export interface AuthoritativeLegalSource {
+  source_id: string;
+  title: string;
+  issuing_authority: string;
+  jurisdiction: string;
+  authority_level: LegalAuthorityLevel;
+  citation: string;
+  publication_or_effective_date?: string | null;
+  section_or_provision?: string | null;
+  source_url?: string | null;
+  retrieval_timestamp: string;
+  excerpt: string;
+  is_binding: boolean;
+}
+
+export interface LegalClaimReviewItem {
+  id: string;
+  claim_text: string;
+  location?: string | null;
+  category: LegalFindingCategory;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  issue_explanation: string;
+  applicable_jurisdiction: string;
+  supporting_citations: AuthoritativeLegalSource[];
+  evidence_status: EvidenceVerificationStatus;
+  confidence: number;
+  suggested_correction?: string | null;
+  question_for_content_owner?: string | null;
+  requires_qualified_legal_review: boolean;
+  uncertainty_or_limitation?: string | null;
+}
+
+export interface ConservativeRevisionSuggestion {
+  id: string;
+  original_text: string;
+  proposed_text: string;
+  material_change_explanation: string;
+  supporting_evidence_rationale: string;
+  remaining_assumptions: string[];
+  is_ai_generated: boolean;
+  is_approved: boolean;
+}
+
+export interface LegalReviewRequest {
+  title?: string;
+  content_text: string;
+  submission_id?: string;
+  revision_id?: string;
+  product_name?: string;
+  intended_audience?: string;
+  target_jurisdiction?: TargetJurisdiction;
+  marketing_channel?: string;
+  regulated_category?: RegulatedProductCategory;
+  campaign_objective?: string;
+  known_product_claims?: string[];
+  supporting_evidence_notes?: string;
+  specific_legal_questions?: string[];
+}
+
+export interface LegalReviewReport {
+  report_id: string;
+  review_id: string;
+  created_at: string;
+  submission_id?: string | null;
+  revision_id?: string | null;
+  executive_summary: string;
+  overall_risk_verdict: string;
+  compliance_score: number;
+  campaign_context: {
+    product_name?: string;
+    intended_audience?: string;
+    marketing_channel?: string;
+    regulated_category?: string;
+    campaign_objective?: string;
+    content_word_count?: number;
+    [key: string]: any;
+  };
+  jurisdictions_and_assumptions: {
+    target_jurisdiction: string;
+    statutory_scope: string[];
+    assumptions_made: string[];
+    uncertainties: string[];
+    [key: string]: any;
+  };
+  high_priority_risks: string[];
+  claims_analysis: LegalClaimReviewItem[];
+  authoritative_sources_register: AuthoritativeLegalSource[];
+  suggested_wording_revisions: ConservativeRevisionSuggestion[];
+  missing_evidence_and_questions: string[];
+  items_requiring_human_legal_counsel: string[];
+  limitations_and_disclaimers: string;
+  review_date: string;
+}
+
+export interface ApplyRevisionRequest {
+  revision_suggestion_id: string;
+  updated_text: string;
+  change_summary?: string;
+}
+
+export interface RecordLegalFeedbackRequest {
+  action: "approve" | "reject" | "request_changes";
+  comments?: string;
+  conditions_or_stipulations?: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6: Unified Campaign Workflow, Policy & Orchestration Types
+// ---------------------------------------------------------------------------
+
+export type CampaignStatus =
+  | "draft"
+  | "in_progress"
+  | "ai_review_pending"
+  | "ai_review_in_progress"
+  | "human_review_pending"
+  | "changes_requested"
+  | "re_review_pending"
+  | "approved"
+  | "rejected"
+  | "archived";
+
+export type CampaignPriority = "low" | "medium" | "high" | "urgent";
+
+export type CampaignReviewTrackStatus =
+  | "not_required"
+  | "pending"
+  | "running"
+  | "completed"
+  | "completed_with_warnings"
+  | "failed"
+  | "needs_human_review";
+
+export interface ReviewTrackResult {
+  track_name: string;
+  status: CampaignReviewTrackStatus;
+  score?: number | null;
+  findings_count: number;
+  critical_findings_count: number;
+  last_run_at?: string | null;
+  reviewed_version?: number | null;
+  reviewed_revision_id?: string | null;
+  summary_message?: string;
+  details?: Record<string, any>;
+}
+
+export interface CampaignReadinessEvaluation {
+  campaign_id: string;
+  workflow_state: string;
+  ai_checks_completed: boolean;
+  human_review_completed: boolean;
+  required_approvals_completed: boolean;
+  outstanding_blockers: string[];
+  review_tracks: Record<string, ReviewTrackResult>;
+  is_ready_for_release: boolean;
+  compliance_disclaimer: string;
+}
+
+export interface CampaignPolicyConfig {
+  required_reviews?: string[];
+  require_legal_signoff?: boolean;
+  require_visual_signoff?: boolean;
+  strict_jurisdiction_mode?: boolean;
+  allowed_channels?: string[];
+  [key: string]: any;
+}
+
+export interface Campaign {
+  id: string;
+  organization_id: string;
+  name: string;
+  description?: string | null;
+  campaign_objective?: string | null;
+  target_audience?: string | null;
+  product_name?: string | null;
+  target_channel?: string | null;
+  target_jurisdiction?: string | null;
+  regulated_category?: string | null;
+  priority: CampaignPriority;
+  deadline?: string | null;
+  owner_id?: string | null;
+  assigned_reviewer_id?: string | null;
+  status: CampaignStatus;
+  version: number;
+  creative_brief?: string | null;
+  policy_config?: CampaignPolicyConfig;
+  campaign_metadata?: Record<string, any>;
+  submissions?: ContentSubmission[];
+  review_tracks?: Record<string, ReviewTrackResult>;
+  readiness?: CampaignReadinessEvaluation;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CampaignCreate {
+  name: string;
+  description?: string;
+  campaign_objective?: string;
+  target_audience?: string;
+  product_name?: string;
+  target_channel?: string;
+  target_jurisdiction?: string;
+  regulated_category?: string;
+  priority?: CampaignPriority;
+  deadline?: string;
+  assigned_reviewer_id?: string;
+  creative_brief?: string;
+  policy_config?: CampaignPolicyConfig;
+  submission_ids?: string[];
+}
+
+export interface CampaignUpdate {
+  name?: string;
+  description?: string;
+  campaign_objective?: string;
+  target_audience?: string;
+  product_name?: string;
+  target_channel?: string;
+  target_jurisdiction?: string;
+  regulated_category?: string;
+  priority?: CampaignPriority;
+  deadline?: string;
+  assigned_reviewer_id?: string;
+  creative_brief?: string;
+  policy_config?: CampaignPolicyConfig;
+  version?: number;
+}
+
+export interface CampaignDecisionRequest {
+  action: "approve" | "reject" | "request_changes";
+  comments: string;
+  conditions?: string[];
+}
+
+export interface NotificationItem {
+  id: string;
+  organization_id: string;
+  recipient_id: string;
+  sender_id?: string | null;
+  title: string;
+  message: string;
+  notification_type: string;
+  link_url?: string | null;
+  is_read: boolean;
+  read_at?: string | null;
+  created_at: string;
+}
+
+// ============================================================================
+// Step 2: Designer Copilot & Shared Intelligence Orchestration
+// ============================================================================
+
+export interface ReferenceImageAnalysisRequest {
+  file_path?: string;
+  submission_id?: string;
+  revision_id?: string;
+  user_query?: string;
+}
+
+export interface ReferenceImageAnalysisResponse {
+  file_name: string;
+  dimensions: {
+    width?: number;
+    height?: number;
+    aspect_ratio?: string;
+    total_pixels?: number;
+  };
+  dominant_colors_hex: string[];
+  contrast_ratio?: number | null;
+  wcag_aa_compliant?: boolean | null;
+  brand_palette_concordance: string;
+  visual_hierarchy_critique: string;
+  observable_facts: string[];
+  actionable_recommendations: string[];
+  uncertainty_limitations: string[];
+  analysis_timestamp: string;
+}
+
+export interface DesignCritiqueIssue {
+  issue: string;
+  why_it_matters: string;
+  how_to_fix: string;
+  suggested_alternative: string;
+  uncertainty_or_limitation?: string | null;
+}
+
+export interface DesignCritiqueRequest {
+  concept_id?: string;
+  concept_data?: Record<string, any>;
+  submission_id?: string;
+  channel?: DesignPlacementChannel;
+  focus_areas?: string[];
+}
+
+export interface DesignCritiqueResponse {
+  critique_id: string;
+  overall_summary: string;
+  strengths: string[];
+  critical_issues: DesignCritiqueIssue[];
+  hierarchy_score: number;
+  accessibility_score: number;
+  brand_consistency_score: number;
+  actionable_next_steps: string[];
+}
+
+export interface DesignAdaptationRequest {
+  base_concept: Record<string, any>;
+  adaptation_instruction: string;
+  target_channel?: DesignPlacementChannel;
+  target_aspect_ratio?: DesignAspectRatio;
+  preserve_elements?: string[];
+}
+
+export interface DesignAdaptationResponse {
+  adaptation_id: string;
+  adapted_concept: DesignConceptAlternative;
+  applied_modifications: string[];
+  preserved_elements: string[];
+  design_rationale: string;
+}
+
+export interface CopilotOrchestrateRequest {
+  copilot_type: "brand_assistant" | "marketing_copilot" | "designer_copilot" | "legal_copilot" | "general";
+  message: string;
+  session_id?: string;
+  campaign_id?: string;
+  submission_id?: string;
+  revision_id?: string;
+  channel?: string;
+  jurisdiction?: string;
+  user_preferences?: Record<string, any>;
+  confirmed_action?: string;
+}
+
+export interface CopilotOrchestrateResponse {
+  session_id: string;
+  message_id: string;
+  copilot_type: string;
+  task_type: string;
+  content: string;
+  structured_deliverable?: Record<string, any> | null;
+  citations: Array<{
+    document_id: string;
+    document_name: string;
+    page?: number | null;
+    section?: string | null;
+    snippet: string;
+  }>;
+  tools_executed: Array<{
+    call_id: string;
+    tool_name: string;
+    success: boolean;
+    data?: any;
+    error?: string | null;
+    execution_time_ms: number;
+  }>;
+  pending_confirmation?: Record<string, any> | null;
+  clarification_needed: boolean;
+  confidence: string;
+  mode: string;
+  assumptions: string[];
+  task_state?: Record<string, any> | null;
+  observability: Record<string, any>;
+}
+
+export interface CopilotFeedbackRequest {
+  session_id: string;
+  message_id: string;
+  helpful: boolean;
+  rating_category?: "solved_task" | "generic_or_irrelevant" | "missed_context" | "unsupported_claim" | "suggestion_needs_improvement" | "tool_failed";
+  comment?: string;
+}

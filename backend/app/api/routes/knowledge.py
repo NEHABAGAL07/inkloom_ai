@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.core.security import get_current_auth_context, AuthContext
+from app.core.security import get_current_auth_context, AuthContext, Permission, require_permission
 from app.models.knowledge import KnowledgeItem
 from app.schemas.knowledge import (
     KnowledgeItemCreate,
@@ -37,7 +37,7 @@ def list_knowledge_items(
     max_priority: Optional[int] = Query(None, ge=1, le=5),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    auth_context: AuthContext = Depends(get_current_auth_context),
+    auth_context: AuthContext = Depends(require_permission(Permission.VIEW_KNOWLEDGE)),
     db: Session = Depends(get_db),
 ):
     """
@@ -66,12 +66,12 @@ def list_knowledge_items(
 @router.post("", response_model=KnowledgeItemResponse, status_code=status.HTTP_201_CREATED)
 def create_knowledge_item(
     payload: KnowledgeItemCreate,
-    auth_context: AuthContext = Depends(get_current_auth_context),
+    auth_context: AuthContext = Depends(require_permission(Permission.MANAGE_KNOWLEDGE)),
     db: Session = Depends(get_db),
 ):
     """
     Registers a new knowledge item (legal statute, certified benchmark, or brand rule)
-    with provenance tracking. Requires Admin or Compliance Officer role.
+    with provenance tracking. Requires MANAGE_KNOWLEDGE permission.
     """
     item = SharedIntelligenceService.create_knowledge_item(
         db=db,
@@ -84,7 +84,7 @@ def create_knowledge_item(
 @router.get("/{item_id}", response_model=KnowledgeItemResponse)
 def get_knowledge_item(
     item_id: str,
-    auth_context: AuthContext = Depends(get_current_auth_context),
+    auth_context: AuthContext = Depends(require_permission(Permission.VIEW_KNOWLEDGE)),
     db: Session = Depends(get_db),
 ):
     """
@@ -111,10 +111,10 @@ def get_knowledge_item(
 def update_knowledge_item(
     item_id: str,
     payload: KnowledgeItemUpdate,
-    auth_context: AuthContext = Depends(get_current_auth_context),
+    auth_context: AuthContext = Depends(require_permission(Permission.MANAGE_KNOWLEDGE)),
     db: Session = Depends(get_db),
 ):
-    """Updates an existing knowledge item. Requires Admin or Compliance Officer role."""
+    """Updates an existing knowledge item. Requires MANAGE_KNOWLEDGE permission."""
     item = SharedIntelligenceService.update_knowledge_item(
         db=db,
         auth_context=auth_context,
@@ -127,7 +127,7 @@ def update_knowledge_item(
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_knowledge_item(
     item_id: str,
-    auth_context: AuthContext = Depends(get_current_auth_context),
+    auth_context: AuthContext = Depends(require_permission(Permission.MANAGE_KNOWLEDGE)),
     db: Session = Depends(get_db),
 ):
     """Deletes a knowledge item, recording an immutable audit event."""
@@ -143,7 +143,7 @@ def delete_knowledge_item(
 def verify_knowledge_item(
     item_id: str,
     verification_req: KnowledgeVerificationRequest,
-    auth_context: AuthContext = Depends(get_current_auth_context),
+    auth_context: AuthContext = Depends(require_permission(Permission.VERIFY_KNOWLEDGE)),
     db: Session = Depends(get_db),
 ):
     """

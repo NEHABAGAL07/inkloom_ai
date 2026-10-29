@@ -34,5 +34,9 @@ class AuditFinding(TimestampedModel):
     status = Column(String(50), default="open", nullable=False)  # open, accepted, dismissed, manual_check_required
     location = Column(JSON, nullable=True)
     requires_human_review = Column(Boolean, default=False, nullable=False)
+    rule_reference = Column(String(255), nullable=True)
+    evidence_status = Column(String(50), nullable=True)
+    jurisdiction = Column(String(100), nullable=True)
+    details = Column(JSON, nullable=True)
 
     audit_run = relationship("AuditRun", back_populates="findings")

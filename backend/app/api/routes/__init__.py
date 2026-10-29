@@ -15,6 +15,11 @@ from app.api.routes.comments import router as comments_router
 from app.api.routes.documents import router as documents_router
 from app.api.routes.chat import router as chat_router
 from app.api.routes.campaign_adaptations import router as campaign_adaptations_router
+from app.api.routes.marketing_copilot import router as marketing_copilot_router
+from app.api.routes.designer_copilot import router as designer_copilot_router
+from app.api.routes.legal_copilot import router as legal_copilot_router
+from app.api.routes.campaigns import router as campaigns_router
+from app.api.routes.notifications import router as notifications_router
 
 api_router = APIRouter()
 
@@ -34,5 +39,10 @@ api_router.include_router(intelligence_router)
 api_router.include_router(documents_router)
 api_router.include_router(chat_router)
 api_router.include_router(campaign_adaptations_router)
+api_router.include_router(marketing_copilot_router)
+api_router.include_router(designer_copilot_router)
+api_router.include_router(legal_copilot_router)
+api_router.include_router(campaigns_router)
+api_router.include_router(notifications_router)
 
 __all__ = ["api_router"]
