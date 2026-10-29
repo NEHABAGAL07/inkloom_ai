@@ -34,6 +34,12 @@ def setup_test_db():
     Base.metadata.drop_all(bind=engine)
 
 
+@pytest.fixture(autouse=True)
+def clean_dependency_overrides():
+    yield
+    app.dependency_overrides.clear()
+
+
 @pytest.fixture
 def db_session():
     connection = engine.connect()
