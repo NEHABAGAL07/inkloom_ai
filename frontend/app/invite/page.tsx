@@ -93,20 +93,21 @@ function InviteContent() {
       <div className="w-full max-w-lg">
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-semibold mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#E8F7F1] dark:bg-teal/10 border border-[#C8E2D8] dark:border-teal/20 text-[#087F70] dark:text-teal text-xs font-semibold mb-3">
             <Shield className="w-3.5 h-3.5" />
             <span>Inkloom AI Brand Governance</span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-navy">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#18352F] dark:text-navy">
             Workspace Invitation
           </h1>
-          <p className="text-sm text-ink-secondary mt-1">
+          <p className="text-sm text-[#58716A] dark:text-ink-secondary mt-1">
             Join your organization&apos;s brand governance &amp; compliance workspace
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-subtle">
+        <div className="bg-white dark:bg-surface border border-[#DDEBE5] dark:border-border rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-subtle relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#43D6B3] dark:from-[#FF7A36] dark:via-[#FFAA35] dark:to-[#FFD84D]" />
           {error && (
             <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-status-error text-sm">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -131,7 +132,7 @@ function InviteContent() {
             /* Token Lookup Step */
             <form onSubmit={handleManualLookup} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-navy mb-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#18352F] dark:text-navy mb-2">
                   Invitation Code or Token *
                 </label>
                 <div className="relative">
@@ -142,7 +143,7 @@ function InviteContent() {
                     placeholder="Paste your invitation token (e.g. inv_...)"
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-workspace border border-border rounded-xl text-sm text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal transition-colors"
+                    className="w-full pl-11 pr-4 py-3 bg-[#F7FBF9] dark:bg-workspace border border-[#DDEBE5] dark:border-border rounded-xl text-sm text-[#18352F] dark:text-navy placeholder:text-ink-muted focus:outline-none focus:border-[#10A995] dark:focus:border-teal transition-colors"
                   />
                 </div>
               </div>
@@ -150,7 +151,7 @@ function InviteContent() {
               <button
                 type="submit"
                 disabled={isLoading || !token.trim()}
-                className="w-full py-3 px-4 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-subtle"
+                className="w-full py-3 px-4 btn-gradient-warm text-white dark:text-ink-950 disabled:opacity-50 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-sm"
               >
                 {isLoading ? "Validating Token..." : "Verify Invitation"}
                 <ArrowRight className="w-4 h-4" />
@@ -248,7 +249,7 @@ function InviteContent() {
                 <button
                   type="submit"
                   disabled={isSubmitting || !fullName.trim() || !password}
-                  className="w-full py-3 px-4 bg-status-success hover:bg-emerald-800 disabled:opacity-50 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-subtle"
+                  className="w-full py-3 px-4 btn-gradient-warm text-white dark:text-ink-950 disabled:opacity-50 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-sm"
                 >
                   {isSubmitting ? "Joining Workspace..." : "Accept Invitation & Join"}
                   <CheckCircle2 className="w-4 h-4" />

@@ -43,23 +43,23 @@ export function AuditTrailTimeline({ events = SAMPLE_EVENTS }: { events?: Timeli
   const getBadge = (type: TimelineEvent["type"]) => {
     switch (type) {
       case "approved":
-        return { icon: Check, bg: "bg-emerald-50 text-status-success border-emerald-200" };
+        return { icon: Check, bg: "bg-emerald-50 text-status-success border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800/40 dark:text-emerald-400" };
       case "rejected":
-        return { icon: X, bg: "bg-red-50 text-status-error border-red-200" };
+        return { icon: X, bg: "bg-rose-50 text-status-error border-rose-200 dark:bg-red-950/40 dark:border-red-800/40 dark:text-red-400" };
       case "changes_requested":
-        return { icon: AlertTriangle, bg: "bg-amber-50 text-status-warning border-amber-200" };
+        return { icon: AlertTriangle, bg: "bg-amber-50 text-status-warning border-amber-200 dark:bg-amber-950/40 dark:border-amber-800/40 dark:text-amber-400" };
       case "audited":
-        return { icon: Shield, bg: "bg-teal/10 text-teal border-teal/20" };
+        return { icon: Shield, bg: "bg-[#E8F7F1] text-[#087F70] border-[#C8E2D8] dark:bg-teal/10 dark:text-teal dark:border-teal/20" };
       default:
-        return { icon: FileText, bg: "bg-slate-100 text-ink-muted border-border" };
+        return { icon: FileText, bg: "bg-[#EFF8F4] text-[#58716A] border-[#DDEBE5] dark:bg-slate-800 dark:text-ink-muted dark:border-border" };
     }
   };
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-bold text-navy">Governance & Decision Audit Trail</h3>
+      <h3 className="text-sm font-bold text-[#18352F] dark:text-navy">Governance & Decision Audit Trail</h3>
 
-      <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
+      <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#DDEBE5] dark:before:bg-border">
         {events.map((evt) => {
           const badge = getBadge(evt.type);
           const Icon = badge.icon;
@@ -70,14 +70,14 @@ export function AuditTrailTimeline({ events = SAMPLE_EVENTS }: { events?: Timeli
               >
                 <Icon className="w-3 h-3 shrink-0" />
               </div>
-              <div className="bg-workspace border border-border p-3.5 rounded-xl hover:border-slate-300 transition shadow-subtle">
+              <div className="bg-white dark:bg-workspace border border-[#DDEBE5] dark:border-border p-3.5 rounded-xl hover:border-[#10A995] dark:hover:border-slate-500 transition shadow-subtle">
                 <div className="flex items-center justify-between text-xs gap-2">
-                  <span className="font-bold text-navy">{evt.title}</span>
-                  <span className="text-ink-muted font-mono text-[10px] shrink-0">{evt.timestamp}</span>
+                  <span className="font-bold text-[#18352F] dark:text-navy">{evt.title}</span>
+                  <span className="text-[#82948E] dark:text-ink-muted font-mono text-[10px] shrink-0">{evt.timestamp}</span>
                 </div>
-                <div className="text-[11px] text-teal font-semibold mt-0.5">By: {evt.actor}</div>
+                <div className="text-[11px] text-[#087F70] dark:text-teal font-semibold mt-0.5">By: {evt.actor}</div>
                 {evt.details && (
-                  <p className="text-xs text-ink-secondary mt-2 bg-surface p-2 rounded-lg border border-border leading-relaxed">
+                  <p className="text-xs text-[#58716A] dark:text-ink-secondary mt-2 bg-[#F7FBF9] dark:bg-surface p-2 rounded-lg border border-[#DDEBE5] dark:border-border leading-relaxed">
                     {evt.details}
                   </p>
                 )}

@@ -138,38 +138,38 @@ export default function DemoSandboxPage() {
   };
 
   return (
-    <div className="min-h-screen bg-workspace text-ink-primary py-12 px-6 relative transition-colors duration-150">
+    <div className="min-h-screen bg-[#F7FBF9] dark:bg-[#111111] text-[#18352F] dark:text-[#F7F3ED] py-12 px-6 relative transition-colors duration-150">
       <div className="absolute top-6 right-6">
         <ThemeToggle />
       </div>
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-semibold mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#E8F7F1] dark:bg-amber-500/10 border border-[#C8E2D8] dark:border-amber-500/20 text-[#087F70] dark:text-[#FFAA35] text-xs font-bold mb-3 font-mono">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Hackathon &amp; Evaluation Sandbox</span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#18352F] dark:text-[#F7F3ED] font-heading sm:text-4xl">
             Role-Based Evaluation Access
           </h1>
-          <p className="text-sm text-ink-secondary mt-2 max-w-2xl mx-auto">
+          <p className="text-sm text-[#58716A] dark:text-[#85817D] mt-2 max-w-2xl mx-auto leading-relaxed">
             Test Inkloom AI&apos;s role-based access control (RBAC), multi-tenant isolation, and pre-publication compliance workflows using pre-configured evaluation accounts.
           </p>
         </div>
 
         {/* Notice Banner */}
-        <div className="mb-8 p-4 rounded-xl bg-amber-50/70 border border-amber-200 text-amber-900 flex items-start gap-3 text-xs leading-relaxed">
-          <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+        <div className="mb-8 p-4 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] text-[#58716A] dark:text-[#85817D] flex items-start gap-3 text-xs leading-relaxed shadow-sm dark:shadow-xl">
+          <AlertCircle className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35] shrink-0 mt-0.5" />
           <div>
-            <span className="font-bold">Evaluation Sandbox Notice:</span> Each button triggers a legitimate backend authentication request (
-            <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[11px]">POST /api/v1/auth/login</code>
-            ) verifying user credentials, issuing an HttpOnly session cookie, and loading tenant-scoped data. These accounts are isolated and intended for platform review.
+            <span className="font-bold text-[#18352F] dark:text-[#F7F3ED]">Evaluation Sandbox Notice:</span> Each button triggers a legitimate backend authentication request (
+            <code className="bg-[#EFF8F4] dark:bg-[#141414] text-[#087F70] dark:text-[#FFAA35] border border-[#DDEBE5] dark:border-[#383838] px-1.5 py-0.5 rounded font-mono text-[11px]">POST /api/v1/auth/login</code>
+            ) verifying user credentials, issuing an HttpOnly session cookie, and loading tenant-scoped data.
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-status-error text-sm">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-3 text-rose-700 dark:text-rose-300 text-sm">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
             <div>
               <p className="font-bold">Authentication Notice</p>
               <p className="text-xs mt-0.5">{error}</p>
@@ -185,45 +185,46 @@ export default function DemoSandboxPage() {
             return (
               <div
                 key={persona.id}
-                className="bg-surface border border-border hover:border-teal/50 rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 shadow-subtle hover:shadow-card"
+                className="bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] hover:border-[#10A995] dark:hover:border-amber-500/50 rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 shadow-sm dark:shadow-xl hover:shadow-md dark:hover:shadow-2xl relative overflow-hidden"
               >
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#43D6B3] dark:from-[#FF7A36] dark:via-[#FFAA35] dark:to-[#FFD84D]" />
                 <div>
                   {/* Top Role & Org Badge */}
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <span
-                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border ${persona.badgeColor}`}
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-full border bg-[#E8F7F1] dark:bg-amber-500/10 text-[#087F70] dark:text-[#FFAA35] border-[#C8E2D8] dark:border-amber-500/20 font-mono"
                     >
                       {persona.roleLabel}
                     </span>
-                    <span className="text-[11px] font-medium text-ink-muted flex items-center gap-1">
-                      <Building className="w-3 h-3 text-teal" />
+                    <span className="text-[11px] font-medium text-[#58716A] dark:text-[#85817D] flex items-center gap-1 font-mono">
+                      <Building className="w-3 h-3 text-[#087F70] dark:text-[#FFAA35]" />
                       {persona.orgName}
                     </span>
                   </div>
 
                   {/* Persona Identity */}
                   <div className="mb-3">
-                    <h3 className="text-lg font-bold text-navy">{persona.name}</h3>
-                    <p className="text-xs font-mono text-ink-muted">{persona.email}</p>
+                    <h3 className="text-lg font-bold text-[#18352F] dark:text-[#F7F3ED] font-heading">{persona.name}</h3>
+                    <p className="text-xs font-mono text-[#82948E] dark:text-[#85817D]">{persona.email}</p>
                   </div>
 
                   {/* Description */}
-                  <p className="text-xs text-ink-secondary mb-4 leading-relaxed">
+                  <p className="text-xs text-[#58716A] dark:text-[#B8B2AC] mb-4 leading-relaxed">
                     {persona.description}
                   </p>
 
                   {/* Capabilities */}
-                  <div className="mb-5 pt-3 border-t border-border/60">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-teal mb-2">
+                  <div className="mb-5 pt-3 border-t border-[#DDEBE5] dark:border-[#383838]">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#087F70] dark:text-[#FFAA35] mb-2 font-mono">
                       Key Permissions &amp; Tasks
                     </div>
                     <ul className="space-y-1.5">
                       {persona.keyResponsibilities.map((resp, idx) => (
                         <li
                           key={idx}
-                          className="text-[11px] text-ink-primary flex items-start gap-1.5"
+                          className="text-[11px] text-[#58716A] dark:text-[#B8B2AC] flex items-start gap-1.5"
                         >
-                          <ChevronRight className="w-3 h-3 text-teal shrink-0 mt-0.5" />
+                          <ChevronRight className="w-3 h-3 text-[#087F70] dark:text-[#FFAA35] shrink-0 mt-0.5" />
                           <span>{resp}</span>
                         </li>
                       ))}
@@ -236,11 +237,11 @@ export default function DemoSandboxPage() {
                   type="button"
                   onClick={() => handleDemoSignIn(persona)}
                   disabled={activeSubmitting !== null}
-                  className="w-full py-2.5 px-4 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-subtle"
+                  className="w-full py-2.5 px-4 btn-gradient-warm text-white dark:text-ink-950 disabled:opacity-50 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-teal-500/15 dark:shadow-orange-500/10"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-white dark:border-black border-t-transparent animate-spin" />
                       <span>Authenticating...</span>
                     </>
                   ) : (
@@ -256,25 +257,25 @@ export default function DemoSandboxPage() {
         </div>
 
         {/* Navigation Footer */}
-        <div className="mt-12 text-center flex flex-col sm:flex-row items-center justify-center gap-6 border-t border-border pt-8 text-xs text-ink-secondary">
+        <div className="mt-12 text-center flex flex-col sm:flex-row items-center justify-center gap-6 border-t border-[#DDEBE5] dark:border-[#383838] pt-8 text-xs text-[#82948E] dark:text-[#85817D]">
           <Link
             href="/login"
-            className="text-teal hover:text-teal-hover font-semibold transition-colors flex items-center gap-1"
+            className="text-[#087F70] hover:text-[#10A995] dark:text-[#FFAA35] dark:hover:text-[#FFD84D] font-semibold transition-colors flex items-center gap-1"
           >
             <Lock className="w-3.5 h-3.5" />
             <span>Standard Workspace Sign-In</span>
           </Link>
-          <span className="hidden sm:inline text-border">•</span>
+          <span className="hidden sm:inline text-[#DDEBE5] dark:text-[#383838]">•</span>
           <Link
             href="/register"
-            className="text-ink-secondary hover:text-navy font-medium transition-colors"
+            className="text-[#58716A] hover:text-[#18352F] dark:text-[#B8B2AC] dark:hover:text-[#F7F3ED] font-medium transition-colors"
           >
             Create New Organization
           </Link>
-          <span className="hidden sm:inline text-border">•</span>
+          <span className="hidden sm:inline text-[#DDEBE5] dark:text-[#383838]">•</span>
           <Link
             href="/"
-            className="text-ink-muted hover:text-navy font-medium transition-colors"
+            className="text-[#82948E] hover:text-[#18352F] dark:text-[#85817D] dark:hover:text-[#F7F3ED] font-medium transition-colors"
           >
             Return to Public Home
           </Link>

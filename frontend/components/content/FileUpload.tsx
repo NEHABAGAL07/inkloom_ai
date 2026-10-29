@@ -41,10 +41,10 @@ export function FileUpload({ onFileSelect, selectedFile }: FileUploadProps) {
       onDrop={handleDrop}
       className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${
         isDragging
-          ? "border-teal bg-teal/5"
+          ? "border-[#10B981] bg-[#10B981]/5 dark:border-[#FFAA35] dark:bg-[#FFAA35]/5"
           : selectedFile
-          ? "border-status-success bg-emerald-50/50"
-          : "border-border hover:border-teal bg-workspace"
+          ? "border-[#10B981] bg-[#10B981]/10 dark:border-[#72D6A1] dark:bg-[#72D6A1]/10"
+          : "border-slate-200 bg-slate-50/60 hover:border-[#10B981] dark:border-[#383838] dark:hover:border-[#FFAA35]/60 dark:bg-[#141414]"
       }`}
       onClick={() => document.getElementById("file-upload-input")?.click()}
     >
@@ -56,22 +56,22 @@ export function FileUpload({ onFileSelect, selectedFile }: FileUploadProps) {
         accept=".txt,.pdf,.docx,.png,.jpg,.jpeg,.webp,.mp4"
       />
 
-      <div className="w-12 h-12 mx-auto rounded-xl bg-surface border border-border flex items-center justify-center mb-3 shadow-subtle">
+      <div className="w-12 h-12 mx-auto rounded-xl bg-white dark:bg-[#202020] border border-slate-200 dark:border-[#383838] flex items-center justify-center mb-3 shadow-xs">
         {selectedFile ? (
-          <File className="w-6 h-6 text-status-success" />
+          <File className="w-6 h-6 text-[#10B981] dark:text-[#72D6A1]" />
         ) : (
-          <UploadCloud className="w-6 h-6 text-teal" />
+          <UploadCloud className="w-6 h-6 text-[#0284C7] dark:text-[#FFAA35]" />
         )}
       </div>
 
       {selectedFile ? (
         <div className="space-y-1">
-          <div className="text-sm font-bold text-navy flex items-center justify-center gap-1.5">
-            <CheckCircle className="w-4 h-4 text-status-success" />
+          <div className="text-sm font-bold text-[#0F172A] dark:text-[#F7F3ED] flex items-center justify-center gap-1.5">
+            <CheckCircle className="w-4 h-4 text-[#10B981] dark:text-[#72D6A1]" />
             <span>{selectedFile.name}</span>
           </div>
-          <div className="text-xs text-ink-muted">
-            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready for OCR extraction & audit
+          <div className="text-xs text-[#64748B] dark:text-[#85817D]">
+            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready for OCR extraction &amp; audit
           </div>
           <button
             type="button"
@@ -79,7 +79,7 @@ export function FileUpload({ onFileSelect, selectedFile }: FileUploadProps) {
               e.stopPropagation();
               onFileSelect(null as any);
             }}
-            className="mt-3 text-xs text-status-error hover:underline font-semibold flex items-center gap-1 mx-auto"
+            className="mt-3 text-xs text-rose-500 dark:text-[#FF6B78] hover:underline font-semibold flex items-center gap-1 mx-auto"
           >
             <X className="w-3.5 h-3.5" />
             <span>Remove file</span>
@@ -87,10 +87,10 @@ export function FileUpload({ onFileSelect, selectedFile }: FileUploadProps) {
         </div>
       ) : (
         <div>
-          <div className="text-sm font-semibold text-navy">
-            Drag &amp; drop brand document or media here, or <span className="text-teal underline font-bold">browse</span>
+          <div className="text-sm font-semibold text-[#0F172A] dark:text-[#F7F3ED]">
+            Drag &amp; drop brand document or media here, or <span className="text-[#2563EB] dark:text-[#FFAA35] underline font-bold">browse</span>
           </div>
-          <p className="text-xs text-ink-muted mt-1.5">
+          <p className="text-xs text-[#64748B] dark:text-[#85817D] mt-1.5">
             Supports PDF, DOCX, TXT, PNG, JPEG, WebP, MP4 (Max 25MB)
           </p>
 
@@ -99,7 +99,7 @@ export function FileUpload({ onFileSelect, selectedFile }: FileUploadProps) {
               (tag) => (
                 <span
                   key={tag}
-                  className="px-2 py-0.5 rounded text-[10px] font-semibold bg-surface text-ink-muted border border-border"
+                  className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-[#475569] border border-slate-200 dark:bg-[#202020] dark:text-[#85817D] dark:border-[#383838]"
                 >
                   {tag}
                 </span>

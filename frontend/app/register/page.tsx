@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/services/auth-context";
+import { InkloomLogo } from "@/components/layout/InkloomLogo";
+import { BackgroundAtmosphere } from "@/components/layout/BackgroundAtmosphere";
+import { ThemeToggle } from "@/services/theme-context";
 import {
   Shield,
   Building,
@@ -16,6 +19,9 @@ import {
   AlertCircle,
   Briefcase,
   CheckCircle2,
+  ChevronLeft,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 
 const INDUSTRIES = [
@@ -28,8 +34,6 @@ const INDUSTRIES = [
   "Professional Services",
   "Other",
 ];
-
-import { ThemeToggle } from "@/services/theme-context";
 
 export default function RegisterCompanyPage() {
   const router = useRouter();
@@ -50,23 +54,25 @@ export default function RegisterCompanyPage() {
   // If already authenticated, allow navigation to workspace
   if (isAuthenticated && !success) {
     return (
-      <div className="min-h-screen bg-workspace flex items-center justify-center p-6 text-center">
-        <div className="bg-surface border border-border rounded-2xl p-8 max-w-md shadow-subtle">
-          <Shield className="w-10 h-10 text-teal mx-auto mb-3" />
-          <h2 className="text-xl font-bold text-navy mb-2">Already Authenticated</h2>
-          <p className="text-sm text-ink-secondary mb-6">
+      <div className="min-h-screen bg-workspace text-ink-primary flex items-center justify-center p-6 text-center">
+        <div className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl p-8 max-w-md shadow-2xl space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-[#E8F7F1] dark:bg-[#272727] border border-[#C8E2D8] dark:border-[#383838] flex items-center justify-center mx-auto text-[#087F70] dark:text-[#FFAA35]">
+            <Shield className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-heading font-bold text-[#18352F] dark:text-[#F7F3ED]">Already Authenticated</h2>
+          <p className="text-xs text-[#58716A] dark:text-[#B8B2AC] leading-relaxed">
             You are currently signed in. You can access your workspace or sign out to register a new tenant.
           </p>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5 pt-2">
             <Link
               href="/"
-              className="w-full py-2.5 px-4 bg-teal hover:bg-teal-hover text-white text-sm font-semibold rounded-xl text-center transition shadow-subtle"
+              className="w-full py-2.5 px-4 btn-gradient-warm rounded-xl text-xs font-bold text-center transition"
             >
               Enter Workspace
             </Link>
             <Link
               href="/login"
-              className="text-xs text-ink-muted hover:text-navy font-medium"
+              className="w-full py-2 px-4 btn-dark-secondary rounded-xl text-xs font-semibold text-center transition"
             >
               Switch Account
             </Link>
@@ -121,228 +127,218 @@ export default function RegisterCompanyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-workspace text-ink-primary flex flex-col justify-center items-center py-12 px-6 relative transition-colors duration-150">
-      <div className="absolute top-6 right-6">
-        <ThemeToggle />
-      </div>
-      <div className="w-full max-w-lg">
-        {/* Header Branding */}
-        <div className="text-center mb-8">
+    <div className="min-h-screen bg-workspace text-ink-primary flex flex-col justify-between relative selection:bg-[#FF7A36]/30 selection:text-white transition-colors duration-150">
+      <BackgroundAtmosphere variant="split-auth" />
+
+      {/* Header */}
+      <header className="px-6 lg:px-12 py-5 flex items-center justify-between border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-40 transition-colors duration-150">
+        <Link href="/" className="group">
+          <InkloomLogo size="md" />
+        </Link>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <ThemeToggle />
           <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-semibold mb-3 hover:bg-teal/15 transition-colors"
+            href="/login"
+            className="text-xs text-ink-secondary hover:text-ink-primary flex items-center gap-1 font-medium transition"
           >
-            <Shield className="w-3.5 h-3.5" />
-            <span>Inkloom AI Brand Governance</span>
+            <ChevronLeft className="w-4 h-4" />
+            <span>Already have an account? Sign In</span>
           </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight text-navy">
-            Register Your Organization
-          </h1>
-          <p className="text-sm text-ink-secondary mt-1 max-w-sm mx-auto">
-            Create an enterprise brand compliance workspace and assign your primary administrator.
-          </p>
         </div>
+      </header>
 
-        {/* Card */}
-        <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-subtle">
-          {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-status-error text-sm">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">Registration Alert</p>
-                <p className="text-xs mt-0.5">{error}</p>
-              </div>
+      {/* Main Registration Box */}
+      <main className="flex-1 flex items-center justify-center py-10 px-6 relative z-20">
+        <div className="w-full max-w-xl space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/85 dark:bg-[#202020] border border-[#C8E2D8] dark:border-[#383838] text-xs font-semibold text-[#087F70] dark:text-[#FFAA35] shadow-sm backdrop-blur-sm">
+              <Sparkles className="w-3.5 h-3.5 text-[#10A995] dark:text-[#FFD84D]" />
+              <span>Multi-Tenant Enterprise Isolation</span>
             </div>
-          )}
+            <h1 className="text-3xl sm:text-4xl font-heading font-extrabold tracking-tight text-[#18352F] dark:text-[#F7F3ED]">
+              Register Your Organization
+            </h1>
+            <p className="text-xs sm:text-sm text-[#58716A] dark:text-[#B8B2AC] max-w-md mx-auto">
+              Create an enterprise brand compliance workspace and assign your primary administrator.
+            </p>
+          </div>
 
-          {success ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto mb-4 text-status-success animate-bounce">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-              <h2 className="text-xl font-bold text-navy mb-2">Organization Created!</h2>
-              <p className="text-sm text-ink-secondary">
-                Welcome to Inkloom AI. Initializing your brand governance workspace...
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Organization Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl p-7 sm:p-9 shadow-[0_16px_40px_rgba(22,91,72,0.08)] dark:shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#58D9D0] dark:from-[#FFD84D] dark:via-[#FF7A36] dark:to-[#F45B91]" />
+
+            {error && (
+              <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-[#272727] border border-rose-200 dark:border-[#FF6B78]/40 flex items-start gap-3 text-rose-700 dark:text-[#FF6B78] text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-[#FF6B78]" />
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-navy mb-1.5">
-                    Organization Name *
+                  <p className="font-bold">Registration Alert</p>
+                  <p className="mt-0.5">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {success ? (
+              <div className="text-center py-8 space-y-3">
+                <div className="w-16 h-16 rounded-2xl bg-[#E8F7F1] dark:bg-[#272727] border border-[#C8E2D8] dark:border-[#72D6A1]/40 flex items-center justify-center mx-auto text-[#087F70] dark:text-[#72D6A1] animate-bounce">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <h2 className="text-xl font-heading font-bold text-[#18352F] dark:text-[#F7F3ED]">
+                  Organization Workspace Created!
+                </h2>
+                <p className="text-xs text-[#58716A] dark:text-[#B8B2AC]">
+                  Welcome to Inkloom AI. Initializing your zero-trust brand governance workspace...
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#18352F] dark:text-[#F7F3ED] mb-1.5">
+                      Organization Name <span className="text-[#E11D48]">*</span>
+                    </label>
+                    <div className="relative">
+                      <Building className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#82948E] dark:text-[#85817D]" />
+                      <input
+                        type="text"
+                        required
+                        value={orgName}
+                        onChange={(e) => setOrgName(e.target.value)}
+                        placeholder="Acme Cloud Systems"
+                        className="w-full bg-[#F7FBF9] dark:bg-[#141414] border border-border dark:border-[#383838] rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#18352F] dark:text-[#F7F3ED] placeholder:text-[#82948E] dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10A995] dark:focus:border-[#FFAA35] focus:ring-1 focus:ring-[#10A995] dark:focus:ring-[#FFAA35] transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#18352F] dark:text-[#F7F3ED] mb-1.5">
+                      Industry Sector <span className="text-[#E11D48]">*</span>
+                    </label>
+                    <div className="relative">
+                      <Briefcase className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#82948E] dark:text-[#85817D]" />
+                      <select
+                        value={industry}
+                        onChange={(e) => setIndustry(e.target.value)}
+                        className="w-full bg-[#F7FBF9] dark:bg-[#141414] border border-border dark:border-[#383838] rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#18352F] dark:text-[#F7F3ED] focus:outline-none focus:border-[#10A995] dark:focus:border-[#FFAA35] focus:ring-1 focus:ring-[#10A995] dark:focus:ring-[#FFAA35] transition"
+                      >
+                        {INDUSTRIES.map((ind) => (
+                          <option key={ind} value={ind} className="bg-white dark:bg-[#1C1C1C] text-[#18352F] dark:text-[#F7F3ED]">
+                            {ind}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#18352F] dark:text-[#F7F3ED] mb-1.5">
+                    Primary Administrator Full Name <span className="text-[#E11D48]">*</span>
                   </label>
                   <div className="relative">
-                    <Building className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
+                    <UserCheck className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#82948E] dark:text-[#85817D]" />
                     <input
                       type="text"
                       required
-                      placeholder="Acme Global Inc."
-                      value={orgName}
-                      onChange={(e) => setOrgName(e.target.value)}
-                      className="w-full pl-10 pr-3 py-2.5 bg-workspace border border-border rounded-xl text-sm text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal transition-colors"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Alex Mercer"
+                      className="w-full bg-[#F7FBF9] dark:bg-[#141414] border border-border dark:border-[#383838] rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#18352F] dark:text-[#F7F3ED] placeholder:text-[#82948E] dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10A995] dark:focus:border-[#FFAA35] focus:ring-1 focus:ring-[#10A995] dark:focus:ring-[#FFAA35] transition"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-navy mb-1.5">
-                    Industry Sector
+                  <label className="block text-xs font-semibold text-[#18352F] dark:text-[#F7F3ED] mb-1.5">
+                    Corporate Work Email <span className="text-[#E11D48]">*</span>
                   </label>
                   <div className="relative">
-                    <Briefcase className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
-                    <select
-                      value={industry}
-                      onChange={(e) => setIndustry(e.target.value)}
-                      className="w-full pl-10 pr-3 py-2.5 bg-workspace border border-border rounded-xl text-sm text-navy focus:outline-none focus:border-teal transition-colors appearance-none cursor-pointer"
-                    >
-                      {INDUSTRIES.map((ind) => (
-                        <option key={ind} value={ind}>
-                          {ind}
-                        </option>
-                      ))}
-                    </select>
+                    <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#82948E] dark:text-[#85817D]" />
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="admin@acmecloud.com"
+                      className="w-full bg-[#F7FBF9] dark:bg-[#141414] border border-border dark:border-[#383838] rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#18352F] dark:text-[#F7F3ED] placeholder:text-[#82948E] dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10A995] dark:focus:border-[#FFAA35] focus:ring-1 focus:ring-[#10A995] dark:focus:ring-[#FFAA35] transition"
+                    />
                   </div>
                 </div>
-              </div>
 
-              {/* Administrator Details */}
-              <div className="pt-2 border-t border-border/60">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-teal mb-3">
-                  Primary Administrator Account
-                </div>
-
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-navy mb-1.5">
-                      Full Name *
+                    <label className="block text-xs font-semibold text-[#18352F] dark:text-[#F7F3ED] mb-1.5">
+                      Password (min. 6 chars) <span className="text-[#E11D48]">*</span>
                     </label>
                     <div className="relative">
-                      <UserCheck className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
+                      <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#82948E] dark:text-[#85817D]" />
                       <input
-                        type="text"
+                        type={showPassword ? "text" : "password"}
                         required
-                        placeholder="Alex Mercer"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        className="w-full pl-10 pr-3 py-2.5 bg-workspace border border-border rounded-xl text-sm text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal transition-colors"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full bg-[#F7FBF9] dark:bg-[#141414] border border-border dark:border-[#383838] rounded-xl pl-10 pr-10 py-2.5 text-xs text-[#18352F] dark:text-[#F7F3ED] placeholder:text-[#82948E] dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10A995] dark:focus:border-[#FFAA35] focus:ring-1 focus:ring-[#10A995] dark:focus:ring-[#FFAA35] transition"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#82948E] hover:text-[#18352F] dark:text-[#85817D] dark:hover:text-[#F7F3ED] transition"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-navy mb-1.5">
-                      Work Email *
+                    <label className="block text-xs font-semibold text-[#18352F] dark:text-[#F7F3ED] mb-1.5">
+                      Confirm Password <span className="text-[#E11D48]">*</span>
                     </label>
                     <div className="relative">
-                      <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
+                      <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#82948E] dark:text-[#85817D]" />
                       <input
-                        type="email"
+                        type={showPassword ? "text" : "password"}
                         required
-                        placeholder="admin@acme.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-10 pr-3 py-2.5 bg-workspace border border-border rounded-xl text-sm text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal transition-colors"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full bg-[#F7FBF9] dark:bg-[#141414] border border-border dark:border-[#383838] rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#18352F] dark:text-[#F7F3ED] placeholder:text-[#82948E] dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10A995] dark:focus:border-[#FFAA35] focus:ring-1 focus:ring-[#10A995] dark:focus:ring-[#FFAA35] transition"
                       />
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-navy mb-1.5">
-                        Password *
-                      </label>
-                      <div className="relative">
-                        <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          required
-                          minLength={6}
-                          placeholder="••••••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="w-full pl-10 pr-10 py-2.5 bg-workspace border border-border rounded-xl text-sm text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal transition-colors"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-navy transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-navy mb-1.5">
-                        Confirm Password *
-                      </label>
-                      <div className="relative">
-                        <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          required
-                          minLength={6}
-                          placeholder="••••••••••••"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full pl-10 pr-3 py-2.5 bg-workspace border border-border rounded-xl text-sm text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal transition-colors"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-ink-muted">
-                    Minimum 6 characters. You will be assigned the <strong>Brand Administrator</strong> role.
-                  </p>
                 </div>
-              </div>
 
-              {/* Submit Button */}
-              <div className="pt-3">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-3 px-4 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-subtle"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                      <span>Creating Organization...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Register Organization</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Auxiliary Links */}
-              <div className="text-center pt-2 space-y-2">
-                <p className="text-xs text-ink-secondary">
-                  Already registered?{" "}
-                  <Link
-                    href="/login"
-                    className="text-teal hover:text-teal-hover font-semibold transition-colors"
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-3 px-4 btn-gradient-warm rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-warmGlow disabled:opacity-50"
                   >
-                    Sign in to your workspace
-                  </Link>
-                </p>
-                <div>
-                  <Link
-                    href="/"
-                    className="text-xs text-ink-muted hover:text-navy transition-colors font-medium"
-                  >
-                    ← Back to Public Overview
-                  </Link>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-white dark:text-[#111111]" />
+                        <span>Provisioning Organization Workspace...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Provision Enterprise Workspace</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
                 </div>
-              </div>
-            </form>
-          )}
+              </form>
+            )}
+          </div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="px-6 lg:px-12 py-4 border-t border-border bg-white dark:bg-[#111111] text-[11px] text-[#82948E] dark:text-[#85817D] flex flex-col sm:flex-row items-center justify-between gap-2 transition-colors duration-150">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-[#10A995] dark:bg-[#72D6A1] animate-pulse" />
+          <span>Tenant Zero-Trust Isolation Active</span>
+        </div>
+        <div>Inkloom AI Brand Governance © 2026. All rights reserved.</div>
+      </footer>
     </div>
   );
 }

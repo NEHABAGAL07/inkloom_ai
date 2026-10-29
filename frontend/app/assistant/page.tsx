@@ -319,22 +319,24 @@ export default function BrandAssistantPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-7xl mx-auto px-4 py-4 sm:px-6">
+    <div className="flex flex-col h-[calc(100vh-7.5rem)] lg:h-[calc(100vh-8.5rem)] min-h-[500px] max-w-7xl mx-auto">
       {/* Top Header & Navigation Tabs */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#DDEBE5] dark:border-[#383838]">
         <div>
-          <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-wider">
-            <Bot className="w-4 h-4" />
-            <span>Document Intelligence & Governance</span>
+          <div className="flex items-center gap-2 text-ink-primary font-bold uppercase tracking-wider text-[11px]">
+            <span className="w-5 h-5 rounded-lg bg-gradient-to-br from-[#087F70] via-[#10A995] to-[#43D6B3] dark:from-[#FFD84D] dark:to-[#F45B91] flex items-center justify-center text-white dark:text-ink-950 shadow-sm shadow-teal/20 dark:shadow-orange-500/20">
+              <Bot className="w-3.5 h-3.5" />
+            </span>
+            <span className="text-gradient-warm font-mono">Document Intelligence &amp; Governance</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-navy dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-[#18352F] dark:text-[#F7F3ED] font-heading flex items-center gap-2 mt-1">
             Brand Guideline Assistant
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-teal/10 text-teal border border-teal/20">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-amber-500/10 dark:text-[#FFAA35] dark:border-amber-500/20">
               Grounded AI
             </span>
           </h1>
           <div className="flex flex-wrap items-center gap-2 mt-1">
-            <p className="text-xs text-ink-muted">
+            <p className="text-xs text-[#58716A] dark:text-[#85817D]">
               Instant natural-language answers strictly verified against your organization's brand documents.
             </p>
             {chatStatus && (
@@ -347,7 +349,7 @@ export default function BrandAssistantPage() {
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    chatStatus.llm_enabled ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+                    chatStatus.llm_enabled ? "bg-emerald-500 dark:bg-emerald-400 animate-pulse" : "bg-amber-500 dark:bg-amber-400"
                   }`}
                 />
                 {chatStatus.llm_enabled
@@ -359,13 +361,13 @@ export default function BrandAssistantPage() {
         </div>
 
         {/* Tab Controls */}
-        <div className="flex items-center p-1 rounded-xl bg-surface border border-border shadow-sm">
+        <div className="flex items-center p-1 rounded-xl bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] shadow-subtle dark:shadow-sm">
           <button
             onClick={() => setActiveTab("chat")}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
               activeTab === "chat"
-                ? "bg-teal text-white shadow-sm"
-                : "text-ink-secondary hover:text-ink-primary hover:bg-workspace"
+                ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-[#FFAA35] dark:to-[#FF665C] dark:text-ink-950 dark:border-transparent font-bold shadow-xs dark:shadow-orange-500/20"
+                : "text-[#58716A] hover:text-[#18352F] hover:bg-[#EFF8F4] dark:text-[#B8B2AC] dark:hover:text-[#F7F3ED] dark:hover:bg-[#272727]"
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -375,8 +377,8 @@ export default function BrandAssistantPage() {
             onClick={() => setActiveTab("documents")}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
               activeTab === "documents"
-                ? "bg-teal text-white shadow-sm"
-                : "text-ink-secondary hover:text-ink-primary hover:bg-workspace"
+                ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-[#FFAA35] dark:to-[#FF665C] dark:text-ink-950 dark:border-transparent font-bold shadow-xs dark:shadow-orange-500/20"
+                : "text-[#58716A] hover:text-[#18352F] hover:bg-[#EFF8F4] dark:text-[#B8B2AC] dark:hover:text-[#F7F3ED] dark:hover:bg-[#272727]"
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -384,8 +386,8 @@ export default function BrandAssistantPage() {
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                 activeTab === "documents"
-                  ? "bg-white text-teal"
-                  : "bg-surface-accent text-ink-secondary border border-border"
+                  ? "bg-[#087F70] text-white dark:bg-ink-950 dark:text-[#FFAA35]"
+                  : "bg-[#EFF8F4] text-[#58716A] border border-[#DDEBE5] dark:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]"
               }`}
             >
               {documents.length}
@@ -398,28 +400,28 @@ export default function BrandAssistantPage() {
       {activeTab === "chat" ? (
         <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 min-h-0">
           {/* Conversation History Sidebar */}
-          <div className="hidden md:flex flex-col bg-surface border border-border rounded-xl p-3 shadow-sm min-h-0">
+          <div className="hidden md:flex flex-col bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] rounded-2xl p-3 shadow-subtle dark:shadow-xl min-h-0">
             <button
               onClick={startNewSession}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-teal text-white text-xs font-semibold shadow hover:bg-teal-600 transition mb-3"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl btn-gradient-warm text-white dark:text-ink-950 text-xs font-bold shadow-warmGlow dark:shadow-orange-500/10 transition mb-3"
             >
               <Plus className="w-4 h-4" />
               New Conversation
             </button>
 
-            <div className="text-[10px] font-bold uppercase tracking-wider text-ink-muted px-2 pb-1.5 flex items-center justify-between">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#58716A] dark:text-[#85817D] px-2 pb-1.5 flex items-center justify-between">
               <span>Past Sessions</span>
-              <span>{sessions.length}</span>
+              <span className="px-1.5 py-0.5 rounded bg-[#EFF8F4] dark:bg-[#272727] text-[#58716A] dark:text-[#B8B2AC] border border-[#DDEBE5] dark:border-transparent font-mono">{sessions.length}</span>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-1 pr-1">
+            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
               {loadingSessions ? (
-                <div className="flex items-center justify-center py-8 text-ink-muted text-xs gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-teal" />
+                <div className="flex items-center justify-center py-8 text-[#58716A] dark:text-[#85817D] text-xs gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#087F70] dark:text-[#FF7A36]" />
                   Loading...
                 </div>
               ) : sessions.length === 0 ? (
-                <div className="p-4 text-center text-xs text-ink-muted">
+                <div className="p-4 text-center text-xs text-[#58716A] dark:text-[#85817D]">
                   No previous conversations yet. Ask a question to begin.
                 </div>
               ) : (
@@ -429,20 +431,20 @@ export default function BrandAssistantPage() {
                     <div
                       key={s.id}
                       onClick={() => selectSession(s.id)}
-                      className={`group relative flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition ${
+                      className={`group relative flex items-center justify-between p-2.5 rounded-xl text-xs cursor-pointer transition ${
                         isActive
-                          ? "bg-teal/10 text-teal dark:text-teal-300 font-semibold border border-teal/20"
-                          : "text-ink-secondary hover:bg-workspace hover:text-ink-primary"
+                          ? "bg-[#E8F7F1] text-[#087F70] font-semibold border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-amber-500/15 dark:to-orange-500/10 dark:text-[#F7F3ED] dark:border-amber-500/30"
+                          : "text-[#58716A] hover:bg-[#EFF8F4] hover:text-[#18352F] dark:text-[#B8B2AC] dark:hover:bg-[#202020] dark:hover:text-[#F7F3ED] border border-transparent"
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate min-w-0 pr-6">
-                        <MessageSquare className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                        <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#087F70] dark:text-[#FFAA35]" : "opacity-60"}`} />
                         <span className="truncate">{s.title || "Brand Assistant Inquiry"}</span>
                       </div>
                       <button
                         onClick={(e) => deleteSession(s.id, e)}
                         title="Delete Session"
-                        className="opacity-0 group-hover:opacity-100 hover:text-red-500 transition p-1 shrink-0"
+                        className="opacity-0 group-hover:opacity-100 hover:text-red-500 dark:hover:text-red-400 transition p-1 shrink-0"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -454,37 +456,37 @@ export default function BrandAssistantPage() {
           </div>
 
           {/* Main Chat Interface */}
-          <div className="md:col-span-3 flex flex-col bg-surface border border-border rounded-xl shadow-sm min-h-0 overflow-hidden">
+          <div className="md:col-span-3 flex flex-col bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] rounded-2xl shadow-subtle dark:shadow-xl min-h-0 overflow-hidden">
             {/* Messages Scroll Area */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full max-w-lg mx-auto text-center py-10">
-                  <div className="w-12 h-12 rounded-2xl bg-teal/10 border border-teal/20 flex items-center justify-center text-teal mb-3 shadow-inner">
-                    <Sparkles className="w-6 h-6" />
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#087F70]/10 via-[#10A995]/10 to-[#43D6B3]/10 dark:from-[#FFD84D]/10 dark:via-[#FF7A36]/10 dark:to-[#F45B91]/10 border border-[#C8E2D8] dark:border-amber-500/30 flex items-center justify-center text-[#087F70] dark:text-[#FFAA35] mb-4 shadow-inner">
+                    <Sparkles className="w-7 h-7" />
                   </div>
-                  <h3 className="text-base font-bold text-navy dark:text-white">
+                  <h3 className="text-lg font-bold text-[#18352F] dark:text-[#F7F3ED] font-heading">
                     What brand rule would you like to verify?
                   </h3>
-                  <p className="text-xs text-ink-muted mt-1 mb-6">
+                  <p className="text-xs text-[#58716A] dark:text-[#85817D] mt-1 mb-6">
                     Ask questions grounded strictly in{" "}
-                    <span className="font-semibold text-teal">{activeOrgName || "your workspace"}</span> brand guideline
+                    <span className="font-semibold text-[#087F70] dark:text-[#FFAA35]">{activeOrgName || "your workspace"}</span> brand guideline
                     documents.
                   </p>
 
-                  <div className="w-full space-y-2 text-left">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-ink-muted px-1">
+                  <div className="w-full space-y-2.5 text-left">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#58716A] dark:text-[#85817D] px-1 font-mono">
                       Suggested Inquiries
                     </div>
                     {starterQuestions.map((q, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleAskQuestion(q.prompt)}
-                        className="w-full flex items-center justify-between p-3 rounded-lg border border-border bg-workspace hover:border-teal/40 hover:bg-teal/5 transition text-xs group"
+                        className="w-full flex items-center justify-between p-3.5 rounded-xl border border-[#DDEBE5] dark:border-[#383838] bg-[#F7FBF9] dark:bg-[#202020] hover:border-[#10A995] dark:hover:border-amber-500/40 hover:bg-[#EFF8F4] dark:hover:bg-[#272727] transition text-xs group"
                       >
-                        <span className="font-medium text-ink-primary group-hover:text-teal transition">
+                        <span className="font-medium text-[#18352F] dark:text-[#B8B2AC] group-hover:text-[#087F70] dark:group-hover:text-[#F7F3ED] transition">
                           "{q.prompt}"
                         </span>
-                        <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-teal transition shrink-0 ml-2" />
+                        <ChevronRight className="w-4 h-4 text-[#82948E] dark:text-[#85817D] group-hover:text-[#087F70] dark:group-hover:text-[#FFAA35] transition shrink-0 ml-2" />
                       </button>
                     ))}
                   </div>
@@ -501,31 +503,31 @@ export default function BrandAssistantPage() {
                     >
                       {/* Message Bubble */}
                       <div
-                        className={`max-w-[85%] sm:max-w-[78%] rounded-2xl p-4 shadow-sm text-xs leading-relaxed ${
+                        className={`max-w-[85%] sm:max-w-[78%] rounded-2xl p-4 shadow-subtle dark:shadow-md text-xs leading-relaxed ${
                           isUser
-                            ? "bg-teal text-white rounded-br-xs"
-                            : "bg-workspace border border-border text-ink-primary rounded-bl-xs"
+                            ? "bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#43D6B3] dark:from-[#FFAA35] dark:via-[#FF7A36] dark:to-[#F45B91] text-white dark:text-ink-950 font-medium rounded-br-xs shadow-warmGlow dark:shadow-orange-500/10"
+                            : "bg-[#F7FBF9] dark:bg-[#202020] border border-[#DDEBE5] dark:border-[#383838] text-[#18352F] dark:text-[#F7F3ED] rounded-bl-xs"
                         }`}
                       >
                         {/* Header for Assistant */}
                         {!isUser && (
-                          <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-border/50 text-[11px]">
-                            <div className="flex items-center gap-1.5 font-bold text-navy dark:text-white">
-                              <Bot className="w-3.5 h-3.5 text-teal" />
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-[#DDEBE5] dark:border-[#383838] text-[11px]">
+                            <div className="flex items-center gap-1.5 font-bold text-[#18352F] dark:text-[#F7F3ED]">
+                              <Bot className="w-3.5 h-3.5 text-[#087F70] dark:text-[#FFAA35]" />
                               <span>Brand Intelligence Assistant</span>
                             </div>
 
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {/* Generation Mode Badge */}
                               {msg.mode === "llm" ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal/10 text-teal dark:text-teal-300 border border-teal/20">
-                                  <Sparkles className="w-2.5 h-2.5 text-teal" />
-                                  AI-generated from your documents
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-amber-500/10 dark:text-[#FFAA35] dark:border-amber-500/20">
+                                  <Sparkles className="w-2.5 h-2.5 text-[#087F70] dark:text-[#FFAA35]" />
+                                  AI-grounded
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
-                                  <Layers className="w-2.5 h-2.5 text-slate-500" />
-                                  Showing matching sections (AI summary unavailable)
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EFF8F4] text-[#58716A] border border-[#DDEBE5] dark:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]">
+                                  <Layers className="w-2.5 h-2.5 text-[#58716A] dark:text-[#85817D]" />
+                                  Extractive Match
                                 </span>
                               )}
 
@@ -534,10 +536,10 @@ export default function BrandAssistantPage() {
                                 <span
                                   className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
                                     msg.confidence === "high"
-                                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                       : msg.confidence === "medium"
-                                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                      ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                      : "bg-rose-500/10 text-rose-400 border-rose-500/20"
                                   }`}
                                 >
                                   {msg.confidence === "not_found"
@@ -554,9 +556,9 @@ export default function BrandAssistantPage() {
 
                         {/* Citations Section */}
                         {!isUser && msg.citations && msg.citations.length > 0 && (
-                          <div className="mt-3 pt-3 border-t border-border/50">
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-ink-muted mb-2 flex items-center gap-1">
-                              <FileCheck2 className="w-3 h-3 text-teal" />
+                          <div className="mt-3 pt-3 border-t border-[#383838]">
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-[#85817D] mb-2 flex items-center gap-1 font-mono">
+                              <FileCheck2 className="w-3 h-3 text-[#FFAA35]" />
                               <span>Grounded Citations ({msg.citations.length})</span>
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -564,12 +566,12 @@ export default function BrandAssistantPage() {
                                 <button
                                   key={cIdx}
                                   onClick={() => setInspectedCitation(cite)}
-                                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface border border-teal/30 hover:border-teal hover:bg-teal/5 text-[11px] font-medium text-teal transition shadow-2xs group"
+                                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#272727] border border-[#383838] hover:border-amber-500/50 hover:bg-[#202020] text-[11px] font-medium text-[#FFAA35] transition group"
                                 >
-                                  <FileText className="w-3 h-3 text-teal" />
+                                  <FileText className="w-3 h-3 text-[#FFAA35]" />
                                   <span className="truncate max-w-[180px]">{cite.document_name}</span>
                                   {cite.page && (
-                                    <span className="px-1 py-0.2 rounded bg-teal/10 text-[9px] font-bold">
+                                    <span className="px-1.5 py-0.2 rounded bg-amber-500/15 text-[9px] font-bold text-[#FFD84D]">
                                       p. {cite.page}
                                     </span>
                                   )}
@@ -582,8 +584,8 @@ export default function BrandAssistantPage() {
 
                         {/* Unclear / Missing Rule Escalation Banner */}
                         {!isUser && isNotFound && (
-                          <div className="mt-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300">
+                          <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-rose-300">
                               <ShieldAlert className="w-4 h-4 shrink-0" />
                               <span className="text-[11px] font-medium">
                                 No matching brand policy detected for this scenario.
@@ -595,7 +597,7 @@ export default function BrandAssistantPage() {
                                 setReportQuestionRef(lastUserMsg?.content || "");
                                 setReportModalOpen(true);
                               }}
-                              className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white font-semibold text-[10px] transition shrink-0 shadow-xs"
+                              className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-[10px] transition shrink-0 shadow-xs"
                             >
                               Report Unclear / Missing Rule
                             </button>
@@ -604,8 +606,8 @@ export default function BrandAssistantPage() {
 
                         {/* Error Message with Retry Action */}
                         {!isUser && msg.id.startsWith("msg_err_") && lastFailedQuestion && (
-                          <div className="mt-3 p-2.5 rounded-lg bg-surface border border-border flex items-center justify-between gap-2 text-[11px]">
-                            <span className="text-ink-muted">Inquiry was not completed.</span>
+                          <div className="mt-3 p-2.5 rounded-xl bg-[#272727] border border-[#383838] flex items-center justify-between gap-2 text-[11px]">
+                            <span className="text-[#85817D]">Inquiry was not completed.</span>
                             <button
                               onClick={() => {
                                 const retryQuery = lastFailedQuestion;
@@ -613,7 +615,7 @@ export default function BrandAssistantPage() {
                                 handleAskQuestion(retryQuery);
                               }}
                               disabled={isAsking}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-teal text-white font-semibold text-[10px] hover:bg-teal-600 transition shadow-2xs disabled:opacity-50"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#FFAA35] to-[#FF7A36] text-ink-950 font-bold text-[10px] transition shadow-xs disabled:opacity-50"
                             >
                               <RotateCcw className="w-3 h-3" />
                               Retry Question
@@ -624,12 +626,12 @@ export default function BrandAssistantPage() {
 
                       {/* Assistant Feedback Controls */}
                       {!isUser && (
-                        <div className="flex items-center gap-2 mt-1.5 px-1 text-[11px] text-ink-muted">
+                        <div className="flex items-center gap-2 mt-1.5 px-1 text-[11px] text-[#85817D]">
                           <span>Was this answer helpful?</span>
                           <button
                             onClick={() => handleFeedback(msg.id, true)}
-                            className={`p-1 rounded hover:bg-surface transition ${
-                              feedbackState[msg.id]?.helpful === true ? "text-emerald-500 font-bold" : "text-ink-muted"
+                            className={`p-1 rounded hover:bg-[#202020] transition ${
+                              feedbackState[msg.id]?.helpful === true ? "text-emerald-400 font-bold" : "text-[#85817D]"
                             }`}
                             title="Helpful"
                           >
@@ -637,8 +639,8 @@ export default function BrandAssistantPage() {
                           </button>
                           <button
                             onClick={() => handleFeedback(msg.id, false)}
-                            className={`p-1 rounded hover:bg-surface transition ${
-                              feedbackState[msg.id]?.helpful === false ? "text-rose-500 font-bold" : "text-ink-muted"
+                            className={`p-1 rounded hover:bg-[#202020] transition ${
+                              feedbackState[msg.id]?.helpful === false ? "text-rose-400 font-bold" : "text-[#85817D]"
                             }`}
                             title="Not Helpful"
                           >
@@ -658,12 +660,12 @@ export default function BrandAssistantPage() {
                                     [msg.id]: { ...prev[msg.id], comment: e.target.value },
                                   }))
                                 }
-                                className="px-2 py-0.5 rounded border border-border bg-surface text-ink-primary text-xs w-48 focus:outline-teal"
+                                className="px-2.5 py-1 rounded-lg border border-[#383838] bg-[#141414] text-[#F7F3ED] text-xs w-48 focus:outline-none focus:border-amber-500"
                               />
                               <button
                                 onClick={() => handleFeedbackCommentSubmit(msg.id)}
                                 disabled={feedbackState[msg.id]?.isSubmitting}
-                                className="px-2 py-0.5 rounded bg-teal text-white text-[10px] font-semibold hover:bg-teal-600"
+                                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#FFAA35] to-[#FF7A36] text-ink-950 text-[10px] font-bold"
                               >
                                 Submit
                               </button>
@@ -679,24 +681,24 @@ export default function BrandAssistantPage() {
               {/* In-Flight Thinking Skeleton */}
               {isAsking && (
                 <div className="flex flex-col items-start max-w-[85%] sm:max-w-[78%]">
-                  <div className="w-full rounded-2xl p-4 bg-workspace border border-border shadow-sm space-y-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-border/50">
-                      <div className="flex items-center gap-2 text-xs font-bold text-navy dark:text-white">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-teal" />
+                  <div className="w-full rounded-2xl p-4 bg-[#202020] border border-[#383838] shadow-lg space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#383838]">
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#F7F3ED]">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFAA35]" />
                         <span>Consulting brand documentation...</span>
                       </div>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal/10 text-teal border border-teal/20 animate-pulse">
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-[#FFAA35] border border-amber-500/20 animate-pulse">
                         Synthesizing answer
                       </span>
                     </div>
                     <div className="space-y-2 py-1">
-                      <div className="h-3.5 bg-ink-muted/15 rounded-full w-full animate-pulse" />
-                      <div className="h-3.5 bg-ink-muted/15 rounded-full w-4/5 animate-pulse" />
-                      <div className="h-3.5 bg-ink-muted/15 rounded-full w-3/5 animate-pulse" />
+                      <div className="h-3.5 bg-[#272727] rounded-full w-full animate-pulse" />
+                      <div className="h-3.5 bg-[#272727] rounded-full w-4/5 animate-pulse" />
+                      <div className="h-3.5 bg-[#272727] rounded-full w-3/5 animate-pulse" />
                     </div>
-                    <div className="text-[11px] text-ink-muted flex items-center gap-1.5 pt-1">
-                      <Sparkles className="w-3 h-3 text-teal shrink-0" />
-                      <span>Retrieving passages with BM25 & verifying grounding against rules...</span>
+                    <div className="text-[11px] text-[#85817D] flex items-center gap-1.5 pt-1">
+                      <Sparkles className="w-3 h-3 text-[#FFAA35] shrink-0" />
+                      <span>Retrieving passages with BM25 &amp; verifying grounding against rules...</span>
                     </div>
                   </div>
                 </div>
@@ -705,7 +707,7 @@ export default function BrandAssistantPage() {
             </div>
 
             {/* Input Bar */}
-            <div className="p-3 sm:p-4 border-t border-border bg-surface">
+            <div className="p-3 sm:p-4 border-t border-[#DDEBE5] dark:border-[#383838] bg-white dark:bg-[#171717]">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -725,19 +727,19 @@ export default function BrandAssistantPage() {
                     }
                   }}
                   disabled={isAsking}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-workspace text-ink-primary text-xs focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal transition placeholder:text-ink-muted resize-none"
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-[#DDEBE5] dark:border-[#383838] bg-[#F7FBF9] dark:bg-[#141414] text-[#18352F] dark:text-[#F7F3ED] text-xs focus:outline-none focus:ring-1 focus:ring-[#10A995] focus:border-[#10A995] dark:focus:ring-[#FF7A36] dark:focus:border-[#FF7A36] transition placeholder:text-[#82948E] dark:placeholder:text-[#85817D] resize-none"
                 />
                 <button
                   type="submit"
                   disabled={isAsking || !questionInput.trim()}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-teal hover:bg-teal-600 disabled:opacity-50 text-white font-semibold text-xs shadow-sm transition shrink-0 h-[42px]"
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl btn-gradient-warm disabled:opacity-50 text-white dark:text-ink-950 font-bold text-xs shadow-warmGlow dark:shadow-orange-500/10 transition shrink-0 h-[42px]"
                 >
-                  {isAsking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {isAsking ? <Loader2 className="w-4 h-4 animate-spin text-white dark:text-ink-950" /> : <Send className="w-4 h-4 text-white dark:text-ink-950" />}
                   <span>Ask</span>
                 </button>
               </form>
-              <div className="flex items-center justify-between text-[10px] text-ink-muted mt-1.5 px-1">
-                <span>Answers derive strictly from your workspace documents. Zero hallucinated rules.</span>
+              <div className="flex items-center justify-between text-[10px] text-[#58716A] dark:text-[#85817D] mt-1.5 px-1 font-mono">
+                <span>Answers derive strictly from workspace documents. Zero hallucinated rules.</span>
                 <span>Press Enter to send, Shift+Enter for new line</span>
               </div>
             </div>
@@ -747,14 +749,14 @@ export default function BrandAssistantPage() {
         /* Brand Documents Management Tab */
         <div className="flex-1 flex flex-col gap-4 pt-4 min-h-0 overflow-y-auto">
           {/* Uploader Card */}
-          <div className="p-5 rounded-xl bg-surface border border-border shadow-sm">
+          <div className="p-5 rounded-2xl bg-[#1C1C1C] border border-[#383838] shadow-xl">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-sm font-bold text-navy dark:text-white flex items-center gap-2">
-                  <UploadCloud className="w-4 h-4 text-teal" />
-                  Upload Brand Guidelines & Style Guides
+                <h3 className="text-sm font-bold text-[#F7F3ED] font-heading flex items-center gap-2">
+                  <UploadCloud className="w-4 h-4 text-[#FFAA35]" />
+                  Upload Brand Guidelines &amp; Style Guides
                 </h3>
-                <p className="text-xs text-ink-muted mt-0.5">
+                <p className="text-xs text-[#85817D] mt-0.5">
                   Supported formats: PDF, DOCX, TXT (up to 25MB). Documents are parsed page-by-page and indexed for
                   BM25 synonym retrieval.
                 </p>
@@ -772,7 +774,7 @@ export default function BrandAssistantPage() {
                   />
                   <label
                     htmlFor="doc-file-upload"
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-teal text-white text-xs font-semibold cursor-pointer shadow hover:bg-teal-600 transition ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl btn-gradient-warm text-ink-950 text-xs font-bold cursor-pointer shadow-lg shadow-orange-500/10 transition ${
                       isUploading ? "opacity-50 pointer-events-none" : ""
                     }`}
                   >
@@ -790,22 +792,22 @@ export default function BrandAssistantPage() {
                   </label>
                 </div>
               ) : (
-                <div className="px-3 py-1.5 rounded-lg bg-surface-accent border border-border text-[11px] text-ink-muted flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Uploads restricted to Brand Admin or Legal & Compliance</span>
+                <div className="px-3 py-1.5 rounded-xl bg-[#202020] border border-[#383838] text-[11px] text-[#85817D] flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-[#FFAA35]" />
+                  <span>Uploads restricted to Brand Admin or Legal &amp; Compliance</span>
                 </div>
               )}
             </div>
 
             {/* Status alerts */}
             {uploadSuccess && (
-              <div className="mt-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+              <div className="mt-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>{uploadSuccess}</span>
               </div>
             )}
             {uploadError && (
-              <div className="mt-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+              <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{uploadError}</span>
               </div>
@@ -813,14 +815,14 @@ export default function BrandAssistantPage() {
           </div>
 
           {/* Documents Table */}
-          <div className="flex-1 bg-surface border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <div className="text-xs font-bold text-navy dark:text-white uppercase tracking-wider">
+          <div className="flex-1 bg-[#1C1C1C] border border-[#383838] rounded-2xl shadow-xl overflow-hidden flex flex-col">
+            <div className="px-4 py-3 border-b border-[#383838] flex items-center justify-between">
+              <div className="text-xs font-bold text-[#F7F3ED] uppercase tracking-wider font-mono">
                 Active Knowledge Documents ({documents.length})
               </div>
               <button
                 onClick={loadDocuments}
-                className="text-xs text-teal hover:underline flex items-center gap-1"
+                className="text-xs text-[#FFAA35] hover:underline flex items-center gap-1"
               >
                 Refresh
               </button>
@@ -828,21 +830,21 @@ export default function BrandAssistantPage() {
 
             <div className="flex-1 overflow-x-auto">
               {loadingDocs ? (
-                <div className="flex items-center justify-center py-16 text-xs text-ink-muted gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-teal" />
+                <div className="flex items-center justify-center py-16 text-xs text-[#85817D] gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#FF7A36]" />
                   Loading brand documents...
                 </div>
               ) : documents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center text-xs text-ink-muted">
-                  <FileText className="w-8 h-8 text-ink-muted/50 mb-2" />
+                <div className="flex flex-col items-center justify-center py-16 text-center text-xs text-[#85817D]">
+                  <FileText className="w-8 h-8 text-[#85817D]/50 mb-2" />
                   <span>No documents uploaded yet.</span>
-                  <span className="text-[11px] text-ink-muted/70 mt-0.5">
+                  <span className="text-[11px] text-[#85817D]/70 mt-0.5">
                     Upload your official brand manual PDF to ground the AI assistant.
                   </span>
                 </div>
               ) : (
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-workspace/50 text-[10px] font-bold uppercase tracking-wider text-ink-muted border-b border-border">
+                  <thead className="bg-[#171717] text-[10px] font-bold uppercase tracking-wider text-[#85817D] border-b border-[#383838] font-mono">
                     <tr>
                       <th className="py-3 px-4">Document Name</th>
                       <th className="py-3 px-4">Pages</th>
@@ -853,42 +855,42 @@ export default function BrandAssistantPage() {
                       {isPrivileged && <th className="py-3 px-4 text-right">Actions</th>}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border">
+                  <tbody className="divide-y divide-[#383838]">
                     {documents.map((doc) => (
-                      <tr key={doc.id} className="hover:bg-workspace/40 transition">
-                        <td className="py-3 px-4 font-semibold text-ink-primary flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-teal shrink-0" />
+                      <tr key={doc.id} className="hover:bg-[#202020] transition">
+                        <td className="py-3 px-4 font-semibold text-[#F7F3ED] flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-[#FFAA35] shrink-0" />
                           <span className="truncate max-w-xs">{doc.filename}</span>
                         </td>
-                        <td className="py-3 px-4 text-ink-secondary">{doc.page_count || "—"}</td>
-                        <td className="py-3 px-4 text-ink-secondary">
+                        <td className="py-3 px-4 text-[#B8B2AC]">{doc.page_count || "—"}</td>
+                        <td className="py-3 px-4 text-[#B8B2AC]">
                           <span className="flex items-center gap-1 font-mono text-[11px]">
-                            <Layers className="w-3 h-3 text-ink-muted" />
+                            <Layers className="w-3 h-3 text-[#85817D]" />
                             {doc.chunks_count || "Ready"}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-ink-secondary">{formatFileSize(doc.file_size_bytes)}</td>
+                        <td className="py-3 px-4 text-[#B8B2AC]">{formatFileSize(doc.file_size_bytes)}</td>
                         <td className="py-3 px-4">
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize border ${
                               doc.status === "ready"
-                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                 : doc.status === "processing"
-                                ? "bg-teal/10 text-teal border-teal/20 animate-pulse"
-                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                ? "bg-amber-500/10 text-[#FFAA35] border-amber-500/20 animate-pulse"
+                                : "bg-rose-500/10 text-rose-400 border-rose-500/20"
                             }`}
                           >
                             {doc.status}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-ink-muted">
+                        <td className="py-3 px-4 text-[#85817D]">
                           {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : "—"}
                         </td>
                         {isPrivileged && (
                           <td className="py-3 px-4 text-right">
                             <button
                               onClick={() => handleDeleteDocument(doc.id, doc.filename)}
-                              className="p-1 rounded text-ink-muted hover:text-red-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition"
+                              className="p-1 rounded text-[#85817D] hover:text-red-400 hover:bg-rose-950/30 transition"
                               title="Delete Document"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -907,26 +909,28 @@ export default function BrandAssistantPage() {
 
       {/* Citation Inspector Modal / Slide-over */}
       {inspectedCitation && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg p-5 shadow-2xl relative text-ink-primary animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1C1C1C] border border-[#383838] rounded-2xl w-full max-w-lg p-6 shadow-2xl relative text-[#F7F3ED] animate-in fade-in zoom-in-95 duration-150">
             <button
               onClick={() => setInspectedCitation(null)}
-              className="absolute top-4 right-4 text-ink-muted hover:text-ink-primary transition"
+              className="absolute top-4 right-4 text-[#85817D] hover:text-[#F7F3ED] transition"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2 text-teal text-xs font-bold uppercase tracking-wider mb-1">
-              <FileCheck2 className="w-4 h-4" />
-              <span>Verified Source Citation</span>
+            <div className="flex items-center gap-2 text-ink-primary text-xs font-bold uppercase tracking-wider mb-1 font-mono">
+              <span className="w-5 h-5 rounded bg-gradient-to-br from-[#FFD84D] to-[#F45B91] flex items-center justify-center text-ink-950">
+                <FileCheck2 className="w-3 h-3" />
+              </span>
+              <span className="text-gradient-warm">Verified Source Citation</span>
             </div>
-            <h3 className="text-base font-bold text-navy dark:text-white truncate pr-8">
+            <h3 className="text-base font-bold text-[#F7F3ED] font-heading truncate pr-8">
               {inspectedCitation.document_name}
             </h3>
 
-            <div className="flex items-center gap-3 text-xs text-ink-muted mt-1 mb-4 pb-3 border-b border-border">
+            <div className="flex items-center gap-3 text-xs text-[#85817D] mt-1 mb-4 pb-3 border-b border-[#383838]">
               {inspectedCitation.page && (
-                <span className="px-2 py-0.5 rounded bg-teal/10 text-teal font-semibold text-[11px]">
+                <span className="px-2 py-0.5 rounded bg-amber-500/15 text-[#FFAA35] font-semibold text-[11px] border border-amber-500/30">
                   Page {inspectedCitation.page}
                 </span>
               )}
@@ -935,10 +939,10 @@ export default function BrandAssistantPage() {
             </div>
 
             <div className="text-xs">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-ink-muted mb-1.5">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#85817D] mb-1.5 font-mono">
                 Verbatim Extracted Snippet
               </div>
-              <div className="p-3 rounded-lg bg-workspace border border-border text-ink-primary font-mono text-[11px] leading-relaxed max-h-60 overflow-y-auto">
+              <div className="p-3.5 rounded-xl bg-[#141414] border border-[#383838] text-[#F7F3ED] font-mono text-[11px] leading-relaxed max-h-60 overflow-y-auto">
                 "{inspectedCitation.snippet}"
               </div>
             </div>
@@ -946,7 +950,7 @@ export default function BrandAssistantPage() {
             <div className="mt-5 flex justify-end">
               <button
                 onClick={() => setInspectedCitation(null)}
-                className="px-4 py-1.5 rounded-lg bg-teal text-white text-xs font-semibold hover:bg-teal-600 transition"
+                className="px-4 py-2 rounded-xl btn-dark-secondary text-xs font-semibold"
               >
                 Close Inspector
               </button>

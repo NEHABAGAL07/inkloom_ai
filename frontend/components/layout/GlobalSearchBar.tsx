@@ -361,9 +361,9 @@ export function GlobalSearchBar() {
               }}
               onFocus={() => setIsOpen(true)}
               onKeyDown={handleKeyDown}
-              placeholder="Search guidelines, rules, claims, or audits... (Press / to focus)"
+              placeholder="Search reviews, guidelines..."
               aria-label="Global search across guidelines, rules, claims, and submissions"
-              className="w-full bg-workspace dark:bg-[#111C2E] border border-border rounded-xl pl-10 pr-16 py-2 text-xs text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all duration-150 shadow-sm"
+              className="w-full bg-white dark:bg-[#111C2E] border border-slate-200 dark:border-border rounded-xl pl-10 pr-16 py-2 text-xs text-ink-primary placeholder:text-slate-400 focus:outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981] transition-all duration-150 shadow-xs"
             />
             {query ? (
               <button

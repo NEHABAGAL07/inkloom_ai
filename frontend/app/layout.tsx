@@ -23,22 +23,24 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  const stored = localStorage.getItem('inkloom_theme');
-                  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  const theme = stored === 'dark' || (stored !== 'light' && prefersDark) ? 'dark' : 'light';
-                  if (theme === 'dark') {
+                  var stored = localStorage.getItem('inkloom_theme');
+                  var isDark = stored ? stored === 'dark' : true;
+                  if (isDark) {
                     document.documentElement.classList.add('dark');
+                    document.documentElement.setAttribute('data-theme', 'dark');
                   } else {
                     document.documentElement.classList.remove('dark');
+                    document.documentElement.setAttribute('data-theme', 'light');
                   }
-                  document.documentElement.setAttribute('data-theme', theme);
-                } catch (e) {}
+                } catch (e) {
+                  document.documentElement.classList.add('dark');
+                }
               })();
             `,
           }}
         />
       </head>
-      <body className="bg-workspace text-ink-primary min-h-screen font-sans antialiased selection:bg-teal selection:text-white transition-colors duration-150">
+      <body className="bg-workspace text-ink-primary min-h-screen font-sans antialiased selection:bg-[#10B981]/25 selection:text-[#0F172A] dark:selection:bg-[#FF7A36]/30 dark:selection:text-white transition-colors duration-150">
         <ThemeProvider>
           <AuthProvider>
             <AppShell>{children}</AppShell>

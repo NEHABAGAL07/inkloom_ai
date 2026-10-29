@@ -25,6 +25,7 @@ class FindingCategory(str, Enum):
     LEGAL_COMPLIANCE = "legal_compliance"
     MARKETING_QUALITY = "marketing_quality"
     CROSS_RULE_CONFLICT = "cross_rule_conflict"
+    POLICY = "editorial_standards"
 
 
 class FindingSeverity(str, Enum):

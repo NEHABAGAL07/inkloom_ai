@@ -63,7 +63,7 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
       {/* Title & Description */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-navy mb-1.5">
+          <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED] mb-1.5">
             Content Campaign Title *
           </label>
           <input
@@ -71,34 +71,34 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-workspace border border-border rounded-xl px-4 py-2.5 text-sm text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal"
+            className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl px-4 py-2.5 text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-slate-400 dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] transition shadow-xs"
             placeholder="e.g. Q4 Global Product Announcement"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-navy mb-1.5">
+          <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED] mb-1.5">
             Context / Target Audience
           </label>
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full bg-workspace border border-border rounded-xl px-4 py-2.5 text-sm text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal"
+            className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl px-4 py-2.5 text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-slate-400 dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] transition shadow-xs"
             placeholder="e.g. Enterprise B2B Buyers, Social Media, PR"
           />
         </div>
       </div>
 
       {/* Input Mode Toggle */}
-      <div className="flex items-center gap-2 border-b border-border pb-3">
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-[#383838] pb-3">
         <button
           type="button"
           onClick={() => setMode("text")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
             mode === "text"
-              ? "bg-navy text-white shadow-subtle"
-              : "text-ink-secondary hover:text-navy hover:bg-workspace"
+              ? "bg-[#CEF0E5] text-[#0F766E] border border-[#BDE7D9] dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50 shadow-xs"
+              : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#B8B2AC] dark:hover:text-[#F7F3ED] dark:hover:bg-[#222222]"
           }`}
         >
           ✍️ Direct Text Entry
@@ -106,10 +106,10 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
         <button
           type="button"
           onClick={() => setMode("file")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
             mode === "file"
-              ? "bg-navy text-white shadow-subtle"
-              : "text-ink-secondary hover:text-navy hover:bg-workspace"
+              ? "bg-[#CEF0E5] text-[#0F766E] border border-[#BDE7D9] dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50 shadow-xs"
+              : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#B8B2AC] dark:hover:text-[#F7F3ED] dark:hover:bg-[#222222]"
           }`}
         >
           📁 Document / Media File
@@ -120,17 +120,17 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
       {mode === "text" ? (
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-semibold text-navy">
+            <label className="text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED]">
               Content Draft Text *
             </label>
-            <span className="text-xs text-ink-muted font-mono">{wordCount} words</span>
+            <span className="text-xs text-slate-500 dark:text-[#85817D] font-mono">{wordCount} words</span>
           </div>
           <textarea
             required
             rows={8}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="w-full bg-workspace border border-border rounded-xl p-4 text-sm text-navy font-sans focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal leading-relaxed"
+            className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl p-4 text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-slate-400 dark:placeholder:text-[#85817D] font-sans focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] leading-relaxed transition shadow-xs"
             placeholder="Paste draft copy, marketing announcement, or script here..."
           />
         </div>
@@ -139,41 +139,41 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
       )}
 
       {/* Guidelines Applied Badge Row */}
-      <div className="flex flex-wrap items-center gap-2 text-xs text-ink-secondary pt-2">
-        <span className="font-semibold text-navy">Active Governance Rules:</span>
-        <span className="px-2.5 py-1 rounded-md bg-teal/10 border border-teal/20 text-teal text-[11px] font-medium flex items-center gap-1">
-          <Check className="w-3 h-3" /> Tone & Voice 2026
+      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-[#B8B2AC] pt-2">
+        <span className="font-semibold text-[#0F172A] dark:text-[#F7F3ED]">Active Governance Rules:</span>
+        <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[#0F766E] dark:bg-[#272727] dark:border-[#383838] dark:text-[#FFAA35] text-[11px] font-medium flex items-center gap-1 shadow-2xs">
+          <Check className="w-3 h-3 text-[#10B981] dark:text-[#72D6A1]" /> Tone & Voice 2026
         </span>
-        <span className="px-2.5 py-1 rounded-md bg-teal/10 border border-teal/20 text-teal text-[11px] font-medium flex items-center gap-1">
-          <Check className="w-3 h-3" /> Terminology Registry
+        <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[#0F766E] dark:bg-[#272727] dark:border-[#383838] dark:text-[#FFAA35] text-[11px] font-medium flex items-center gap-1 shadow-2xs">
+          <Check className="w-3 h-3 text-[#10B981] dark:text-[#72D6A1]" /> Terminology Registry
         </span>
-        <span className="px-2.5 py-1 rounded-md bg-teal/10 border border-teal/20 text-teal text-[11px] font-medium flex items-center gap-1">
-          <Check className="w-3 h-3" /> Certified Claims Verification
+        <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[#0F766E] dark:bg-[#272727] dark:border-[#383838] dark:text-[#FFAA35] text-[11px] font-medium flex items-center gap-1 shadow-2xs">
+          <Check className="w-3 h-3 text-[#10B981] dark:text-[#72D6A1]" /> Certified Claims Verification
         </span>
       </div>
 
       {/* Submit Button */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-[#383838]">
         <button
           type="button"
           onClick={() => setText("")}
-          className="px-4 py-2.5 rounded-xl text-xs font-semibold text-ink-muted hover:text-navy transition"
+          className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-[#85817D] dark:hover:text-[#F7F3ED] dark:hover:bg-[#222222] transition"
         >
           Clear
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-teal hover:bg-teal-hover text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-subtle transition flex items-center gap-2 disabled:opacity-50"
+          className="btn-gradient-warm font-bold text-xs px-6 py-2.5 rounded-xl shadow-sm dark:shadow-warmGlow transition flex items-center gap-2 disabled:opacity-50"
         >
           {isSubmitting ? (
             <>
-              <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
+              <span className="w-4 h-4 rounded-full border-2 border-white/40 dark:border-[#111111]/30 border-t-white dark:border-t-[#111111] animate-spin"></span>
               <span>Running Brand Audit Pass...</span>
             </>
           ) : (
             <>
-              <Shield className="w-4 h-4" />
+              <Shield className="w-4 h-4 text-white dark:text-[#111111]" />
               <span>Run AI Brand Audit</span>
             </>
           )}

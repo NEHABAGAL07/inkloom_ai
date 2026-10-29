@@ -140,17 +140,18 @@ function AuditsContent() {
   const activeSub = submissions.find((s) => s.id === selectedContentId);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 relative selection:bg-[#10A995]/20 dark:selection:bg-[#FF7A36]/30 selection:text-[#18352F] dark:selection:text-white">
       {/* Header & Content Piece Switcher */}
-      <div className="bg-surface rounded-2xl p-6 border border-border shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl p-6 border border-[#DDEBE5] dark:border-[#383838] shadow-subtle dark:shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#43D6B3] dark:from-[#FFD84D] dark:via-[#FF7A36] dark:to-[#F45B91]" />
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E8F7F1] border border-[#C8E2D8] text-[#087F70] dark:bg-[#272727] dark:border-[#383838] dark:text-[#FFAA35] text-xs font-semibold">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Audit Findings & Remediation</span>
+            <span>Audit Findings &amp; Remediation</span>
           </div>
-          <h1 className="text-2xl font-extrabold text-navy tracking-tight">Audit Findings & Remediation</h1>
-          <p className="text-xs text-ink-secondary">
-            Inspecting <strong className="text-navy">{activeSub?.title || auditResult.content_id}</strong> against active enterprise guidelines.
+          <h1 className="text-2xl font-heading font-extrabold text-[#18352F] dark:text-[#F7F3ED] tracking-tight">Audit Findings &amp; Remediation</h1>
+          <p className="text-xs text-[#58716A] dark:text-[#85817D]">
+            Inspecting <strong className="text-[#18352F] dark:text-[#F7F3ED]">{activeSub?.title || auditResult.content_id}</strong> against active enterprise guidelines.
           </p>
         </div>
 
@@ -158,14 +159,14 @@ function AuditsContent() {
         <div className="flex flex-wrap items-center gap-3">
           {submissions.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-ink-muted font-semibold hidden md:inline">Inspect Asset:</span>
+              <span className="text-xs text-[#58716A] dark:text-[#85817D] font-semibold hidden md:inline">Inspect Asset:</span>
               <select
                 value={selectedContentId}
                 onChange={(e) => setSelectedContentId(e.target.value)}
-                className="bg-workspace border border-border text-xs text-navy rounded-xl px-3 py-2 max-w-[240px] truncate focus:outline-none focus:border-teal"
+                className="bg-[#F7FBF9] dark:bg-[#141414] border border-[#DDEBE5] dark:border-[#383838] text-xs text-[#18352F] dark:text-[#F7F3ED] rounded-xl px-3 py-2 max-w-[240px] truncate focus:outline-none focus:border-[#10A995] dark:focus:border-[#FFAA35]"
               >
                 {submissions.map((s) => (
-                  <option key={s.id} value={s.id}>
+                  <option key={s.id} value={s.id} className="bg-white dark:bg-[#1C1C1C] text-[#18352F] dark:text-[#F7F3ED]">
                     [{s.content_type.toUpperCase()}] {s.title}
                   </option>
                 ))}
@@ -176,19 +177,19 @@ function AuditsContent() {
           {activeSub && (
             <button
               onClick={() => setIsViewerOpen(true)}
-              className="bg-teal/10 hover:bg-teal/20 text-teal border border-teal/30 font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-subtle"
+              className="btn-dark-secondary font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5"
             >
-              <Eye className="w-3.5 h-3.5" />
+              <Eye className="w-3.5 h-3.5 text-[#087F70] dark:text-[#FFAA35]" />
               <span>Open &amp; View Asset ↗</span>
             </button>
           )}
 
           <a
             href="/reviews"
-            className="bg-teal hover:bg-teal-hover text-white font-bold text-xs px-4 py-2 rounded-xl shadow-subtle transition whitespace-nowrap flex items-center gap-1.5"
+            className="btn-gradient-warm text-white dark:text-[#111111] text-xs font-bold px-4 py-2 rounded-xl shadow-warmGlow transition whitespace-nowrap flex items-center gap-1.5"
           >
             <span>Reviewer Queue</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5 text-white dark:text-[#111111]" />
           </a>
         </div>
       </div>

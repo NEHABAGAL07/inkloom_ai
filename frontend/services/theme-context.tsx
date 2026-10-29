@@ -18,8 +18,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const STORAGE_KEY = "inkloom_theme";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>("system");
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
+  const [theme, setThemeState] = useState<ThemeMode>("dark");
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("dark");
   const [mounted, setMounted] = useState(false);
 
   // Apply theme class to document root
@@ -37,22 +37,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Determine resolved theme based on preference
   const resolveTheme = useCallback((pref: ThemeMode): ResolvedTheme => {
-    if (typeof window === "undefined") return "light";
+    if (typeof window === "undefined") return "dark";
     if (pref === "dark") return "dark";
     if (pref === "light") return "light";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
   }, []);
 
   // Initialize from storage or system on client mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
-      const initialPref: ThemeMode = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
+      const initialPref: ThemeMode =
+        stored === "light" || stored === "dark" || stored === "system" ? stored : "dark";
       setThemeState(initialPref);
       const resolved = resolveTheme(initialPref);
       applyTheme(resolved);
     } catch {
-      applyTheme("light");
+      applyTheme("dark");
     }
     setMounted(true);
   }, [applyTheme, resolveTheme]);
@@ -85,7 +86,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 
   const toggleTheme = useCallback(() => {
-    const nextTheme = resolvedTheme === "dark" ? "light" : "dark";
+    // Check current DOM state to guarantee reliable toggle without sync lag
+    const isCurrentlyDark =
+      typeof document !== "undefined"
+        ? document.documentElement.classList.contains("dark")
+        : resolvedTheme === "dark";
+    const nextTheme: ResolvedTheme = isCurrentlyDark ? "light" : "dark";
     setTheme(nextTheme);
   }, [resolvedTheme, setTheme]);
 
@@ -130,12 +136,12 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={toggleTheme}
       aria-label={label}
       title={label}
-      className={`relative inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-workspace hover:bg-surface text-ink-secondary hover:text-ink-primary transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-teal shadow-subtle ${className}`}
+      className={`relative inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-surface hover:bg-surface-elevated text-ink-secondary hover:text-ink-primary transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#FF7A36] shadow-subtle ${className}`}
     >
       {isDark ? (
-        <Sun className="w-4 h-4 text-amber-400 animate-in fade-in zoom-in-75 duration-200" />
+        <Sun className="w-4 h-4 text-[#FFD84D] animate-in fade-in zoom-in-75 duration-200" />
       ) : (
-        <Moon className="w-4 h-4 text-navy animate-in fade-in zoom-in-75 duration-200" />
+        <Moon className="w-4 h-4 text-slate-700 animate-in fade-in zoom-in-75 duration-200" />
       )}
       <span className="sr-only">{label}</span>
     </button>

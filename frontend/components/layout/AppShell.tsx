@@ -7,6 +7,8 @@ import { Header } from "./Header";
 import { usePathname } from "next/navigation";
 import { Lock, ArrowRight, Home, AlertTriangle, RefreshCw, ServerOff } from "lucide-react";
 
+import { InkloomLoadingScreen } from "./InkloomLoadingScreen";
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, backendError, retryAuth } = useAuth();
   const pathname = usePathname();
@@ -99,30 +101,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Branded initial loading state
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-workspace flex flex-col items-center justify-center space-y-4 p-6">
-        <div className="w-12 h-12 rounded-xl bg-navy flex items-center justify-center shadow-subtle border border-border">
-          <span className="text-xl font-black text-white">I</span>
-        </div>
-        <p className="text-xs text-ink-secondary tracking-wider font-semibold uppercase animate-pulse">
-          Loading Inkloom Brand Governance...
-        </p>
-        {showSlowWarning && (
-          <div className="pt-2 text-center space-y-2 animate-in fade-in duration-300">
-            <p className="text-[11px] text-ink-muted">
-              Initialization is taking longer than expected.
-            </p>
-            <button
-              onClick={() => retryAuth()}
-              className="px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-workspace text-xs text-ink-primary font-medium transition inline-flex items-center gap-1.5"
-            >
-              <RefreshCw className="w-3 h-3 text-teal" />
-              <span>Retry</span>
-            </button>
-          </div>
-        )}
-      </div>
-    );
+    return <InkloomLoadingScreen onRetry={retryAuth} showSlowWarning={showSlowWarning} />;
   }
 
   // Public Landing page (/) for unauthenticated visitors

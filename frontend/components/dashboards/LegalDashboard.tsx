@@ -142,37 +142,39 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Enterprise Page Header */}
-      <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-border shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl p-6 sm:p-8 border border-[#DDEBE5] dark:border-[#383838] shadow-subtle dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#43D6B3] dark:from-[#FFD84D] dark:via-[#FF7A36] dark:to-[#F45B91]" />
+        <div className="absolute top-0 right-0 w-80 h-32 bg-gradient-to-l from-[#10A995]/10 dark:from-[#FF7A36]/10 to-transparent pointer-events-none blur-2xl" />
         <div className="space-y-2 max-w-3xl">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F7F1] border border-[#C8E2D8] text-[#087F70] dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-[#FFAA35] text-xs font-bold font-mono">
             <Scale className="w-3.5 h-3.5" />
-            <span>Legal & Regulatory Compliance Station</span>
+            <span>Legal &amp; Regulatory Compliance Station</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-navy tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#18352F] dark:text-[#F7F3ED] font-heading tracking-tight">
             {activeOrgName || "Enterprise"} Compliance Review Queue
           </h1>
-          <p className="text-ink-secondary text-sm leading-relaxed">
+          <p className="text-[#58716A] dark:text-[#85817D] text-sm leading-relaxed">
             Human-in-the-loop review station for brand governance. Inspect factual accuracy, statutory disclosures, and guideline alignment before authorizing public release.
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-          <div className="bg-workspace border border-border rounded-xl px-4 py-3 text-center">
-            <span className="block text-[11px] font-bold uppercase tracking-wider text-ink-muted">Awaiting Action</span>
-            <span className="text-2xl font-black text-navy">{pendingCount}</span>
+          <div className="bg-[#EFF8F4] dark:bg-[#141414] border border-[#DDEBE5] dark:border-[#383838] rounded-xl px-5 py-3 text-center">
+            <span className="block text-[11px] font-bold uppercase tracking-wider text-[#58716A] dark:text-[#85817D] font-mono">Awaiting Action</span>
+            <span className="text-2xl font-black text-gradient-warm font-heading">{pendingCount}</span>
           </div>
         </div>
       </div>
 
       {decisionFeedback && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl flex items-center justify-between shadow-subtle">
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-sm rounded-xl flex items-center justify-between shadow-subtle dark:shadow-xl">
           <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-status-success shrink-0" />
+            <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{decisionFeedback}</span>
           </div>
           <button
             onClick={() => setDecisionFeedback(null)}
-            className="text-emerald-700 hover:text-emerald-900 font-bold p-1"
+            className="text-emerald-600 dark:text-emerald-400 hover:opacity-80 font-bold p-1"
           >
             ✕
           </button>
@@ -182,13 +184,13 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
       {/* Main Review Section: Queue on Left, Findings Inspection on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Pending Review Queue */}
-        <div className="lg:col-span-5 bg-surface border border-border rounded-2xl p-5 shadow-subtle space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-border">
-            <h2 className="text-sm font-bold text-navy flex items-center gap-2">
-              <FileText className="w-4 h-4 text-teal" />
+        <div className="lg:col-span-5 bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] rounded-2xl p-5 shadow-subtle dark:shadow-xl space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#DDEBE5] dark:border-[#383838]">
+            <h2 className="text-sm font-bold text-[#18352F] dark:text-[#F7F3ED] font-heading flex items-center gap-2">
+              <FileText className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
               <span>Review Queue ({filteredQueue.length})</span>
             </h2>
-            <span className="text-[11px] font-bold text-status-warning bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-[#087F70] bg-[#E8F7F1] border border-[#C8E2D8] dark:text-[#FFAA35] dark:bg-amber-500/10 dark:border-amber-500/20 px-2.5 py-0.5 rounded-full font-mono">
               Separation of Duties
             </span>
           </div>
@@ -199,8 +201,8 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
               onClick={() => setQueueFilter("pending")}
               className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
                 queueFilter === "pending"
-                  ? "bg-navy text-white shadow-sm"
-                  : "bg-workspace hover:bg-slate-200 text-ink-secondary border border-border"
+                  ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-ink-950 shadow-sm"
+                  : "bg-[#F7FBF9] hover:bg-[#EFF8F4] text-[#58716A] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]"
               }`}
             >
               Awaiting ({pendingCount})
@@ -209,8 +211,8 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
               onClick={() => setQueueFilter("visual")}
               className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
                 queueFilter === "visual"
-                  ? "bg-navy text-white shadow-sm"
-                  : "bg-workspace hover:bg-slate-200 text-ink-secondary border border-border"
+                  ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-ink-950 shadow-sm"
+                  : "bg-[#F7FBF9] hover:bg-[#EFF8F4] text-[#58716A] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]"
               }`}
             >
               Visual Media ({visualCount})
@@ -219,8 +221,8 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
               onClick={() => setQueueFilter("all")}
               className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
                 queueFilter === "all"
-                  ? "bg-navy text-white shadow-sm"
-                  : "bg-workspace hover:bg-slate-200 text-ink-secondary border border-border"
+                  ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-ink-950 shadow-sm"
+                  : "bg-[#F7FBF9] hover:bg-[#EFF8F4] text-[#58716A] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]"
               }`}
             >
               All ({submissions.length})
@@ -229,15 +231,15 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
               onClick={() => setQueueFilter("approved")}
               className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
                 queueFilter === "approved"
-                  ? "bg-navy text-white shadow-sm"
-                  : "bg-workspace hover:bg-slate-200 text-ink-secondary border border-border"
+                  ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-ink-950 shadow-sm"
+                  : "bg-[#F7FBF9] hover:bg-[#EFF8F4] text-[#58716A] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]"
               }`}
             >
               Approved ({approvedCount})
             </button>
           </div>
 
-          <div className="divide-y divide-border space-y-2">
+          <div className="divide-y divide-[#DDEBE5] dark:divide-[#383838] space-y-2">
             {filteredQueue.length > 0 ? (
               filteredQueue.map((sub) => {
                 const isSelected = selectedSubmission?.id === sub.id;
@@ -247,28 +249,28 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                     onClick={() => handleInspectSubmission(sub)}
                     className={`p-4 rounded-xl cursor-pointer transition-all border ${
                       isSelected
-                        ? "bg-teal/5 border-teal shadow-subtle ring-1 ring-teal"
-                        : "bg-surface border-border hover:border-slate-300 hover:bg-workspace"
+                        ? "bg-[#E8F7F1] border-[#10A995] shadow-sm dark:bg-[#272727] dark:border-amber-500/50 dark:shadow-md dark:ring-1 dark:ring-amber-500/30"
+                        : "bg-white border-[#DDEBE5] hover:border-[#10A995]/50 hover:bg-[#F7FBF9] dark:bg-[#202020] dark:border-[#383838] dark:hover:border-amber-500/30 dark:hover:bg-[#272727]"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-bold text-navy truncate">{sub.title}</span>
+                      <span className="text-sm font-bold text-[#18352F] dark:text-[#F7F3ED] truncate font-heading">{sub.title}</span>
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize shrink-0 ${
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize shrink-0 font-mono ${
                           sub.status === "pending_approval"
-                            ? "bg-blue-50 text-status-info border-blue-200"
-                            : "bg-amber-50 text-status-warning border-amber-200"
+                            ? "bg-[#E8F7F1] text-[#087F70] border-[#C8E2D8] dark:bg-amber-500/10 dark:text-[#FFAA35] dark:border-amber-500/20"
+                            : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20"
                         }`}
                       >
                         {sub.status.replace("_", " ")}
                       </span>
                     </div>
-                    <div className="text-xs text-ink-secondary mt-1.5 line-clamp-2 leading-relaxed">
+                    <div className="text-xs text-[#58716A] dark:text-ink-secondary mt-1.5 line-clamp-2 leading-relaxed">
                       {sub.description}
                     </div>
-                    <div className="mt-3 flex items-center justify-between text-[11px] text-ink-muted border-t border-border/80 pt-2">
+                    <div className="mt-3 flex items-center justify-between text-[11px] text-[#82948E] dark:text-ink-muted border-t border-[#DDEBE5] dark:border-border/80 pt-2">
                       <span className="uppercase font-semibold tracking-wider">{sub.content_type}</span>
-                      <span className="text-teal font-bold flex items-center gap-1">
+                      <span className="text-[#087F70] dark:text-teal font-bold flex items-center gap-1">
                         Inspect Evidence <ArrowRight className="w-3 h-3" />
                       </span>
                     </div>
@@ -276,10 +278,10 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                 );
               })
             ) : (
-              <div className="py-16 text-center text-ink-muted text-xs space-y-2">
+              <div className="py-16 text-center text-[#82948E] dark:text-ink-muted text-xs space-y-2">
                 <CheckCircle className="w-8 h-8 text-status-success mx-auto opacity-70" />
-                <div className="font-semibold text-navy">Review queue is clear</div>
-                <p className="text-[11px] text-ink-muted max-w-xs mx-auto">
+                <div className="font-semibold text-[#18352F] dark:text-navy">Review queue is clear</div>
+                <p className="text-[11px] text-[#82948E] dark:text-ink-muted max-w-xs mx-auto">
                   All submitted content pieces have received authorized decisions.
                 </p>
               </div>
@@ -303,10 +305,10 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => setIsAssetViewerOpen(true)}
-                    className="px-3.5 py-2 bg-teal/10 hover:bg-teal/20 text-teal border border-teal/30 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                    className="px-3.5 py-2 btn-dark-secondary text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
                     title="Open visual design canvas, inspect WCAG contrast, and view high-resolution media"
                   >
-                    <Eye className="w-3.5 h-3.5" />
+                    <Eye className="w-3.5 h-3.5 text-[#087F70] dark:text-[#FFAA35]" />
                     <span>Open Design Asset ↗</span>
                   </button>
                   <button
@@ -321,13 +323,13 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                         ? "Separation of Duties: Creators cannot authorize their own submissions."
                         : "Authorize content for production release"
                     }
-                    className={`px-3.5 py-2 text-xs font-bold rounded-xl shadow-subtle transition flex items-center gap-1.5 ${
+                    className={`px-4 py-2 text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-1.5 ${
                       isAuthor
-                        ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-300"
-                        : "bg-status-success hover:bg-emerald-800 text-white"
+                        ? "bg-[#272727] text-[#85817D] cursor-not-allowed border border-[#383838]"
+                        : "btn-gradient-warm text-white dark:text-ink-950 shadow-warmGlow"
                     }`}
                   >
-                    {isAuthor ? <Lock className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                    {isAuthor ? <Lock className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5 text-white dark:text-ink-950" />}
                     <span>{isAuthor ? "Authorize (Self Locked)" : "Authorize"}</span>
                   </button>
                   <button
@@ -335,7 +337,7 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                       setDecisionAction("request_changes");
                       setIsDecisionModalOpen(true);
                     }}
-                    className="px-3.5 py-2 bg-status-warning hover:bg-amber-800 text-white text-xs font-bold rounded-xl shadow-subtle transition flex items-center gap-1.5"
+                    className="px-3.5 py-2 bg-[#E8F7F1] hover:bg-[#DDF3EB] text-[#087F70] border border-[#C8E2D8] dark:bg-amber-500/15 dark:hover:bg-amber-500/25 dark:text-[#FFAA35] dark:border-amber-500/30 text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5"
                   >
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>Request Changes</span>

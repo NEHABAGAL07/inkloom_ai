@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { ContentSubmission, AnalyticsSummary, MemberInfo, AuditResult } from "@/types";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
+import { BackgroundAtmosphere } from "@/components/layout/BackgroundAtmosphere";
 import {
   Shield,
   ShieldCheck,
@@ -24,6 +26,9 @@ import {
   FileCheck,
   Eye,
   Lock,
+  Layers,
+  Sparkles,
+  BookOpen,
 } from "lucide-react";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
@@ -34,6 +39,51 @@ interface ManagerDashboardProps {
   members: MemberInfo[];
   onRefresh: () => void;
 }
+
+const DASHBOARD_TEMPLATES = [
+  {
+    id: "linkedin",
+    name: "LinkedIn Post",
+    format: "Social Campaign",
+    title: "Autonomous Zero-Trust Cloud Platform Release",
+    sample: "We are thrilled to announce Acme Cloud Fabric 4.0! With sub-50ms core latency and deterministic throughput, engineering teams can eliminate downtime forever.",
+  },
+  {
+    id: "instagram",
+    name: "Instagram Caption",
+    format: "Visual & Social",
+    title: "Engineering-First Cloud Performance",
+    sample: "Simplicity without compromise. Acme Cloud gives platform architects sub-50ms latency across global edge points. Deterministic compute engineered for modern scale.",
+  },
+  {
+    id: "facebook",
+    name: "Facebook Ad",
+    format: "Display Ad",
+    title: "Eliminate Cloud Outages with Zero-Trust Compute",
+    sample: "Tired of unpredictable downtime? Acme Cloud delivers mathematically verifiable hybrid compute. Guaranteed 100% reduction in multi-cloud overhead.",
+  },
+  {
+    id: "blog",
+    name: "Blog & Editorial",
+    format: "Long-form",
+    title: "Why Autonomous Zero-Trust Infrastructure Matters in 2026",
+    sample: "In modern distributed enterprise architectures, legacy perimeter defenses are no longer sufficient. Acme Cloud Systems provides deterministic zero-trust compute.",
+  },
+  {
+    id: "email",
+    name: "Marketing Email",
+    format: "Product Announcement",
+    title: "Important Update: Upgrade to Acme Cloud Infrastructure",
+    sample: "Hello platform team, We are excited to share new certified performance benchmarks for Acme Cloud. Our platform delivers verified multi-region isolation and sub-50ms latency.",
+  },
+  {
+    id: "press_release",
+    name: "Press Release",
+    format: "Corporate Comms",
+    title: "Acme Cloud Systems Certified for Global Enterprise Deployments",
+    sample: "Acme Cloud Systems today announced verified compliance certifications for enterprise cloud infrastructure across 42 global regions.",
+  },
+];
 
 export function ManagerDashboard({
   submissions,
@@ -124,21 +174,12 @@ export function ManagerDashboard({
         (selectedSubForAudit.created_by && selectedSubForAudit.created_by === user.id))
   );
 
-  const isAuthorOfViewing = Boolean(
-    viewingSub &&
-      user &&
-      ((viewingSub.creator_id && viewingSub.creator_id === user.id) ||
-        (viewingSub.author_id && viewingSub.author_id === user.id) ||
-        (viewingSub.author_email &&
-          user.email &&
-          viewingSub.author_email.toLowerCase() === user.email.toLowerCase()) ||
-        (viewingSub.created_by && viewingSub.created_by === user.id))
-  );
-
   const handleManagerDecision = async (action: "approve" | "request_changes") => {
     if (!selectedSubForAudit) return;
     if (action === "approve" && isAuthorOfSub) {
-      alert("Separation of duties violation: Creators cannot authorize their own submissions. Please request review from another manager or compliance officer.");
+      alert(
+        "Separation of duties violation: Creators cannot authorize their own submissions. Please request review from another manager or compliance officer."
+      );
       return;
     }
     try {
@@ -167,32 +208,32 @@ export function ManagerDashboard({
     switch (status) {
       case "approved":
         return {
-          bg: "bg-emerald-50 text-status-success border-emerald-200",
+          bg: "bg-[#E8F7F1] text-[#087F70] border-[#C8E2D8] dark:bg-[#72D6A1]/15 dark:text-[#72D6A1] dark:border-[#72D6A1]/30",
           icon: CheckCircle,
           label: "Approved",
         };
       case "pending_approval":
       case "submitted":
         return {
-          bg: "bg-amber-50 text-status-warning border-amber-200",
+          bg: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-[#FFAA35]/15 dark:text-[#FFAA35] dark:border-[#FFAA35]/30",
           icon: Clock,
           label: "Pending Review",
         };
       case "changes_requested":
         return {
-          bg: "bg-amber-50 text-status-warning border-amber-200",
+          bg: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-[#FFD166]/15 dark:text-[#FFD166] dark:border-[#FFD166]/30",
           icon: AlertTriangle,
           label: "Changes Requested",
         };
       case "rejected":
         return {
-          bg: "bg-rose-50 text-status-error border-rose-200",
+          bg: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-[#FF6B78]/15 dark:text-[#FF6B78] dark:border-[#FF6B78]/30",
           icon: AlertCircle,
           label: "Rejected",
         };
       default:
         return {
-          bg: "bg-slate-100 text-ink-secondary border-border",
+          bg: "bg-[#EFF8F4] text-[#58716A] border-[#DDEBE5] dark:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]",
           icon: FileText,
           label: status.replace("_", " "),
         };
@@ -214,249 +255,300 @@ export function ManagerDashboard({
   const approvedCount = submissions.filter((s) => s.status === "approved").length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Executive Header Banner */}
-      <div className="bg-surface border border-border rounded-xl p-6 shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-navy/10 text-navy border border-navy/20 flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-navy" />
-              Executive Brand Administration
-            </span>
-            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
-              Active Governance
-            </span>
+    <div className="space-y-8 max-w-7xl mx-auto relative selection:bg-[#FF7A36]/30 selection:text-white">
+      {/* ========================================================
+          1. Hero Section with Warm Gradient Ribbon
+          ======================================================== */}
+      <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl p-7 sm:p-10 border border-border dark:border-[#383838] shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-2xl relative overflow-hidden">
+        <BackgroundAtmosphere variant="hero" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#58D9D0] dark:from-[#FFD84D] dark:via-[#FF7A36] dark:to-[#F45B91]" />
+
+        <div className="max-w-3xl space-y-4 relative z-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E8F7F1] dark:bg-[#272727] border border-[#C8E2D8] dark:border-[#383838] text-xs font-semibold text-[#087F70] dark:text-[#FFAA35] shadow-sm">
+            <Shield className="w-3.5 h-3.5 text-[#10A995] dark:text-[#FFD84D]" />
+            <span>Executive Governance Command Center</span>
           </div>
-          <h1 className="text-2xl font-bold text-navy tracking-tight">
-            {activeOrgName || "Enterprise"} Governance Overview
+
+          <h1 className="text-3xl sm:text-5xl font-heading font-extrabold tracking-tight text-[#18352F] dark:text-[#F7F3ED] leading-[1.15]">
+            Every draft, <span className="text-gradient-warm">in good hands.</span>
           </h1>
-          <p className="text-xs text-ink-secondary mt-1 max-w-2xl leading-relaxed">
-            Monitor organizational compliance benchmarks, cross-functional review queues, and brand guideline integrity across marketing and creative teams.
+
+          <p className="text-xs sm:text-sm text-[#58716A] dark:text-[#B8B2AC] leading-relaxed max-w-2xl">
+            Autonomous zero-trust brand governance co-pilot for {activeOrgName || "Enterprise"}. Monitor cross-functional review queues, enforce certified claims, and manage team authority.
           </p>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Link
+              href="/content"
+              className="px-5 py-3 rounded-xl btn-gradient-warm text-xs font-bold transition flex items-center gap-2 shadow-warmGlow text-white dark:text-[#111111]"
+            >
+              <Plus className="w-4 h-4 text-white dark:text-[#111111] stroke-[2.5]" />
+              <span>Start a Content Review</span>
+            </Link>
+
+            <button
+              onClick={() => setIsInviteModalOpen(true)}
+              className="px-5 py-3 rounded-xl btn-dark-secondary text-xs font-bold transition flex items-center gap-2"
+            >
+              <Users className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
+              <span>Invite Team Member</span>
+            </button>
+
+            <Link
+              href="/guidelines"
+              className="px-5 py-3 rounded-xl bg-[#EFF8F4] dark:bg-[#202020] hover:bg-[#DDF3EB] dark:hover:bg-[#272727] text-[#58716A] dark:text-[#B8B2AC] hover:text-[#18352F] dark:hover:text-[#F7F3ED] border border-border dark:border-[#383838] text-xs font-bold transition flex items-center gap-2"
+            >
+              <FileCheck className="w-4 h-4 text-[#82948E] dark:text-[#85817D]" />
+              <span>Brand Standards</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================
+          2. Template Cards: LinkedIn, Instagram, Facebook, Blogs, Emails
+          ======================================================== */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-heading font-bold uppercase tracking-wider text-[#82948E] dark:text-[#85817D] flex items-center gap-2">
+            <Layers className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
+            <span>Supported Content Formats &amp; Templates</span>
+          </h2>
+          <Link
+            href="/content"
+            className="text-[11px] text-[#087F70] hover:text-[#10A995] dark:text-[#FFAA35] dark:hover:text-[#FFD84D] font-semibold transition"
+          >
+            Open Full Review Studio →
+          </Link>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          <button
-            onClick={() => setIsInviteModalOpen(true)}
-            className="px-3.5 py-2 bg-teal hover:bg-teal-hover text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Invite Team Member</span>
-          </button>
-          <button
-            onClick={onRefresh}
-            className="px-3.5 py-2 bg-workspace hover:bg-border text-ink-primary border border-border text-xs font-semibold rounded-lg transition flex items-center gap-1.5"
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-ink-secondary" />
-            <span>Refresh</span>
-          </button>
-          <a
-            href="/guidelines"
-            className="px-3.5 py-2 bg-workspace hover:bg-border text-ink-primary border border-border text-xs font-semibold rounded-lg transition flex items-center gap-1.5"
-          >
-            <FileCheck className="w-3.5 h-3.5 text-teal" />
-            <span>Brand Standards</span>
-          </a>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {DASHBOARD_TEMPLATES.map((tpl) => (
+            <Link
+              key={tpl.id}
+              href={`/content?template=${tpl.id}`}
+              className="p-3.5 rounded-xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] hover:border-[#10A995] hover:bg-[#E8F7F1]/60 dark:hover:border-[#FFAA35]/60 dark:hover:bg-[#242424] text-left transition-all duration-150 group flex flex-col justify-between h-32 shadow-[0_4px_20px_rgba(22,91,72,0.05)] dark:shadow-none card-dark-hover"
+            >
+              <div>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-[#272727] dark:text-[#FFAA35] dark:border-[#383838]">
+                  {tpl.format}
+                </span>
+                <div className="text-xs font-bold text-[#18352F] dark:text-[#F7F3ED] mt-2 group-hover:text-[#087F70] dark:group-hover:text-[#FFAA35] transition truncate">
+                  {tpl.name}
+                </div>
+              </div>
+              <p className="text-[10.5px] text-[#58716A] dark:text-[#85817D] line-clamp-2 leading-relaxed">
+                {tpl.sample}
+              </p>
+            </Link>
+          ))}
         </div>
       </div>
 
       {/* Compliance Advisory Disclaimer Notice */}
-      <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80 text-xs text-amber-900 flex items-start gap-2.5">
-        <Scale className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+      <div className="p-4 rounded-xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] text-xs text-[#58716A] dark:text-[#B8B2AC] flex items-start gap-3 shadow-[0_4px_20px_rgba(22,91,72,0.05)] dark:shadow-sm">
+        <Scale className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35] shrink-0 mt-0.5" />
         <div className="text-[11px] leading-relaxed">
-          <strong className="font-semibold text-amber-900">Advisory Role &amp; Compliance Workflow:</strong> Inkloom AI provides automated rule evaluation to assist internal brand governance and factual verification. Following approved guidelines establishes organizational conformity but <strong>does not guarantee legal immunity</strong> or eliminate regulatory risk. Final campaign publication requires human authorization.
+          <strong className="font-semibold text-[#18352F] dark:text-[#F7F3ED]">Human Authority Guarantee:</strong> AI assists, scores, and recommends intent-preserving rewrites, but authorized enterprise reviewers always make the final publication sign-off decision.
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* ========================================================
+          3. Executive KPI Cards with Warm Subtle Lighting
+          ======================================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Approved Content */}
-        <div className="p-5 rounded-xl bg-surface border border-border shadow-subtle space-y-1">
-          <div className="flex items-center justify-between text-xs font-medium text-ink-secondary">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-card space-y-1 relative overflow-hidden">
+          <div className="flex items-center justify-between text-xs font-medium text-[#58716A] dark:text-[#85817D]">
             <span>Approved Assets</span>
-            <CheckCircle className="w-4 h-4 text-status-success" />
+            <CheckCircle className="w-4 h-4 text-[#087F70] dark:text-[#72D6A1]" />
           </div>
-          <div className="text-2xl font-bold text-navy mt-1">{approvedCount}</div>
-          <div className="text-[11px] text-ink-muted">Authorized for publication</div>
+          <div className="text-3xl font-heading font-extrabold text-[#18352F] dark:text-[#F7F3ED] mt-1">{approvedCount}</div>
+          <div className="text-[11px] text-[#82948E] dark:text-[#85817D]">Authorized for release</div>
         </div>
 
         {/* Pending Review */}
-        <div className="p-5 rounded-xl bg-surface border border-border shadow-subtle space-y-1">
-          <div className="flex items-center justify-between text-xs font-medium text-ink-secondary">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-card space-y-1 relative overflow-hidden">
+          <div className="flex items-center justify-between text-xs font-medium text-[#58716A] dark:text-[#85817D]">
             <span>Pending Review</span>
-            <Clock className="w-4 h-4 text-status-warning" />
+            <Clock className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
           </div>
-          <div className="text-2xl font-bold text-status-warning mt-1">{pendingCount}</div>
-          <div className="text-[11px] text-ink-muted">Awaiting reviewer sign-off</div>
+          <div className="text-3xl font-heading font-extrabold text-[#087F70] dark:text-[#FFAA35] mt-1">{pendingCount}</div>
+          <div className="text-[11px] text-[#82948E] dark:text-[#85817D]">Awaiting sign-off</div>
         </div>
 
         {/* Total Submissions */}
-        <div className="p-5 rounded-xl bg-surface border border-border shadow-subtle space-y-1">
-          <div className="flex items-center justify-between text-xs font-medium text-ink-secondary">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-card space-y-1 relative overflow-hidden">
+          <div className="flex items-center justify-between text-xs font-medium text-[#58716A] dark:text-[#85817D]">
             <span>Total Submissions</span>
-            <FileText className="w-4 h-4 text-teal" />
+            <FileText className="w-4 h-4 text-[#10A995] dark:text-[#F45B91]" />
           </div>
-          <div className="text-2xl font-bold text-navy mt-1">{submissions.length}</div>
-          <div className="text-[11px] text-ink-muted">Campaigns, copy &amp; media files</div>
+          <div className="text-3xl font-heading font-extrabold text-[#18352F] dark:text-[#F7F3ED] mt-1">{submissions.length}</div>
+          <div className="text-[11px] text-[#82948E] dark:text-[#85817D]">Campaigns, copy &amp; media</div>
         </div>
 
         {/* Active Team Members */}
-        <div className="p-5 rounded-xl bg-surface border border-border shadow-subtle space-y-1">
-          <div className="flex items-center justify-between text-xs font-medium text-ink-secondary">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-card space-y-1 relative overflow-hidden">
+          <div className="flex items-center justify-between text-xs font-medium text-[#58716A] dark:text-[#85817D]">
             <span>Workspace Team</span>
-            <Users className="w-4 h-4 text-navy" />
+            <Users className="w-4 h-4 text-[#087F70] dark:text-[#83B9FF]" />
           </div>
-          <div className="text-2xl font-bold text-navy mt-1">{members.length || 4}</div>
-          <div className="text-[11px] text-ink-muted">Legal, designers, marketing</div>
+          <div className="text-3xl font-heading font-extrabold text-[#18352F] dark:text-[#F7F3ED] mt-1">{members.length || 4}</div>
+          <div className="text-[11px] text-[#82948E] dark:text-[#85817D]">Legal, designers, marketing</div>
         </div>
       </div>
 
-      {/* Organization Content Pipeline */}
-      <div className="bg-surface border border-border rounded-xl p-6 shadow-subtle space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
-            <div>
-              <h2 className="text-base font-bold text-navy flex items-center gap-2">
-                <FileText className="w-4 h-4 text-teal" />
-                <span>Organization Content Pipeline</span>
-              </h2>
-              <p className="text-xs text-ink-muted mt-0.5">
-                Real-time review and audit status across all active content assets
-              </p>
-            </div>
+      {/* ========================================================
+          4. Organization Content Pipeline
+          ======================================================== */}
+      <div className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl p-6 shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-card space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border dark:border-[#383838]">
+          <div>
+            <h2 className="text-base font-heading font-bold text-[#18352F] dark:text-[#F7F3ED] flex items-center gap-2">
+              <FileText className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
+              <span>Organization Content Pipeline</span>
+            </h2>
+            <p className="text-xs text-[#58716A] dark:text-[#85817D] mt-0.5">
+              Real-time review and audit status across all active content assets
+            </p>
           </div>
-
-          {/* Pipeline Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <button
-              onClick={() => setPipelineFilter("all")}
-              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition ${
-                pipelineFilter === "all"
-                  ? "bg-navy text-white font-semibold"
-                  : "text-ink-secondary hover:bg-workspace bg-surface border border-border"
-              }`}
-            >
-              All ({submissions.length})
-            </button>
-            <button
-              onClick={() => setPipelineFilter("pending")}
-              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition ${
-                pipelineFilter === "pending"
-                  ? "bg-navy text-white font-semibold"
-                  : "text-ink-secondary hover:bg-workspace bg-surface border border-border"
-              }`}
-            >
-              Pending Review ({pendingCount})
-            </button>
-            <button
-              onClick={() => setPipelineFilter("visual")}
-              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition ${
-                pipelineFilter === "visual"
-                  ? "bg-navy text-white font-semibold"
-                  : "text-ink-secondary hover:bg-workspace bg-surface border border-border"
-              }`}
-            >
-              Media &amp; Visuals (
-              {
-                submissions.filter(
-                  (s) => s.content_type === "image" || s.content_type === "video"
-                ).length
-              }
-              )
-            </button>
-            <button
-              onClick={() => setPipelineFilter("approved")}
-              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition ${
-                pipelineFilter === "approved"
-                  ? "bg-navy text-white font-semibold"
-                  : "text-ink-secondary hover:bg-workspace bg-surface border border-border"
-              }`}
-            >
-              Approved ({approvedCount})
-            </button>
-          </div>
-
-          {/* Submissions List */}
-          <div className="divide-y divide-border pt-1">
-            {filteredSubmissions.length > 0 ? (
-              filteredSubmissions.map((sub) => {
-                const badge = getStatusBadge(sub.status);
-                const BadgeIcon = badge.icon;
-                const isSelected = selectedPipelineSub?.id === sub.id;
-                return (
-                  <div
-                    key={sub.id}
-                    onClick={() => setSelectedPipelineSub(sub)}
-                    className={`py-3.5 flex items-center justify-between px-3 rounded-lg transition-colors gap-3 cursor-pointer ${
-                      isSelected
-                        ? "bg-teal/5 border border-teal/40 dark:bg-teal-950/20 shadow-sm"
-                        : "hover:bg-workspace/60 border border-transparent"
-                    }`}
-                  >
-                    <div className="space-y-1 max-w-[55%] min-w-0">
-                      <div className="text-xs font-bold text-navy flex items-center gap-2 truncate">
-                        <span className="truncate">{sub.title}</span>
-                        <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-workspace border border-border text-ink-secondary shrink-0">
-                          {sub.content_type}
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-ink-muted truncate">
-                        {sub.description || "No description provided."}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span
-                        className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold border flex items-center gap-1 ${badge.bg}`}
-                      >
-                        <BadgeIcon className="w-3 h-3" />
-                        <span>{badge.label}</span>
-                      </span>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setViewingSub(sub);
-                          setIsViewerOpen(true);
-                        }}
-                        className="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal hover:bg-teal-hover text-white transition flex items-center gap-1 shadow-sm"
-                        title="Open and view design asset or document"
-                      >
-                        <Eye className="w-3 h-3" />
-                        <span>Open</span>
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleInspectAudit(sub);
-                        }}
-                        className="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition flex items-center gap-1"
-                        title="Inspect AI rule checks and audit summary"
-                      >
-                        <ShieldCheck className="w-3 h-3 text-teal" />
-                        <span>Audit</span>
-                      </button>
-
-                      <a
-                        href={`/audits?id=${sub.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-xs font-medium px-2 py-1 rounded-md bg-workspace hover:bg-border text-ink-secondary border border-border transition"
-                      >
-                        Details
-                      </a>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="py-12 text-center text-xs text-ink-muted">
-                No submissions found for the selected filter.
-              </div>
-            )}
-          </div>
+          <button
+            onClick={onRefresh}
+            className="px-3 py-1.5 rounded-xl btn-dark-secondary text-xs font-semibold flex items-center gap-1.5 transition self-start sm:self-auto"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-[#58716A] dark:text-[#85817D]" />
+            <span>Refresh</span>
+          </button>
         </div>
 
-      {/* Suggestion / Improvement Box under Designer's Content for Manager */}
+        {/* Pipeline Filter Tabs */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <button
+            onClick={() => setPipelineFilter("all")}
+            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+              pipelineFilter === "all"
+                ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
+                : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
+            }`}
+          >
+            All ({submissions.length})
+          </button>
+          <button
+            onClick={() => setPipelineFilter("pending")}
+            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+              pipelineFilter === "pending"
+                ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
+                : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
+            }`}
+          >
+            Pending Review ({pendingCount})
+          </button>
+          <button
+            onClick={() => setPipelineFilter("visual")}
+            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+              pipelineFilter === "visual"
+                ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
+                : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
+            }`}
+          >
+            Media &amp; Visuals (
+            {submissions.filter((s) => s.content_type === "image" || s.content_type === "video").length}
+            )
+          </button>
+          <button
+            onClick={() => setPipelineFilter("approved")}
+            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+              pipelineFilter === "approved"
+                ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
+                : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
+            }`}
+          >
+            Approved ({approvedCount})
+          </button>
+        </div>
+
+        {/* Submissions List */}
+        <div className="divide-y divide-border dark:divide-[#383838] pt-1">
+          {filteredSubmissions.length > 0 ? (
+            filteredSubmissions.map((sub) => {
+              const badge = getStatusBadge(sub.status);
+              const BadgeIcon = badge.icon;
+              const isSelected = selectedPipelineSub?.id === sub.id;
+              return (
+                <div
+                  key={sub.id}
+                  onClick={() => setSelectedPipelineSub(sub)}
+                  className={`py-3.5 flex items-center justify-between px-3 rounded-xl transition-all gap-3 cursor-pointer ${
+                    isSelected
+                      ? "bg-[#E8F7F1] border border-[#C8E2D8] shadow-sm dark:bg-[#272727] dark:border-[#FFAA35]/40"
+                      : "hover:bg-[#EFF8F4] border border-transparent dark:hover:bg-[#202020]"
+                  }`}
+                >
+                  <div className="space-y-1 max-w-[55%] min-w-0">
+                    <div className="text-xs font-bold text-[#18352F] dark:text-[#F7F3ED] flex items-center gap-2 truncate">
+                      <span className="truncate">{sub.title}</span>
+                      <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-[#EFF8F4] border border-[#DDEBE5] text-[#58716A] dark:bg-[#141414] dark:border-[#383838] dark:text-[#85817D] shrink-0">
+                        {sub.content_type}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-[#58716A] dark:text-[#85817D] truncate">
+                      {sub.description || "No description provided."}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`text-[11px] px-2.5 py-1 rounded-full font-bold border flex items-center gap-1 ${badge.bg}`}
+                    >
+                      <BadgeIcon className="w-3 h-3" />
+                      <span>{badge.label}</span>
+                    </span>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setViewingSub(sub);
+                        setIsViewerOpen(true);
+                      }}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-lg btn-dark-secondary transition flex items-center gap-1"
+                      title="Open and view design asset or document"
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>Open</span>
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleInspectAudit(sub);
+                      }}
+                      className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#E8F7F1] hover:bg-[#DDF3EB] text-[#087F70] border border-[#C8E2D8] dark:bg-[#272727] dark:hover:bg-[#2F2F2F] dark:text-[#FFAA35] dark:border-[#383838] transition flex items-center gap-1"
+                      title="Inspect AI rule checks and audit summary"
+                    >
+                      <ShieldCheck className="w-3 h-3 text-[#087F70] dark:text-[#FFAA35]" />
+                      <span>Audit</span>
+                    </button>
+
+                    <Link
+                      href={`/audits?id=${sub.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs font-medium px-2 py-1 rounded-lg bg-[#EFF8F4] hover:bg-[#DDF3EB] text-[#58716A] hover:text-[#18352F] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#85817D] dark:hover:text-[#F7F3ED] dark:border-[#383838] transition"
+                    >
+                      Details
+                    </Link>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="py-12 text-center text-xs text-[#82948E] dark:text-[#85817D]">
+              No submissions found for the selected filter.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Suggestion / Feedback Box under Selected Content */}
       {selectedPipelineSub && (
         <DesignerFeedbackComments
           submissionId={selectedPipelineSub.id}
@@ -472,180 +564,114 @@ export function ManagerDashboard({
 
       {/* Manager Audit Summary Modal */}
       {isAuditModalOpen && selectedSubForAudit && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-2xl max-w-2xl w-full p-6 shadow-dropdown space-y-5 max-h-[90vh] overflow-y-auto text-ink-primary">
-            <div className="flex items-center justify-between border-b border-border pb-4">
+        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto text-[#18352F] dark:text-[#F7F3ED]">
+            <div className="flex items-center justify-between border-b border-border dark:border-[#383838] pb-4">
               <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-teal flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-teal" />
+                <div className="text-xs font-bold uppercase tracking-wider text-[#087F70] dark:text-[#FFAA35] flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
                   <span>AI Brand Governance Review</span>
                 </div>
-                <h3 className="text-lg font-bold text-navy mt-1">
+                <h3 className="text-lg font-heading font-bold text-[#18352F] dark:text-[#F7F3ED] mt-1">
                   {selectedSubForAudit.title}
                 </h3>
               </div>
               <button
                 onClick={() => setIsAuditModalOpen(false)}
-                className="text-ink-muted hover:text-ink-primary p-1 rounded-lg"
+                className="text-[#82948E] hover:text-[#18352F] dark:text-[#85817D] dark:hover:text-[#F7F3ED] p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {actionFeedback && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 text-status-success text-xs rounded-lg font-semibold flex items-center gap-2">
-                <Check className="w-4 h-4 text-status-success" />
+              <div className="p-3 bg-[#E8F7F1] dark:bg-[#272727] border border-[#C8E2D8] dark:border-[#72D6A1]/40 text-[#087F70] dark:text-[#72D6A1] text-xs rounded-xl font-semibold flex items-center gap-2">
+                <Check className="w-4 h-4 text-[#087F70] dark:text-[#72D6A1]" />
                 <span>{actionFeedback}</span>
               </div>
             )}
 
             {isLoadingAudit ? (
-              <div className="py-12 text-center text-ink-muted text-xs flex items-center justify-center gap-2">
-                <RefreshCw className="w-4 h-4 animate-spin text-teal" />
+              <div className="py-12 text-center text-[#82948E] dark:text-[#85817D] text-xs flex items-center justify-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin text-[#087F70] dark:text-[#FFAA35]" />
                 <span>Loading audit findings...</span>
               </div>
             ) : inspectionAudit ? (
               <div className="space-y-4">
-                {/* Score & Review Notice */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 rounded-xl bg-workspace border border-border">
-                    <div className="text-[11px] text-ink-secondary font-semibold uppercase tracking-wider">
+                  <div className="p-4 rounded-xl bg-[#F7FBF9] dark:bg-[#202020] border border-border dark:border-[#383838]">
+                    <div className="text-[11px] text-[#82948E] dark:text-[#85817D] font-semibold uppercase tracking-wider">
                       Compliance Score
                     </div>
-                    <div className="text-2xl font-bold text-navy mt-1">
+                    <div className="text-2xl font-heading font-bold text-gradient-warm mt-1">
                       {inspectionAudit.summary.compliance_score}
-                      <span className="text-sm text-ink-muted font-normal ml-1">/100</span>
+                      <span className="text-sm text-[#82948E] dark:text-[#85817D] font-normal ml-1">/100</span>
                     </div>
                   </div>
-                  <div className="p-4 rounded-xl bg-workspace border border-border">
-                    <div className="text-[11px] text-ink-secondary font-semibold uppercase tracking-wider">
-                      Human Authority
+                  <div className="p-4 rounded-xl bg-[#F7FBF9] dark:bg-[#202020] border border-border dark:border-[#383838]">
+                    <div className="text-[11px] text-[#82948E] dark:text-[#85817D] font-semibold uppercase tracking-wider">
+                      Violations Count
                     </div>
-                    <div className="text-xs font-bold text-status-warning mt-2 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-status-warning" />
-                      <span>Reviewer Sign-off Required</span>
+                    <div className="text-2xl font-heading font-bold text-[#E11D48] dark:text-[#FF6B78] mt-1">
+                      {inspectionAudit.findings.length}
                     </div>
                   </div>
                 </div>
 
-                {/* AI Executive Summary */}
-                {inspectionAudit.summary.verdict_overview && (
-                  <div className="p-3.5 rounded-xl bg-workspace border border-border space-y-1">
-                    <div className="text-xs font-bold text-navy uppercase tracking-wider">
-                      Executive Verdict
-                    </div>
-                    <p className="text-xs text-ink-secondary leading-relaxed">
-                      {inspectionAudit.summary.verdict_overview}
-                    </p>
-                  </div>
-                )}
-
-                {/* Findings List */}
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-navy uppercase tracking-wider">
-                    Findings ({inspectionAudit.findings.length})
-                  </div>
-                  {inspectionAudit.findings.map((f) => (
-                    <div
-                      key={f.id}
-                      className="p-3 rounded-lg bg-workspace border border-border space-y-1"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-navy">{f.title}</span>
-                        <span
-                          className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
-                            f.severity === "high" || f.severity === "critical"
-                              ? "bg-rose-50 text-status-error border border-rose-200"
-                              : f.severity === "medium"
-                              ? "bg-amber-50 text-status-warning border border-amber-200"
-                              : "bg-teal-50 text-teal-800 border border-teal-200"
-                          }`}
-                        >
-                          {f.severity}
-                        </span>
-                      </div>
-                      <p className="text-xs text-ink-secondary">{f.message}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Actions */}
-                <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => {
-                        setViewingSub(selectedSubForAudit);
-                        setIsViewerOpen(true);
-                      }}
-                      className="text-xs text-teal hover:text-teal-hover font-bold flex items-center gap-1"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Open Visual Asset Inspector ↗</span>
-                    </button>
-                    <a
-                      href={`/audits?id=${inspectionAudit.content_id}`}
-                      className="text-xs text-ink-secondary hover:text-navy font-semibold flex items-center gap-1"
-                    >
-                      <span>Full Audit</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <button
-                      onClick={() => handleManagerDecision("request_changes")}
-                      className="flex-1 sm:flex-none px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-status-warning border border-amber-300 font-semibold text-xs rounded-lg transition"
-                    >
-                      Request Changes
-                    </button>
-                    <button
-                      disabled={isAuthorOfSub}
-                      onClick={() => handleManagerDecision("approve")}
-                      title={isAuthorOfSub ? "Self-approval disabled under separation of duties" : ""}
-                      className={`flex-1 sm:flex-none px-4 py-2 font-semibold text-xs rounded-lg shadow-sm transition flex items-center justify-center gap-1.5 ${
-                        isAuthorOfSub
-                          ? "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed border border-slate-300"
-                          : "bg-teal hover:bg-teal-hover text-white"
-                      }`}
-                    >
-                      {isAuthorOfSub ? <Lock className="w-3.5 h-3.5" /> : null}
-                      <span>{isAuthorOfSub ? "Authorize (Self Locked)" : "Approve Asset"}</span>
-                    </button>
-                  </div>
+                {/* Manager Decision Buttons */}
+                <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border dark:border-[#383838]">
+                  <button
+                    onClick={() => handleManagerDecision("request_changes")}
+                    className="px-4 py-2 rounded-xl bg-[#EFF8F4] hover:bg-[#DDF3EB] text-[#087F70] border border-[#C8E2D8] text-xs font-semibold dark:bg-[#272727] dark:hover:bg-[#333333] dark:text-[#FFAA35] dark:border-[#383838]"
+                  >
+                    Request Revision
+                  </button>
+                  <button
+                    onClick={() => handleManagerDecision("approve")}
+                    className="px-4 py-2 rounded-xl btn-gradient-warm text-xs font-bold shadow-warmGlow text-white dark:text-[#111111]"
+                  >
+                    Authorize Publication
+                  </button>
                 </div>
               </div>
-            ) : null}
+            ) : (
+              <div className="py-8 text-center text-xs text-[#82948E] dark:text-[#85817D]">
+                Unable to load audit details.
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Quick Invite Modal */}
+      {/* Invite Member Modal */}
       {isInviteModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-xl max-w-md w-full p-6 shadow-dropdown space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <h3 className="text-base font-bold text-navy flex items-center gap-2">
-                <Users className="w-4 h-4 text-teal" />
-                <span>Invite Team Member</span>
+        <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-[#18352F] dark:text-[#F7F3ED]">
+            <div className="flex items-center justify-between border-b border-border dark:border-[#383838] pb-3">
+              <h3 className="text-sm font-heading font-bold text-[#18352F] dark:text-[#F7F3ED]">
+                Invite New Team Member
               </h3>
               <button
-                onClick={() => setIsInviteModalOpen(false)}
-                className="text-ink-muted hover:text-ink-primary"
+                onClick={() => {
+                  setIsInviteModalOpen(false);
+                  setInviteSuccessMsg(null);
+                }}
+                className="text-[#82948E] hover:text-[#18352F] dark:text-[#85817D] dark:hover:text-[#F7F3ED]"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {inviteSuccessMsg && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 text-status-success text-xs rounded-lg break-all">
+              <div className="p-3 rounded-xl bg-[#E8F7F1] dark:bg-[#272727] border border-[#C8E2D8] dark:border-[#72D6A1]/40 text-[#087F70] dark:text-[#72D6A1] text-xs leading-relaxed break-all">
                 {inviteSuccessMsg}
               </div>
             )}
 
             <form onSubmit={handleSendInvite} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-ink-primary mb-1">
-                  Employee Email
+                <label className="block text-xs font-semibold text-[#18352F] dark:text-[#F7F3ED] mb-1.5">
+                  Corporate Email *
                 </label>
                 <input
                   type="email"
@@ -653,40 +679,40 @@ export function ManagerDashboard({
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="colleague@acmecloud.com"
-                  className="w-full bg-workspace border border-border rounded-lg px-3 py-2 text-xs text-ink-primary focus:outline-none focus:border-teal"
+                  className="w-full bg-[#F7FBF9] dark:bg-[#141414] border border-border dark:border-[#383838] rounded-xl px-3 py-2 text-xs text-[#18352F] dark:text-[#F7F3ED] placeholder:text-[#82948E] dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10A995] dark:focus:border-[#FFAA35]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-ink-primary mb-1">
-                  Designated Role
+                <label className="block text-xs font-semibold text-[#18352F] dark:text-[#F7F3ED] mb-1.5">
+                  Role Assignment *
                 </label>
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="w-full bg-workspace border border-border rounded-lg px-3 py-2 text-xs text-ink-primary focus:outline-none focus:border-teal"
+                  className="w-full bg-[#F7FBF9] dark:bg-[#141414] border border-border dark:border-[#383838] rounded-xl px-3 py-2 text-xs text-[#18352F] dark:text-[#F7F3ED] focus:outline-none focus:border-[#10A995] dark:focus:border-[#FFAA35]"
                 >
-                  <option value="marketing">Marketing Content Creator</option>
-                  <option value="designer">Senior Designer</option>
-                  <option value="compliance_officer">Legal &amp; Compliance Reviewer</option>
-                  <option value="admin">Workspace Co-Administrator</option>
+                  <option value="marketing" className="bg-white dark:bg-[#1C1C1C]">Marketing Lead</option>
+                  <option value="designer" className="bg-white dark:bg-[#1C1C1C]">Brand Designer</option>
+                  <option value="compliance_officer" className="bg-white dark:bg-[#1C1C1C]">Legal &amp; Compliance</option>
+                  <option value="admin" className="bg-white dark:bg-[#1C1C1C]">Brand Administrator</option>
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-border">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border dark:border-[#383838]">
                 <button
                   type="button"
                   onClick={() => setIsInviteModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-ink-secondary hover:bg-workspace border border-border"
+                  className="px-4 py-2 rounded-xl btn-dark-secondary text-xs font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isInviting}
-                  className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-teal hover:bg-teal-hover disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl btn-gradient-warm text-xs font-bold shadow-warmGlow text-white dark:text-[#111111]"
                 >
-                  {isInviting ? "Sending..." : "Send Invitation"}
+                  {isInviting ? "Sending Invite..." : "Send Invitation"}
                 </button>
               </div>
             </form>
@@ -694,13 +720,14 @@ export function ManagerDashboard({
         </div>
       )}
 
-      {/* Design Asset Viewer Modal */}
-      <DesignAssetViewerModal
-        isOpen={isViewerOpen}
-        onClose={() => setIsViewerOpen(false)}
-        submission={viewingSub}
-        canAuthorize={!isAuthorOfViewing}
-      />
+      {/* Asset Viewer Modal */}
+      {isViewerOpen && viewingSub && (
+        <DesignAssetViewerModal
+          isOpen={isViewerOpen}
+          submission={viewingSub}
+          onClose={() => setIsViewerOpen(false)}
+        />
+      )}
     </div>
   );
 }

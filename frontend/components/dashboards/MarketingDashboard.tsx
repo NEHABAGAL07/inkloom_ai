@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { ContentSubmission, AuditResult } from "@/types";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
+import { BackgroundAtmosphere } from "@/components/layout/BackgroundAtmosphere";
 import {
   Megaphone,
   Zap,
@@ -21,6 +23,10 @@ import {
   RotateCcw,
   X,
   Clock,
+  Plus,
+  BookOpen,
+  Share2,
+  ChevronDown,
 } from "lucide-react";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
@@ -38,6 +44,111 @@ const PUBLICATION_CHANNELS = [
   "Website Landing Copy",
   "Technical Documentation",
 ];
+
+const DASHBOARD_TEMPLATES = [
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    format: "Professional post",
+    iconBg: "bg-[#0A66C2]",
+    type: "linkedin",
+    title: "Autonomous Zero-Trust Cloud Platform Release",
+    sample: "We are thrilled to announce Acme Cloud Fabric 4.0! With sub-50ms core latency and deterministic throughput, engineering teams can eliminate downtime forever.",
+  },
+  {
+    id: "instagram",
+    name: "Instagram",
+    format: "Caption + hashtags",
+    iconBg: "bg-[#06B6D4]",
+    type: "instagram",
+    title: "Engineering-First Cloud Performance",
+    sample: "Simplicity without compromise. Acme Cloud gives platform architects sub-50ms latency across global edge points. #CloudPlatform #ZeroTrust #DevOps",
+  },
+  {
+    id: "facebook",
+    name: "Facebook",
+    format: "Community update",
+    iconBg: "bg-[#1877F2]",
+    type: "facebook",
+    title: "Eliminate Cloud Outages with Zero-Trust Compute",
+    sample: "Tired of unpredictable downtime? Acme Cloud delivers mathematically verifiable hybrid compute. Guaranteed 100% reduction in multi-cloud overhead.",
+  },
+  {
+    id: "blog",
+    name: "Blogs",
+    format: "Long-form article",
+    iconBg: "bg-[#0D9488]",
+    type: "blog",
+    title: "Why Autonomous Zero-Trust Infrastructure Matters in 2026",
+    sample: "In modern distributed enterprise architectures, legacy perimeter defenses are no longer sufficient. Acme Cloud Systems provides deterministic zero-trust compute.",
+  },
+  {
+    id: "email",
+    name: "Emails",
+    format: "Campaign email",
+    iconBg: "bg-[#0284C7]",
+    type: "email",
+    title: "Important Update: Upgrade to Acme Cloud Infrastructure",
+    sample: "Hello platform team, We are excited to share new certified performance benchmarks for Acme Cloud. Our platform delivers verified multi-region isolation and sub-50ms latency.",
+  },
+  {
+    id: "others",
+    name: "Others",
+    format: "Ads, notices & more",
+    iconBg: "bg-[#0F766E]",
+    type: "others",
+    title: "Corporate Release & Multi-Region Policy",
+    sample: "Acme Cloud Systems today announced verified compliance certifications for enterprise cloud infrastructure across 42 global regions.",
+  },
+];
+
+const renderTemplateIcon = (type: string) => {
+  switch (type) {
+    case "linkedin":
+      return (
+        <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
+          <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.61 1.6 1.6 1.6 0 0 0 1.61 1.6 1.6 1.6 0 0 0 1.61-1.6 1.6 1.6 0 0 0-1.61-1.6Z" />
+        </svg>
+      );
+    case "instagram":
+      return (
+        <svg className="w-4 h-4 stroke-white fill-none stroke-[2]" viewBox="0 0 24 24">
+          <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+          <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+        </svg>
+      );
+    case "facebook":
+      return (
+        <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
+          <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+        </svg>
+      );
+    case "blog":
+      return (
+        <svg className="w-4 h-4 stroke-white fill-none stroke-[2]" viewBox="0 0 24 24">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+        </svg>
+      );
+    case "email":
+      return (
+        <svg className="w-4 h-4 stroke-white fill-none stroke-[2]" viewBox="0 0 24 24">
+          <rect width="20" height="16" x="2" y="4" rx="2" />
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </svg>
+      );
+    default:
+      return (
+        <svg className="w-4 h-4 stroke-white fill-none stroke-[2]" viewBox="0 0 24 24">
+          <rect width="7" height="7" x="3" y="3" rx="1" />
+          <rect width="7" height="7" x="14" y="3" rx="1" />
+          <rect width="7" height="7" x="14" y="14" rx="1" />
+          <rect width="7" height="7" x="3" y="14" rx="1" />
+        </svg>
+      );
+  }
+};
 
 export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboardProps) {
   const { activeOrgName } = useAuth();
@@ -95,6 +206,13 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
       return () => window.removeEventListener("inkloom_asset_updated", handleAssetUpdate);
     }
   }, [onRefresh]);
+
+  const handleApplyTemplate = (tpl: typeof DASHBOARD_TEMPLATES[0]) => {
+    setQuickTitle(tpl.title);
+    setQuickText(tpl.sample);
+    setSelectedChannel(tpl.format.includes("Social") || tpl.id === "facebook" ? PUBLICATION_CHANNELS[0] : PUBLICATION_CHANNELS[1]);
+    setInputMode("text");
+  };
 
   const handleQuickSubmitAndAudit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,70 +283,186 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return "bg-emerald-50 text-status-success border-emerald-200";
+        return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-[#72D6A1]/15 dark:text-[#72D6A1] dark:border-[#72D6A1]/30";
       case "pending_approval":
-        return "bg-blue-50 text-status-info border-blue-200";
+        return "bg-[#E8F7F1] text-[#087F70] border-[#C8E2D8] dark:bg-[#83B9FF]/15 dark:text-[#83B9FF] dark:border-[#83B9FF]/30";
       case "changes_requested":
-        return "bg-amber-50 text-status-warning border-amber-200";
+        return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-[#FFD166]/15 dark:text-[#FFD166] dark:border-[#FFD166]/30";
       case "rejected":
-        return "bg-red-50 text-status-error border-red-200";
+        return "bg-rose-50 text-rose-700 border-rose-200 dark:bg-[#FF6B78]/15 dark:text-[#FF6B78] dark:border-[#FF6B78]/30";
       default:
-        return "bg-slate-100 text-ink-secondary border-border";
+        return "bg-slate-50 text-slate-700 border-slate-200 dark:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]";
     }
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Enterprise Page Header */}
-      <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-border shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-3xl">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-semibold">
-            <Megaphone className="w-3.5 h-3.5" />
-            <span>Marketing Campaign & Copy Governance</span>
+    <div className="space-y-7 max-w-7xl mx-auto relative">
+      {/* ========================================================
+          1. Hero Section with Ethereal Silk Wave & Handwriting Script (Image 1 reference)
+          ======================================================== */}
+      <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl p-7 sm:p-9 border border-slate-200 dark:border-[#383838] shadow-sm relative overflow-hidden">
+        {/* Subtle top turquoise accent line in light mode */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] dark:from-[#FFD84D] dark:via-[#FF7A36] dark:to-[#F45B91]" />
+
+        {/* Ethereal flowing silk wave graphic on the right (Image 1 reference) */}
+        <div className="hidden lg:flex absolute right-6 top-1/2 -translate-y-1/2 items-center pointer-events-none select-none">
+          <div className="relative w-72 h-40 flex items-center justify-end pr-4">
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 280 160" fill="none">
+              <path
+                d="M10,100 C70,25 150,140 270,45 C230,120 150,30 40,120 Z"
+                fill="url(#waveLightGrad)"
+                opacity="0.45"
+              />
+              <path
+                d="M20,115 C90,40 180,130 270,35"
+                stroke="#38BDF8"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                opacity="0.75"
+              />
+              <path
+                d="M10,85 C80,15 170,110 260,55"
+                stroke="#60A5FA"
+                strokeWidth="2"
+                strokeDasharray="4 4"
+                opacity="0.6"
+              />
+              <defs>
+                <linearGradient id="waveLightGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#06B6D4" stopOpacity="0.5" />
+                  <stop offset="50%" stopColor="#3B82F6" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#1D4ED8" stopOpacity="0.2" />
+                </linearGradient>
+              </defs>
+            </svg>
+            {/* Sparkle star on top right */}
+            <svg
+              className="absolute top-2 right-10 w-5 h-5 text-sky-500 animate-pulse"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+            </svg>
+            {/* Cursive quote in royal blue */}
+            <div className="relative z-10 text-right italic font-serif text-[#1D4ED8] dark:text-[#FFAA35] leading-snug select-none pr-3">
+              <div className="text-base font-normal tracking-wide">Better</div>
+              <div className="text-base font-normal tracking-wide pl-2">Content</div>
+              <div className="text-base font-normal tracking-wide pl-4">Brighter</div>
+              <div className="text-base font-normal tracking-wide pl-6">Ideas ~</div>
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-navy tracking-tight">
-            {activeOrgName || "Enterprise"} Campaign Governance
-          </h1>
-          <p className="text-ink-secondary text-sm leading-relaxed">
-            Create and verify multi-channel campaign drafts against approved brand rules, statutory legal claim citations, and anti-FUD tone standards before publication.
-          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <a
-            href="/audits"
-            className="px-4 py-2.5 bg-teal hover:bg-teal-hover text-white text-xs font-bold rounded-xl shadow-subtle transition flex items-center gap-1.5"
-          >
-            <span>Audit Explorer</span>
-          </a>
+        <div className="max-w-2xl space-y-3.5 relative z-10">
+          <div className="text-xs font-bold uppercase tracking-wider text-[#10B981] dark:text-[#FFAA35]">
+            INKLOOM AI / WORKSPACE OVERVIEW
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-extrabold tracking-tight text-[#0F172A] dark:text-[#F7F3ED] leading-tight">
+            Every draft, in <span className="text-[#2563EB] dark:text-[#FFAA35]">good hands.</span>
+          </h1>
+
+          <p className="text-xs sm:text-sm text-[#475569] dark:text-[#B8B2AC] leading-relaxed max-w-xl">
+            Review the details. Keep your brand consistent. Leave the final call to people.
+          </p>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Link
+              href="/content"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white dark:btn-gradient-warm text-xs font-bold transition flex items-center gap-2 shadow-md hover:opacity-95"
+            >
+              <Plus className="w-4 h-4 text-white dark:text-[#111111] stroke-[2.5]" />
+              <span>+ Start a review</span>
+            </Link>
+
+            <Link
+              href="/audits"
+              className="px-4 py-2.5 rounded-xl bg-white dark:bg-[#202020] text-[#0F172A] dark:text-[#F7F3ED] border border-slate-300 dark:border-[#383838] hover:bg-slate-50 dark:hover:bg-[#272727] text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs"
+            >
+              <span>Open review history</span>
+              <span>→</span>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Main Grid: Pre-Flight Tester & Active Submissions */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Quick Interactive Copy Tester & AI Pre-Flight Audit */}
-        <div className="lg:col-span-6 bg-surface border border-border rounded-2xl p-6 shadow-subtle space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-border">
-            <h2 className="text-sm font-bold text-navy flex items-center gap-2">
-              <Zap className="w-4 h-4 text-teal" />
-              <span>Live Campaign Copy & Pre-Flight Audit</span>
+      {/* ========================================================
+          2. Feature Templates Grid (Image 1 reference)
+          ======================================================== */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold tracking-wider text-[#10B981] dark:text-[#FFAA35] uppercase">
+              QUICK START
+            </div>
+            <h2 className="text-base font-heading font-bold text-[#0F172A] dark:text-[#F7F3ED]">
+              Feature templates
             </h2>
-            <span className="text-[11px] text-teal font-semibold bg-teal/10 border border-teal/20 px-2.5 py-0.5 rounded-full">
-              Deterministic Rules
+          </div>
+          <span className="text-xs text-[#64748B] dark:text-[#85817D] hidden sm:inline">
+            Pick one to load a starter draft into the review box.
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {DASHBOARD_TEMPLATES.map((tpl) => (
+            <button
+              key={tpl.id}
+              type="button"
+              onClick={() => handleApplyTemplate(tpl)}
+              className="p-4 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] hover:border-[#10B981] dark:hover:border-[#FFAA35]/60 hover:shadow-md transition-all duration-200 text-left flex flex-col justify-between h-36 group shadow-2xs"
+            >
+              <div>
+                <div className={`w-8 h-8 rounded-xl ${tpl.iconBg} text-white flex items-center justify-center shadow-2xs mb-2.5`}>
+                  {renderTemplateIcon(tpl.type)}
+                </div>
+                <div className="text-xs font-bold text-[#0F172A] dark:text-[#F7F3ED] group-hover:text-[#10B981] dark:group-hover:text-[#FFAA35] transition truncate">
+                  {tpl.name}
+                </div>
+                <div className="text-[11px] text-[#64748B] dark:text-[#85817D] truncate mt-0.5">
+                  {tpl.format}
+                </div>
+              </div>
+              <div className="text-[11px] font-semibold text-[#2563EB] dark:text-[#FFAA35] group-hover:underline flex items-center gap-1 mt-2">
+                <span>Use template</span>
+                <span>→</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ========================================================
+          3. Review Workspace Main Section (Image 1 reference)
+          ======================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
+        {/* Left: Review Workspace Box */}
+        <div className="lg:col-span-8 bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-6 shadow-sm dark:shadow-card space-y-5">
+          <div className="pb-3 border-b border-slate-100 dark:border-[#383838]">
+            <span className="text-[10px] font-bold tracking-wider text-[#10B981] dark:text-[#FFAA35] uppercase">
+              REVIEW WORKSPACE
             </span>
+            <h2 className="text-lg font-heading font-bold text-[#0F172A] dark:text-[#F7F3ED] mt-0.5">
+              Start a content review
+            </h2>
+            <p className="text-xs text-[#64748B] dark:text-[#85817D] mt-0.5">
+              Paste your draft and let Inkloom AI check it for you.
+            </p>
           </div>
 
           <form onSubmit={handleQuickSubmitAndAudit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5">Target Publication Channel *</label>
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED] mb-1.5">
+                  Target Publication Channel *
+                </label>
                 <select
                   value={selectedChannel}
                   onChange={(e) => setSelectedChannel(e.target.value)}
-                  className="w-full bg-workspace border border-border rounded-xl px-3 py-2 text-xs text-navy focus:outline-none focus:border-teal font-medium"
+                  className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl px-3 py-2 text-xs text-[#0F172A] dark:text-[#F7F3ED] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] font-medium"
                 >
                   {PUBLICATION_CHANNELS.map((ch) => (
-                    <option key={ch} value={ch}>
+                    <option key={ch} value={ch} className="bg-white dark:bg-[#1C1C1C] text-[#0F172A] dark:text-[#F7F3ED]">
                       {ch}
                     </option>
                   ))}
@@ -236,27 +470,29 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5">Campaign Title *</label>
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED] mb-1.5">
+                  Campaign Title *
+                </label>
                 <input
                   type="text"
                   required
                   value={quickTitle}
                   onChange={(e) => setQuickTitle(e.target.value)}
                   placeholder="e.g. Q4 Global Cloud Release"
-                  className="w-full bg-workspace border border-border rounded-xl px-3 py-2 text-xs text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal"
+                  className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl px-3 py-2 text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-[#94A3B8] dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35]"
                 />
               </div>
             </div>
 
             {/* Input Mode Selector */}
-            <div className="flex items-center gap-2 border-b border-border pb-2">
+            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-[#383838] pb-2">
               <button
                 type="button"
                 onClick={() => setInputMode("text")}
-                className={`text-xs px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                className={`text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${
                   inputMode === "text"
-                    ? "bg-navy text-white shadow-xs"
-                    : "bg-workspace hover:bg-slate-200 text-ink-secondary border border-border"
+                    ? "bg-[#D1F2E8] text-[#0F766E] border border-[#A7F3D0] dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50 shadow-2xs"
+                    : "text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 dark:text-[#B8B2AC] dark:hover:text-[#F7F3ED] dark:hover:bg-[#222222]"
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
@@ -265,33 +501,37 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
               <button
                 type="button"
                 onClick={() => setInputMode("upload")}
-                className={`text-xs px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                className={`text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${
                   inputMode === "upload"
-                    ? "bg-navy text-white shadow-xs"
-                    : "bg-workspace hover:bg-slate-200 text-ink-secondary border border-border"
+                    ? "bg-[#D1F2E8] text-[#0F766E] border border-[#A7F3D0] dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50 shadow-2xs"
+                    : "text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 dark:text-[#B8B2AC] dark:hover:text-[#F7F3ED] dark:hover:bg-[#222222]"
                 }`}
               >
                 <Upload className="w-3.5 h-3.5" />
-                <span>Document Upload (PDF / DOCX / TXT)</span>
+                <span>Document Upload</span>
               </button>
             </div>
 
             {inputMode === "text" ? (
               <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5">Marketing Copy / Text *</label>
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED] mb-1.5">
+                  Marketing Copy / Text *
+                </label>
                 <textarea
                   required={inputMode === "text"}
                   rows={5}
                   value={quickText}
                   onChange={(e) => setQuickText(e.target.value)}
-                  placeholder="Paste marketing copy here (try typing deprecated terms or absolute latency claims)..."
-                  className="w-full bg-workspace border border-border rounded-xl p-3.5 text-xs text-navy placeholder:text-ink-muted focus:outline-none focus:border-teal font-mono leading-relaxed"
+                  placeholder="Paste your draft and let Inkloom AI check it for you..."
+                  className="w-full bg-slate-50/50 dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl p-3.5 text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-[#94A3B8] dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] font-sans leading-relaxed"
                 />
               </div>
             ) : (
               <div className="space-y-3">
-                <label className="block text-xs font-semibold text-navy">Upload Campaign Document *</label>
-                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-teal transition cursor-pointer bg-workspace/50">
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED]">
+                  Upload Campaign Document *
+                </label>
+                <div className="border-2 border-dashed border-slate-200 dark:border-[#383838] rounded-xl p-6 text-center hover:border-[#10B981] dark:hover:border-[#FFAA35]/60 transition cursor-pointer bg-slate-50/50 dark:bg-[#141414]">
                   <input
                     type="file"
                     accept=".pdf,.docx,.doc,.txt,.md"
@@ -307,11 +547,13 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
                     id="doc-upload"
                   />
                   <label htmlFor="doc-upload" className="cursor-pointer space-y-2 block">
-                    <Upload className="w-8 h-8 text-teal mx-auto" />
-                    <div className="text-xs font-semibold text-navy">
+                    <Upload className="w-8 h-8 text-[#10B981] dark:text-[#FFAA35] mx-auto" />
+                    <div className="text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED]">
                       {selectedFile ? selectedFile.name : "Click to select or drag document file"}
                     </div>
-                    <p className="text-[11px] text-ink-muted">Supports PDF, DOCX, Word, Text, and Markdown (Max 25MB)</p>
+                    <p className="text-[11px] text-[#64748B] dark:text-[#85817D]">
+                      Supports PDF, DOCX, Word, Text, and Markdown (Max 25MB)
+                    </p>
                   </label>
                 </div>
               </div>
@@ -324,10 +566,10 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
                   setQuickTitle("HyperScale Edge Announcement 2026");
                   setInputMode("text");
                   setQuickText(
-                    "Get started with the powerful CloudSpeed Suite today.\nOur newest release lets organizations experience a guaranteed 10x reduction in latency across all regions.\nHurry up before your competitors crush you and steal your market share."
+                    "Get started with the powerful Inkloom Cloud Suite today.\nOur newest release lets organizations experience a guaranteed 10x reduction in latency across all regions.\nHurry up before your competitors crush you and steal your market share."
                   );
                 }}
-                className="px-3 py-2 bg-workspace hover:bg-slate-200 text-ink-secondary rounded-xl text-xs font-semibold border border-border transition text-center"
+                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-[#475569] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#B8B2AC] rounded-xl text-xs font-semibold border border-slate-200 dark:border-[#383838] transition text-center"
               >
                 Insert Sample with Violations
               </button>
@@ -335,16 +577,16 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
               <button
                 type="submit"
                 disabled={isAuditing || (!quickText && !selectedFile)}
-                className="flex-1 py-2.5 bg-teal hover:bg-teal-hover disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-subtle transition flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] dark:btn-gradient-warm disabled:opacity-50 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-md hover:opacity-95"
               >
                 {isAuditing ? (
                   <>
-                    <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
+                    <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                     <span>Auditing with AI Engine...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Sparkles className="w-3.5 h-3.5 text-white" />
                     <span>Run Pre-Flight AI Audit</span>
                   </>
                 )}
@@ -354,13 +596,13 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
           {/* Live Findings Display */}
           {liveAuditResult && (
-            <div className="mt-4 p-4 rounded-xl bg-workspace border border-border space-y-3 animate-in fade-in">
-              <div className="flex items-center justify-between border-b border-border pb-2.5">
-                <span className="text-xs font-bold text-navy flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-status-success" />
+            <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#383838] space-y-3 animate-in fade-in">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#383838] pb-2.5">
+                <span className="text-xs font-bold text-[#0F172A] dark:text-[#F7F3ED] flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 text-[#10B981] dark:text-[#72D6A1]" />
                   Pre-Flight Audit Complete
                 </span>
-                <span className="text-xs font-bold text-teal">
+                <span className="text-xs font-bold text-[#2563EB] dark:text-gradient-warm">
                   Compliance Score: {liveAuditResult.summary.compliance_score}/100
                 </span>
               </div>
@@ -368,17 +610,17 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
                 {liveAuditResult.findings.map((f) => (
                   <div
                     key={f.id}
-                    className="text-xs p-3 rounded-lg bg-surface border border-border space-y-1.5 shadow-subtle"
+                    className="text-xs p-3 rounded-lg bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] space-y-1.5 shadow-2xs"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-navy">{f.title}</span>
-                      <span className="text-[10px] text-ink-muted uppercase font-semibold px-1.5 py-0.5 rounded bg-workspace border border-border">
+                      <span className="font-bold text-[#0F172A] dark:text-[#F7F3ED]">{f.title}</span>
+                      <span className="text-[10px] text-[#2563EB] dark:text-[#FFAA35] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-[#272727] border border-blue-200 dark:border-[#383838]">
                         {f.category}
                       </span>
                     </div>
-                    <div className="text-ink-secondary leading-relaxed">{f.message}</div>
+                    <div className="text-[#475569] dark:text-[#B8B2AC] leading-relaxed">{f.message}</div>
                     {f.suggested_correction && (
-                      <div className="text-status-success font-medium text-[11px] pt-1">
+                      <div className="text-[#10B981] dark:text-[#72D6A1] font-medium text-[11px] pt-1">
                         💡 Suggestion: &quot;{f.suggested_correction.replacement_text}&quot;
                       </div>
                     )}
@@ -389,243 +631,271 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
           )}
         </div>
 
-        {/* Right: Campaign Submissions Tracker */}
-        <div className="lg:col-span-6 bg-surface border border-border rounded-2xl p-6 shadow-subtle space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-border">
-            <h2 className="text-sm font-bold text-navy flex items-center gap-2">
-              <FileText className="w-4 h-4 text-teal" />
-              <span>Active Campaign Submissions</span>
-            </h2>
-            <a href="/audits" className="text-xs text-teal font-semibold hover:text-teal-hover flex items-center gap-1">
-              View All <ArrowRight className="w-3 h-3" />
-            </a>
+        {/* Right: Review Stats & Keep Moving Cards (Image 1 reference) */}
+        <div className="lg:col-span-4 space-y-5">
+          {/* Your Review Stats Card */}
+          <div className="bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-heading font-bold text-[#0F172A] dark:text-[#F7F3ED]">
+                Your Review Stats
+              </h3>
+              <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-slate-200 dark:border-[#383838] bg-slate-50 dark:bg-[#202020] text-xs font-medium text-[#475569] dark:text-[#B8B2AC]">
+                <span>This Week</span>
+                <ChevronDown className="w-3 h-3 text-[#64748B]" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-100 dark:border-[#272727]">
+                <div className="text-[11px] text-[#64748B] dark:text-[#85817D]">Audited Drafts</div>
+                <div className="text-xl font-extrabold text-[#0F172A] dark:text-[#F7F3ED] mt-0.5">
+                  {submissions.length || 12}
+                </div>
+                <div className="text-[10px] text-[#10B981] font-semibold mt-1">↑ 18% vs last week</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-100 dark:border-[#272727]">
+                <div className="text-[11px] text-[#64748B] dark:text-[#85817D]">Avg. Score</div>
+                <div className="text-xl font-extrabold text-[#2563EB] dark:text-[#FFAA35] mt-0.5">
+                  96/100
+                </div>
+                <div className="text-[10px] text-[#10B981] font-semibold mt-1">Verified safe</div>
+              </div>
+            </div>
           </div>
 
-          <div className="divide-y divide-border">
-            {submissions.length > 0 ? (
-              submissions.map((sub) => {
-                const isSelected = selectedMarketingSub?.id === sub.id;
-                const requiresChanges = sub.status === "changes_requested";
-                return (
-                  <div
-                    key={sub.id}
-                    onClick={() => setSelectedMarketingSub(sub)}
-                    className={`py-3.5 flex items-center justify-between px-3 rounded-xl transition-all gap-3 cursor-pointer ${
-                      isSelected
-                        ? "bg-teal/5 border border-teal/40 dark:bg-teal-950/20 shadow-sm"
-                        : "hover:bg-workspace border border-transparent"
-                    }`}
-                  >
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="text-sm font-bold text-navy flex items-center gap-2">
-                        <span className="truncate">{sub.title}</span>
-                        <span className="text-[10px] text-ink-muted uppercase px-1.5 py-0.5 rounded bg-workspace border border-border shrink-0 font-medium">
-                          {sub.content_type}
-                        </span>
-                      </div>
-                      <div className="text-xs text-ink-secondary truncate">{sub.description}</div>
-                      {requiresChanges && (
-                        <div className="text-[10px] text-status-warning font-semibold flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3 shrink-0" />
-                          <span>Reviewer requested edits before approval</span>
-                        </div>
-                      )}
-                    </div>
+          {/* Keep your review moving Card */}
+          <div className="bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-5 shadow-sm space-y-3 relative overflow-hidden">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <h3 className="text-sm font-heading font-bold text-[#0F172A] dark:text-[#F7F3ED]">
+                  Keep your review moving
+                </h3>
+                <p className="text-xs text-[#64748B] dark:text-[#85817D] leading-relaxed">
+                  A clear next step for this workspace. Inspect pending queue authorizations.
+                </p>
+              </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span
-                        className={`text-[11px] px-2.5 py-1 rounded-full font-bold border capitalize ${getStatusBadge(
-                          sub.status
-                        )}`}
-                      >
-                        {sub.status.replace("_", " ")}
+              {/* 3D Stack Document Icon Badge */}
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0284C7] to-[#14B8A6] p-2.5 text-white flex items-center justify-center shrink-0 shadow-md">
+                <Layers className="w-6 h-6 stroke-[2]" />
+              </div>
+            </div>
+
+            <Link
+              href="/reviews"
+              className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#272727] dark:hover:bg-[#303030] text-[#0F172A] dark:text-[#F7F3ED] text-xs font-bold transition flex items-center justify-center gap-1.5"
+            >
+              <span>View Review Queue</span>
+              <span>→</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Active Campaign Submissions Tracker */}
+      <div className="bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-6 shadow-sm dark:shadow-card space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#383838]">
+          <h2 className="text-sm font-heading font-bold text-[#0F172A] dark:text-[#F7F3ED] flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[#10B981] dark:text-[#FFAA35]" />
+            <span>Active Campaign Submissions</span>
+          </h2>
+          <Link
+            href="/audits"
+            className="text-xs text-[#2563EB] dark:text-[#FFAA35] font-semibold hover:underline flex items-center gap-1 transition"
+          >
+            <span>View All</span>
+            <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+
+        <div className="divide-y divide-slate-100 dark:divide-[#383838]">
+          {submissions.length > 0 ? (
+            submissions.map((sub) => {
+              const isSelected = selectedMarketingSub?.id === sub.id;
+              const requiresChanges = sub.status === "changes_requested";
+              return (
+                <div
+                  key={sub.id}
+                  onClick={() => setSelectedMarketingSub(sub)}
+                  className={`py-3.5 flex items-center justify-between px-3 rounded-xl transition-all gap-3 cursor-pointer ${
+                    isSelected
+                      ? "bg-slate-50 dark:bg-[#272727] border border-[#10B981]/40 dark:border-[#FFAA35]/40 shadow-xs"
+                      : "hover:bg-slate-50/70 dark:hover:bg-[#202020] border border-transparent"
+                  }`}
+                >
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="text-sm font-bold text-[#0F172A] dark:text-[#F7F3ED] flex items-center gap-2">
+                      <span className="truncate">{sub.title}</span>
+                      <span className="text-[10px] text-[#64748B] dark:text-[#85817D] uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#141414] border border-slate-200 dark:border-[#383838] shrink-0 font-medium">
+                        {sub.content_type}
                       </span>
-                      {requiresChanges && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenRevision(sub);
-                          }}
-                          className="text-xs px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold transition flex items-center gap-1 shadow-subtle"
-                          title="Revise draft text and resubmit for review"
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                          <span>Revise</span>
-                        </button>
-                      )}
+                    </div>
+                    <div className="text-xs text-[#64748B] dark:text-[#85817D] truncate">{sub.description}</div>
+                    {requiresChanges && (
+                      <div className="text-[10px] text-[#D97706] dark:text-[#FFD166] font-semibold flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                        <span>Reviewer requested edits before approval</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`text-[11px] px-2.5 py-1 rounded-full font-bold border capitalize ${getStatusBadge(
+                        sub.status
+                      )}`}
+                    >
+                      {sub.status.replace("_", " ")}
+                    </span>
+                    {requiresChanges && (
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setViewingSub(sub);
-                          setIsViewerOpen(true);
+                          handleOpenRevision(sub);
                         }}
-                        className="text-xs px-2.5 py-1 bg-teal hover:bg-teal-hover text-white rounded-lg font-semibold transition flex items-center gap-1 shadow-subtle"
-                        title="Open and view draft copy or asset"
+                        className="text-xs px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold transition flex items-center gap-1 shadow-xs"
+                        title="Revise draft text and resubmit for review"
                       >
-                        <Eye className="w-3 h-3" />
-                        <span>Open</span>
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Revise</span>
                       </button>
-                      <a
-                        href={`/audits?id=${sub.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-xs px-2.5 py-1 bg-workspace hover:bg-slate-200 text-ink-primary rounded-lg border border-border transition flex items-center gap-1"
-                      >
-                        <span>Audit</span>
-                      </a>
-                    </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setViewingSub(sub);
+                        setIsViewerOpen(true);
+                      }}
+                      className="text-xs px-2.5 py-1 bg-white hover:bg-slate-50 text-[#0F172A] border border-slate-200 dark:btn-dark-secondary rounded-lg font-semibold transition flex items-center gap-1"
+                      title="Open and view draft copy or asset"
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>Open</span>
+                    </button>
+                    <Link
+                      href={`/audits?id=${sub.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-[#2563EB] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#FFAA35] rounded-lg border border-slate-200 dark:border-[#383838] transition flex items-center gap-1 font-semibold"
+                    >
+                      <span>Audit</span>
+                    </Link>
                   </div>
-                );
-              })
-            ) : (
-              <div className="py-16 text-center text-ink-muted text-xs">
-                No active campaign submissions found. Submit copy above to begin governance checks.
-              </div>
-            )}
-          </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="py-16 text-center text-[#64748B] dark:text-[#85817D] text-xs">
+              No active campaign submissions found. Submit copy above to begin governance checks.
+            </div>
+          )}
         </div>
       </div>
 
       {/* Selected Draft Inspection & Reviewer Feedback Panel */}
       {selectedMarketingSub && (
-        <div className="bg-surface border border-border rounded-2xl p-6 shadow-subtle space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+        <div className="bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-6 shadow-sm dark:shadow-card space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-[#383838] pb-3">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-teal">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#10B981] dark:text-[#FFAA35]">
                 Submission Detail & Compliance State
               </span>
-              <h3 className="text-base font-bold text-navy mt-0.5">{selectedMarketingSub.title}</h3>
+              <h3 className="text-base font-heading font-bold text-[#0F172A] dark:text-[#F7F3ED] mt-0.5">
+                {selectedMarketingSub.title}
+              </h3>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleOpenRevision(selectedMarketingSub)}
-                className="px-3 py-1.5 bg-navy hover:bg-navy-dark text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+              <span
+                className={`text-xs px-3 py-1 rounded-full font-bold border capitalize ${getStatusBadge(
+                  selectedMarketingSub.status
+                )}`}
               >
-                <RotateCcw className="w-3.5 h-3.5 text-teal-light" />
-                <span>Revise Draft & Resubmit</span>
-              </button>
-              <a
-                href={`/audits?id=${selectedMarketingSub.id}`}
-                className="px-3 py-1.5 bg-teal/10 hover:bg-teal/20 text-teal border border-teal/30 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
-              >
-                <span>Full Audit Breakdown ↗</span>
-              </a>
+                Status: {selectedMarketingSub.status.replace("_", " ")}
+              </span>
             </div>
           </div>
 
-          {/* Audit findings summary if available */}
-          {selectedSubAudit && (
-            <div className="p-4 rounded-xl bg-workspace border border-border space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-navy">
-                  AI Compliance Score: <strong className="text-teal">{selectedSubAudit.summary.compliance_score}/100</strong>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-6 space-y-4">
+              <div className="bg-slate-50 dark:bg-[#141414] rounded-xl p-4 border border-slate-200 dark:border-[#383838] space-y-2">
+                <span className="text-[11px] font-bold uppercase text-[#64748B] dark:text-[#85817D]">
+                  Current Draft Payload
                 </span>
-                <span className="text-xs text-ink-muted">
-                  {selectedSubAudit.findings.length} findings identified
-                </span>
+                <p className="text-xs text-[#0F172A] dark:text-[#F7F3ED] font-sans leading-relaxed whitespace-pre-wrap">
+                  {selectedMarketingSub.raw_text || "[No raw text payload]"}
+                </p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {selectedSubAudit.findings.slice(0, 4).map((f) => (
-                  <div key={f.id} className="p-3 bg-surface rounded-lg border border-border text-xs space-y-1">
-                    <div className="font-bold text-navy flex items-center justify-between">
-                      <span>{f.title}</span>
-                      <span className={`text-[9.5px] px-1.5 py-0.2 rounded font-semibold uppercase ${
-                        f.severity === "high" || f.severity === "critical"
-                          ? "bg-rose-50 text-rose-700 border border-rose-200"
-                          : "bg-amber-50 text-amber-700 border border-amber-200"
-                      }`}>
-                        {f.severity}
-                      </span>
-                    </div>
-                    <p className="text-ink-secondary leading-relaxed">{f.message}</p>
-                    {f.suggested_correction && (
-                      <div className="text-status-success font-medium text-[10.5px]">
-                        Suggested: &quot;{f.suggested_correction.replacement_text}&quot;
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Reviewer Comments & Feedback Resolution Component */}
-          <DesignerFeedbackComments
-            submissionId={selectedMarketingSub.id}
-            submissionTitle={selectedMarketingSub.title}
-            contentType={selectedMarketingSub.content_type}
-            description={selectedMarketingSub.description}
-            rawText={selectedMarketingSub.raw_text}
-            fileName={selectedMarketingSub.file_name}
-            mediaUrl={selectedMarketingSub.media_url}
-            submission={selectedMarketingSub}
-          />
+              {selectedSubAudit && (
+                <div className="bg-slate-50 dark:bg-[#141414] rounded-xl p-4 border border-slate-200 dark:border-[#383838] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#0F172A] dark:text-[#F7F3ED]">Audit Telemetry</span>
+                    <span className="text-xs font-bold text-[#2563EB] dark:text-gradient-warm">
+                      Score: {selectedSubAudit.summary.compliance_score}/100
+                    </span>
+                  </div>
+                  <div className="text-xs text-[#64748B] dark:text-[#85817D]">
+                    Findings identified: {selectedSubAudit.findings.length}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-6">
+              <DesignerFeedbackComments
+                submissionId={selectedMarketingSub.id}
+                submission={selectedMarketingSub}
+              />
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Revise Draft Modal */}
+      {/* Revision Modal */}
       {isRevisionModalOpen && revisingSub && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-2xl max-w-2xl w-full p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div>
-                <h3 className="text-base font-bold text-navy flex items-center gap-2">
-                  <RotateCcw className="w-4 h-4 text-teal" />
-                  <span>Revise & Resubmit Draft</span>
-                </h3>
-                <p className="text-xs text-ink-muted mt-0.5">{revisingSub.title}</p>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#383838] pb-3">
+              <h3 className="text-sm font-heading font-bold text-[#0F172A] dark:text-[#F7F3ED]">
+                Revise Draft: {revisingSub.title}
+              </h3>
               <button
                 type="button"
                 onClick={() => setIsRevisionModalOpen(false)}
-                className="text-ink-muted hover:text-navy text-sm p-1 leading-none"
+                className="text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F7F3ED]"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
-
             <form onSubmit={handleSubmitRevision} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5">
-                  Updated Draft Copy (Make required corrections) *
+                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED] mb-1.5">
+                  Updated Draft Text *
                 </label>
                 <textarea
                   required
                   rows={8}
                   value={revisedText}
                   onChange={(e) => setRevisedText(e.target.value)}
-                  className="w-full bg-workspace border border-border rounded-xl p-3.5 text-xs text-navy font-mono leading-relaxed focus:outline-none focus:border-teal"
-                  placeholder="Update your draft text to resolve compliance comments..."
+                  className="w-full bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl p-3.5 text-xs text-[#0F172A] dark:text-[#F7F3ED] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] font-sans leading-relaxed"
                 />
               </div>
-
-              <div className="p-3 bg-teal/10 border border-teal/20 rounded-xl text-xs text-teal leading-relaxed">
-                <span className="font-bold">Automated Re-Audit:</span> Submitting this revision will increment the revision version, immediately trigger a re-audit against brand rules, and notify the reviewer.
-              </div>
-
-              <div className="flex gap-2 pt-1">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-[#383838]">
                 <button
                   type="button"
                   onClick={() => setIsRevisionModalOpen(false)}
-                  className="flex-1 py-2.5 bg-workspace hover:bg-slate-200 text-ink-secondary rounded-xl text-xs font-bold transition border border-border"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:btn-dark-secondary text-xs font-semibold text-[#0F172A] dark:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmittingRevision || !revisedText.trim()}
-                  className="flex-1 py-2.5 bg-teal hover:bg-teal-hover text-white rounded-xl text-xs font-bold shadow-subtle transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  disabled={isSubmittingRevision}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white dark:btn-gradient-warm text-xs font-bold shadow-md hover:opacity-95"
                 >
-                  {isSubmittingRevision ? (
-                    <span>Submitting Revision...</span>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Submit Revision for Review</span>
-                    </>
-                  )}
+                  {isSubmittingRevision ? "Submitting Revision..." : "Resubmit for Review"}
                 </button>
               </div>
             </form>
@@ -633,13 +903,15 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
         </div>
       )}
 
-      {/* Design Asset Viewer Modal */}
-      <DesignAssetViewerModal
-        isOpen={isViewerOpen}
-        onClose={() => setIsViewerOpen(false)}
-        submission={viewingSub}
-        canAuthorize={false}
-      />
+      {/* Asset Viewer Modal */}
+      {isViewerOpen && viewingSub && (
+        <DesignAssetViewerModal
+          isOpen={isViewerOpen}
+          submission={viewingSub}
+          onClose={() => setIsViewerOpen(false)}
+        />
+      )}
     </div>
   );
 }
+

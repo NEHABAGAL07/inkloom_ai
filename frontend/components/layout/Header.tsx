@@ -16,6 +16,8 @@ import {
   Settings,
   Users,
   Loader2,
+  ArrowLeft,
+  Bell,
 } from "lucide-react";
 
 export function Header() {
@@ -80,29 +82,29 @@ export function Header() {
       case "admin":
         return {
           label: "Brand Administrator",
-          bg: "bg-navy/10 dark:bg-navy-light/40 text-navy dark:text-slate-200 border-navy/20 dark:border-slate-700",
+          bg: "bg-[#E8F7F1] text-[#087F70] border-[#C8E2D8] dark:bg-navy-light/40 dark:text-slate-200 dark:border-slate-700",
         };
       case "compliance_officer":
       case "legal":
         return {
           label: "Legal & Compliance",
-          bg: "bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border-teal-200 dark:border-teal-700/50",
+          bg: "bg-[#EFF8F4] text-[#087F70] border-[#DDEBE5] dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-700/50",
         };
       case "designer":
         return {
           label: "Brand Designer",
-          bg: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700",
+          bg: "bg-[#EFF8F4] text-[#10A995] border-[#DDEBE5] dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
         };
       case "marketing":
       case "creator":
         return {
           label: "Marketing Creator",
-          bg: "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60",
+          bg: "bg-[#E8F7F1] text-[#087F70] border-[#C8E2D8] dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/60",
         };
       default:
         return {
           label: role || "Member",
-          bg: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+          bg: "bg-[#EFF8F4] text-[#58716A] border-[#DDEBE5] dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
         };
     }
   };
@@ -178,9 +180,23 @@ export function Header() {
   return (
     <header className="h-16 border-b border-border bg-surface px-4 lg:px-6 flex items-center justify-between sticky top-0 z-30 select-none shadow-subtle gap-3 transition-colors duration-150">
       {/* ----------------------------------------------------
-          Left Section: Workspace Switcher
+          Left Section: Back Button & Workspace Switcher
           ---------------------------------------------------- */}
-      <div className="flex items-center space-x-3 shrink-0">
+      <div className="flex items-center space-x-2.5 shrink-0">
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              window.history.back();
+            }
+          }}
+          aria-label="Go back"
+          className="w-8 h-8 rounded-full border border-slate-200 dark:border-[#383838] bg-white dark:bg-[#1C1C1C] flex items-center justify-center text-slate-600 dark:text-[#85817D] hover:bg-slate-50 dark:hover:bg-[#252525] shadow-xs transition"
+          title="Back"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+
         <div className="relative" ref={orgDropdownRef}>
           <button
             type="button"
@@ -204,7 +220,7 @@ export function Header() {
           </button>
 
           {isOrgDropdownOpen && (
-            <div className="absolute left-0 mt-2 w-64 bg-surface dark:bg-[#162235] border border-border rounded-xl shadow-dropdown p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute left-0 mt-2 w-64 bg-surface border border-border rounded-xl shadow-dropdown p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase text-ink-muted border-b border-border">
                 Switch Organization Workspace
               </div>
@@ -247,14 +263,14 @@ export function Header() {
       <GlobalSearchBar />
 
       {/* ----------------------------------------------------
-          Right Section: Theme Toggle & Compact Profile Dropdown
+          Right Section: Notification Bell, Theme Toggle & Profile Dropdown
           ---------------------------------------------------- */}
-      <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+      <div className="flex items-center space-x-2 sm:space-x-2.5 shrink-0">
         {/* In-App Workflow Notification Bell */}
         <NotificationBell />
 
         {/* Global Light / Dark Theme Toggle */}
-        <ThemeToggle />
+        <ThemeToggle className="!w-8 !h-8 !rounded-full bg-white dark:bg-[#1C1C1C] border-slate-200 dark:border-[#383838] shadow-xs text-slate-600 dark:text-[#85817D]" />
 
         {/* Unified Profile Trigger & Dropdown Menu */}
         <div className="relative" ref={profileDropdownRef}>
@@ -273,12 +289,12 @@ export function Header() {
             title={`${user?.full_name || user?.email || "Account"} (${roleInfo.label})`}
             className={`flex items-center space-x-2 sm:space-x-2.5 p-1 sm:pl-1.5 sm:pr-2.5 sm:py-1.5 rounded-xl border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-teal select-none ${
               isProfileOpen
-                ? "bg-workspace dark:bg-[#162235] border-teal/40 shadow-subtle"
-                : "border-border/60 hover:border-border hover:bg-workspace dark:hover:bg-[#162235]"
+                ? "bg-workspace border-teal/40 shadow-subtle"
+                : "border-border/60 hover:border-border hover:bg-workspace"
             }`}
           >
             {/* User Avatar / Initials */}
-            <div className="w-8 h-8 rounded-full bg-navy text-white dark:bg-teal dark:text-slate-900 flex items-center justify-center font-bold text-xs shadow-subtle shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#087F70] via-[#10A995] to-[#43D6B3] text-white dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-[#111111] flex items-center justify-center font-bold text-xs shadow-subtle shrink-0">
               {initials}
             </div>
 
@@ -307,12 +323,12 @@ export function Header() {
               role="menu"
               aria-labelledby="user-profile-trigger"
               onKeyDown={handleMenuKeyDown}
-              className="absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] bg-surface dark:bg-[#162235] border border-border rounded-2xl shadow-dropdown p-2.5 z-50 animate-in fade-in zoom-in-95 duration-100 focus:outline-none"
+              className="absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] bg-surface border border-border rounded-2xl shadow-dropdown p-2.5 z-50 animate-in fade-in zoom-in-95 duration-100 focus:outline-none"
             >
               {/* 1. Identity & Role Summary Card (Profile) */}
-              <div className="p-3 bg-workspace dark:bg-[#101A2B] rounded-xl border border-border/80 mb-2">
+              <div className="p-3 bg-workspace rounded-xl border border-border mb-2">
                 <div className="flex items-start space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-navy text-white dark:bg-teal dark:text-slate-900 flex items-center justify-center font-bold text-sm shadow-subtle shrink-0 mt-0.5">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#087F70] via-[#10A995] to-[#43D6B3] text-white dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-[#111111] flex items-center justify-center font-bold text-sm shadow-subtle shrink-0 mt-0.5">
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -331,7 +347,7 @@ export function Header() {
                         <span className="truncate max-w-[130px]">{roleInfo.label}</span>
                       </span>
                       {activeOrgName && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-ink-muted bg-surface dark:bg-[#162235] border border-border truncate max-w-[110px]">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-ink-muted bg-surface border border-border truncate max-w-[110px]">
                           <Building2 className="w-2.5 h-2.5 text-teal shrink-0" />
                           <span className="truncate">{activeOrgName}</span>
                         </span>
@@ -348,7 +364,7 @@ export function Header() {
                   role="menuitem"
                   tabIndex={0}
                   onClick={() => setIsProfileOpen(false)}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-ink-secondary hover:text-ink-primary hover:bg-workspace dark:hover:bg-[#101A2B] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-teal"
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-ink-secondary hover:text-ink-primary hover:bg-workspace rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-teal"
                 >
                   <Settings className="w-4 h-4 text-teal shrink-0" />
                   <div className="flex-1 text-left">
@@ -362,7 +378,7 @@ export function Header() {
                   role="menuitem"
                   tabIndex={0}
                   onClick={() => setIsProfileOpen(false)}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-ink-secondary hover:text-ink-primary hover:bg-workspace dark:hover:bg-[#101A2B] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-teal"
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-ink-secondary hover:text-ink-primary hover:bg-workspace rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-teal"
                 >
                   <Users className="w-4 h-4 text-teal shrink-0" />
                   <div className="flex-1 text-left">

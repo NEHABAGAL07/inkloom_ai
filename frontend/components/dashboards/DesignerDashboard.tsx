@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ApprovedAsset, ContentSubmission, AuditResult } from "@/types";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
+import { useTheme } from "@/services/theme-context";
 import {
   Palette,
   Image as ImageIcon,
@@ -30,6 +31,7 @@ interface DesignerDashboardProps {
 
 export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardProps) {
   const { activeOrgName } = useAuth();
+  const { resolvedTheme } = useTheme();
   const [assets, setAssets] = useState<ApprovedAsset[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
@@ -217,24 +219,26 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Enterprise Page Header */}
-      <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-border shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl p-6 sm:p-8 border border-[#DDEBE5] dark:border-[#383838] shadow-subtle dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#43D6B3] dark:from-[#FFD84D] dark:via-[#FF7A36] dark:to-[#F45B91]" />
+        <div className="absolute top-0 right-0 w-80 h-32 bg-gradient-to-l from-[#10A995]/10 dark:from-[#FF7A36]/10 to-transparent pointer-events-none blur-2xl" />
         <div className="space-y-2 max-w-3xl">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F7F1] border border-[#C8E2D8] text-[#087F70] dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-[#FFAA35] text-xs font-bold font-mono">
             <Palette className="w-3.5 h-3.5" />
-            <span>Creative & Visual Brand Governance Studio</span>
+            <span>Creative &amp; Visual Brand Governance Studio</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-navy tracking-tight">
-            {activeOrgName || "Enterprise"} Brand Kit & Visual Compliance
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#18352F] dark:text-[#F7F3ED] font-heading tracking-tight">
+            {activeOrgName || "Enterprise"} Brand Kit &amp; Visual Compliance
           </h1>
-          <p className="text-ink-secondary text-sm leading-relaxed">
+          <p className="text-[#58716A] dark:text-[#85817D] text-sm leading-relaxed">
             Inspect approved color tokens, official vector logos, and typography rules. Run automated visual compliance scans on graphics, banners, and media assets before production release.
           </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="bg-workspace border border-border rounded-xl px-4 py-3 text-center">
-            <span className="block text-[11px] font-bold uppercase tracking-wider text-ink-muted">Certified Palette</span>
-            <span className="text-sm font-bold text-status-success flex items-center justify-center gap-1 mt-0.5">
+          <div className="bg-[#EFF8F4] dark:bg-[#141414] border border-[#DDEBE5] dark:border-[#383838] rounded-xl px-4 py-3 text-center">
+            <span className="block text-[11px] font-bold uppercase tracking-wider text-[#58716A] dark:text-[#85817D] font-mono">Certified Palette</span>
+            <span className="text-sm font-bold text-[#087F70] dark:text-emerald-400 flex items-center justify-center gap-1 mt-0.5">
               <CheckCircle className="w-3.5 h-3.5" /> Active
             </span>
           </div>
@@ -242,16 +246,16 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
       </div>
 
       {/* Deterministic Advisory Analysis Banner */}
-      <div className="bg-teal/5 border border-teal/20 rounded-2xl p-4 flex items-start gap-3.5 shadow-subtle">
-        <Info className="w-5 h-5 text-teal shrink-0 mt-0.5" />
+      <div className="bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] rounded-2xl p-4 flex items-start gap-3.5 shadow-subtle dark:shadow-xl">
+        <Info className="w-5 h-5 text-[#087F70] dark:text-[#FFAA35] shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <div className="text-xs font-bold text-navy flex items-center gap-2">
+          <div className="text-xs font-bold text-[#18352F] dark:text-[#F7F3ED] flex items-center gap-2 font-heading">
             <span>Deterministic Advisory Visual Governance</span>
-            <span className="text-[10px] font-semibold text-teal px-2 py-0.5 rounded-full bg-teal/10 border border-teal/20">
+            <span className="text-[10px] font-semibold text-[#087F70] bg-[#E8F7F1] border border-[#C8E2D8] dark:text-[#FFAA35] dark:bg-amber-500/10 dark:border-amber-500/20 px-2 py-0.5 rounded-full font-mono">
               Advisory Analysis Only • No Synthetic Generation
             </span>
           </div>
-          <p className="text-xs text-ink-secondary leading-relaxed">
+          <p className="text-xs text-[#58716A] dark:text-[#85817D] leading-relaxed">
             Inkloom AI performs deterministic color clustering, contrast ratio verification (WCAG 2.2 AA), wordmark clear-space checks, and metadata extraction.
             It does <strong>not</strong> synthesize artificial images, modify creative artwork, or fabricate media. All visual assets are creator-submitted and require human compliance authorization before release.
           </p>
@@ -259,133 +263,151 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
       </div>
 
       {/* Brand Visual & Voice Standards Panel */}
-      <div className="bg-surface border border-border rounded-2xl p-6 shadow-subtle space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border">
+      <div className="bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] rounded-2xl p-6 shadow-subtle dark:shadow-xl space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#DDEBE5] dark:border-[#383838]">
           <div>
-            <h2 className="text-sm font-bold text-navy flex items-center gap-2">
-              <Layers className="w-4 h-4 text-teal" />
+            <h2 className="text-sm font-bold text-[#18352F] dark:text-[#F7F3ED] font-heading flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
               <span>Brand Visual, Typography &amp; Voice Standards</span>
             </h2>
-            <p className="text-xs text-ink-muted mt-0.5">Authoritative design guidelines, color tokens, and tone rules certified for enterprise campaigns</p>
+            <p className="text-xs text-[#58716A] dark:text-[#85817D] mt-0.5">Authoritative design guidelines, color tokens, and tone rules certified for enterprise campaigns</p>
           </div>
-          <span className="text-[11px] text-teal font-semibold bg-teal/10 border border-teal/20 px-2.5 py-1 rounded-full w-fit">
+          <span className="text-[11px] text-[#087F70] bg-[#E8F7F1] border border-[#C8E2D8] dark:text-[#FFAA35] dark:bg-amber-500/10 dark:border-amber-500/20 px-2.5 py-1 rounded-full w-fit font-mono font-semibold">
             WCAG 2.2 AA Verified
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Logo Card */}
-          <div className="p-4 rounded-xl bg-workspace border border-border flex flex-col justify-between space-y-4">
+          <div className="p-4 rounded-xl bg-[#F7FBF9] dark:bg-[#202020] border border-[#DDEBE5] dark:border-[#383838] flex flex-col justify-between space-y-4">
             <div>
-              <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Primary Wordmark</div>
-              <div className="text-sm font-bold text-navy mt-1">Official High-Res SVG Logo</div>
-              <div className="mt-3 p-4 rounded-xl bg-surface border border-border flex items-center justify-center">
-                <span className="text-xl font-black tracking-widest text-navy">INKLOOM</span>
+              <div className="text-[11px] font-bold text-[#58716A] dark:text-[#85817D] uppercase tracking-wider font-mono">Primary Wordmark</div>
+              <div className="text-sm font-bold text-[#18352F] dark:text-[#F7F3ED] font-heading mt-1">Official High-Res SVG Logo</div>
+              <div className="mt-3 p-4 rounded-xl bg-white dark:bg-[#141414] border border-[#DDEBE5] dark:border-[#383838] flex items-center justify-center gap-2 shadow-xs">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/inkloom-feather-cute@2x.png"
+                  alt="Inkloom Feather"
+                  className="w-6 h-6 object-contain shrink-0 filter drop-shadow-[0_1px_4px_rgba(168,85,247,0.4)]"
+                />
+                <span className="text-base font-black tracking-widest text-[#18352F] dark:text-[#F7F3ED] font-heading">INKLOOM</span>
               </div>
             </div>
-            <div className="text-[11px] text-ink-muted space-y-1 pt-2 border-t border-border">
+            <div className="text-[11px] text-[#58716A] dark:text-[#85817D] space-y-1 pt-2 border-t border-[#DDEBE5] dark:border-[#383838]">
               <div className="flex justify-between">
                 <span>Clear Space:</span>
-                <span className="font-semibold text-navy">Min 24px perimeter</span>
+                <span className="font-semibold text-[#18352F] dark:text-[#F7F3ED]">Min 24px perimeter</span>
               </div>
               <div className="flex justify-between">
                 <span>Aspect Ratio:</span>
-                <span className="font-semibold text-teal">Vector SVG (No skew)</span>
+                <span className="font-semibold text-[#087F70] dark:text-[#FFAA35]">Vector SVG (No skew)</span>
               </div>
             </div>
           </div>
 
           {/* Color Tokens Card with Click-to-Copy */}
-          <div className="p-4 rounded-xl bg-workspace border border-border flex flex-col justify-between space-y-3">
+          <div className="p-4 rounded-xl bg-[#F7FBF9] dark:bg-[#202020] border border-[#DDEBE5] dark:border-[#383838] flex flex-col justify-between space-y-3">
             <div>
               <div className="flex items-center justify-between">
-                <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Color Tokens</div>
+                <div className="text-[11px] font-bold text-[#58716A] dark:text-[#85817D] uppercase tracking-wider font-mono">Color Tokens</div>
                 {copiedColor && (
-                  <span className="text-[10px] text-status-success font-bold animate-in fade-in">
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold animate-in fade-in font-mono">
                     Copied {copiedColor}!
                   </span>
                 )}
               </div>
-              <div className="text-sm font-bold text-navy mt-1">Authoritative Palette (Click to Copy)</div>
+              <div className="text-sm font-bold text-[#18352F] dark:text-[#F7F3ED] font-heading mt-1">
+                {resolvedTheme === "light" ? "Inkloom Signature Mint & Turquoise Palette" : "Inkloom Signature Warm Palette"}
+              </div>
               <div className="grid grid-cols-3 gap-2 mt-3">
-                {[
-                  { hex: "#0D9488", label: "Teal Primary", bg: "bg-[#0D9488]" },
-                  { hex: "#0F766E", label: "Deep Teal", bg: "bg-[#0F766E]" },
-                  { hex: "#0F172A", label: "Navy Midnight", bg: "bg-[#0F172A]" },
-                  { hex: "#14263D", label: "Slate Navy", bg: "bg-[#14263D]" },
-                  { hex: "#15803D", label: "Emerald Success", bg: "bg-[#15803D]" },
-                  { hex: "#64748B", label: "Slate Muted", bg: "bg-[#64748B]" },
-                ].map((col) => (
+                {(resolvedTheme === "light"
+                  ? [
+                      { hex: "#087F70", label: "Deep Teal", bg: "bg-[#087F70]" },
+                      { hex: "#10A995", label: "Primary Teal", bg: "bg-[#10A995]" },
+                      { hex: "#43D6B3", label: "Mint Green", bg: "bg-[#43D6B3]" },
+                      { hex: "#58D9D0", label: "Bright Turquoise", bg: "bg-[#58D9D0]" },
+                      { hex: "#A5EBDD", label: "Soft Mint", bg: "bg-[#A5EBDD]" },
+                      { hex: "#D9F8EF", label: "Pale Mint", bg: "bg-[#D9F8EF]" },
+                    ]
+                  : [
+                      { hex: "#FFD84D", label: "Golden Yellow", bg: "bg-[#FFD84D]" },
+                      { hex: "#FFAA35", label: "Amber", bg: "bg-[#FFAA35]" },
+                      { hex: "#FF7A36", label: "Orange", bg: "bg-[#FF7A36]" },
+                      { hex: "#FF665C", label: "Coral", bg: "bg-[#FF665C]" },
+                      { hex: "#F45B91", label: "Pink", bg: "bg-[#F45B91]" },
+                      { hex: "#1C1C1C", label: "Dark Charcoal", bg: "bg-[#1C1C1C]" },
+                    ]
+                ).map((col) => (
                   <button
                     key={col.hex}
                     type="button"
                     onClick={() => copyToClipboard(col.hex)}
-                    className="p-1.5 rounded-lg bg-surface border border-border hover:border-teal text-center transition group flex flex-col items-center"
+                    className="p-1.5 rounded-lg bg-white dark:bg-[#141414] border border-[#DDEBE5] dark:border-[#383838] hover:border-[#10A995] dark:hover:border-[#FF7A36] text-center transition group flex flex-col items-center shadow-xs"
                     title={`Click to copy ${col.label} (${col.hex})`}
                   >
-                    <div className={`w-full h-6 rounded-md ${col.bg} border border-black/10`} />
-                    <span className="text-[9px] font-mono text-ink-secondary mt-1 group-hover:text-teal font-semibold">
+                    <div className={`w-full h-6 rounded-md ${col.bg} border border-black/5 dark:border-white/10`} />
+                    <span className="text-[9px] font-mono text-[#58716A] dark:text-[#B8B2AC] mt-1 group-hover:text-[#087F70] dark:group-hover:text-[#FFAA35] font-semibold">
                       {col.hex}
                     </span>
                   </button>
                 ))}
               </div>
             </div>
-            <div className="text-[11px] text-ink-muted flex justify-between items-center pt-2 border-t border-border">
+            <div className="text-[11px] text-[#58716A] dark:text-[#85817D] flex justify-between items-center pt-2 border-t border-[#DDEBE5] dark:border-[#383838]">
               <span>Min Contrast: 4.5:1</span>
-              <span className="text-status-success font-bold">WCAG AA Pass</span>
+              <span className="text-[#087F70] dark:text-emerald-400 font-bold font-mono">WCAG AA Pass</span>
             </div>
           </div>
 
           {/* Typography Hierarchy */}
-          <div className="p-4 rounded-xl bg-workspace border border-border flex flex-col justify-between space-y-3">
+          <div className="p-4 rounded-xl bg-[#F7FBF9] dark:bg-[#202020] border border-[#DDEBE5] dark:border-[#383838] flex flex-col justify-between space-y-3">
             <div>
-              <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Typography Scale</div>
-              <div className="text-sm font-bold text-navy mt-1">Outfit / Inter Sans Scale</div>
+              <div className="text-[11px] font-bold text-[#58716A] dark:text-[#85817D] uppercase tracking-wider font-mono">Typography Scale</div>
+              <div className="text-sm font-bold text-[#18352F] dark:text-[#F7F3ED] font-heading mt-1">Space Grotesk / Inter</div>
               <div className="mt-3 space-y-2 text-xs">
-                <div className="p-2 rounded-lg bg-surface border border-border">
-                  <div className="text-[10px] text-ink-muted">Display / Hero (32px / 2rem)</div>
-                  <div className="font-extrabold text-navy tracking-tight text-sm">Enterprise Governance</div>
+                <div className="p-2 rounded-lg bg-white dark:bg-[#141414] border border-[#DDEBE5] dark:border-[#383838]">
+                  <div className="text-[10px] text-[#58716A] dark:text-[#85817D] font-mono">Headlines (Space Grotesk / Sora)</div>
+                  <div className="font-extrabold text-[#18352F] dark:text-[#F7F3ED] font-heading tracking-tight text-sm">Enterprise Governance</div>
                 </div>
-                <div className="p-2 rounded-lg bg-surface border border-border">
-                  <div className="text-[10px] text-ink-muted">Section Headings (18px / 1.125rem)</div>
-                  <div className="font-bold text-navy text-xs">Compliance Audit Evidence</div>
+                <div className="p-2 rounded-lg bg-white dark:bg-[#141414] border border-[#DDEBE5] dark:border-[#383838]">
+                  <div className="text-[10px] text-[#58716A] dark:text-[#85817D] font-mono">Section Labels (Uppercase)</div>
+                  <div className="font-bold text-[#087F70] dark:text-[#FFAA35] text-xs font-mono uppercase">COMPLIANCE AUDIT EVIDENCE</div>
                 </div>
-                <div className="p-2 rounded-lg bg-surface border border-border">
-                  <div className="text-[10px] text-ink-muted">Body Copy (14px / 0.875rem)</div>
-                  <div className="text-ink-secondary text-[11px] leading-relaxed">Relaxed leading, 4.5:1 min contrast</div>
+                <div className="p-2 rounded-lg bg-white dark:bg-[#141414] border border-[#DDEBE5] dark:border-[#383838]">
+                  <div className="text-[10px] text-[#58716A] dark:text-[#85817D] font-mono">Body Copy (Inter Sans)</div>
+                  <div className="text-[#58716A] dark:text-[#B8B2AC] text-[11px] leading-relaxed">Editorial clarity, comfortable line height</div>
                 </div>
               </div>
             </div>
-            <div className="text-[11px] text-ink-muted flex justify-between items-center pt-2 border-t border-border">
+            <div className="text-[11px] text-[#58716A] dark:text-[#85817D] flex justify-between items-center pt-2 border-t border-[#DDEBE5] dark:border-[#383838]">
               <span>Font Hierarchy:</span>
-              <span className="text-teal font-bold">Inter / Outfit</span>
+              <span className="text-[#087F70] dark:text-[#FFAA35] font-bold font-mono">Space Grotesk / Inter</span>
             </div>
           </div>
 
           {/* Anti-FUD & Tone Guidelines */}
-          <div className="p-4 rounded-xl bg-workspace border border-border flex flex-col justify-between space-y-3">
+          <div className="p-4 rounded-xl bg-[#F7FBF9] dark:bg-[#202020] border border-[#DDEBE5] dark:border-[#383838] flex flex-col justify-between space-y-3">
             <div>
-              <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Voice &amp; Tone Rules</div>
-              <div className="text-sm font-bold text-navy mt-1">Anti-FUD &amp; Factual Clarity</div>
+              <div className="text-[11px] font-bold text-[#58716A] dark:text-[#85817D] uppercase tracking-wider font-mono">Voice &amp; Tone Rules</div>
+              <div className="text-sm font-bold text-[#18352F] dark:text-[#F7F3ED] font-heading mt-1">Anti-FUD &amp; Factual Clarity</div>
               <div className="mt-3 space-y-2 text-xs">
-                <div className="p-2.5 rounded-lg bg-surface border border-border space-y-1">
-                  <span className="text-[10px] font-bold text-status-success uppercase block">✓ Permitted Voice</span>
-                  <p className="text-[11px] text-ink-secondary leading-relaxed">
+                <div className="p-2.5 rounded-lg bg-white dark:bg-[#141414] border border-[#DDEBE5] dark:border-[#383838] space-y-1">
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase block font-mono">✓ Permitted Voice</span>
+                  <p className="text-[11px] text-[#58716A] dark:text-[#B8B2AC] leading-relaxed">
                     Objective, factual statements with verified benchmark citations and statutory notices.
                   </p>
                 </div>
-                <div className="p-2.5 rounded-lg bg-surface border border-border space-y-1">
-                  <span className="text-[10px] font-bold text-status-error uppercase block">✗ Prohibited (Anti-FUD)</span>
-                  <p className="text-[11px] text-ink-secondary leading-relaxed">
+                <div className="p-2.5 rounded-lg bg-white dark:bg-[#141414] border border-[#DDEBE5] dark:border-[#383838] space-y-1">
+                  <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase block font-mono">✗ Prohibited (Anti-FUD)</span>
+                  <p className="text-[11px] text-[#58716A] dark:text-[#B8B2AC] leading-relaxed">
                     Fear, uncertainty, doubt (FUD), unbacked superlatives (&quot;100% unbreakable&quot;), or uncertified claims.
                   </p>
                 </div>
               </div>
             </div>
-            <div className="text-[11px] text-ink-muted flex justify-between items-center pt-2 border-t border-border">
+            <div className="text-[11px] text-[#58716A] dark:text-[#85817D] flex justify-between items-center pt-2 border-t border-[#DDEBE5] dark:border-[#383838]">
               <span>Mandatory Disclosure:</span>
-              <span className="text-teal font-bold">SOC2 / ISO 27001</span>
+              <span className="text-[#087F70] dark:text-[#FFAA35] font-bold font-mono">SOC2 / ISO 27001</span>
             </div>
           </div>
         </div>
