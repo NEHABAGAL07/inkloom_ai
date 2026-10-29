@@ -624,7 +624,7 @@ def test_migration_fresh_and_existing_db():
         engine = create_engine(db_url)
         with engine.connect() as conn:
             conn.execute(text("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL PRIMARY KEY)"))
-            conn.execute(text("INSERT INTO alembic_version VALUES ('004_add_mode_to_chat_messages')"))
+            conn.execute(text("INSERT INTO alembic_version VALUES ('006_add_phase2_fields_to_audit_findings')"))
             conn.execute(text("CREATE TABLE organizations (id VARCHAR(36) PRIMARY KEY, name VARCHAR(255))"))
             conn.execute(text("CREATE TABLE content_submissions (id VARCHAR(36) PRIMARY KEY, organization_id VARCHAR(36), title VARCHAR(255), status VARCHAR(50))"))
             conn.execute(text("INSERT INTO content_submissions VALUES ('sub_existing_1', 'org_1', 'Existing Piece 1', 'approved')"))

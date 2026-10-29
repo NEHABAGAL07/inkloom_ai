@@ -1,7 +1,7 @@
 """Create campaign_adaptations table and add source_content_id to content_submissions
 
-Revision ID: 005_create_campaign_adaptations
-Revises: 004_add_mode_to_chat_messages
+Revision ID: 007_create_campaign_adaptations
+Revises: 006_add_phase2_fields_to_audit_findings
 Create Date: 2026-10-29 01:00:00.000000
 
 """
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '005_create_campaign_adaptations'
-down_revision = '004_add_mode_to_chat_messages'
+revision = '007_create_campaign_adaptations'
+down_revision = '006_add_phase2_fields_to_audit_findings'
 branch_labels = None
 depends_on = None
 

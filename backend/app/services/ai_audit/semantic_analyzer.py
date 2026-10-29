@@ -16,7 +16,7 @@ import json
 import logging
 import re
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from app.schemas.audit_contract import (
     Finding,
