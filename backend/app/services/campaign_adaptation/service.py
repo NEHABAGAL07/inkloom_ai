@@ -8,7 +8,7 @@ import json
 import logging
 import re
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
@@ -85,6 +85,8 @@ def _flatten_variant_text(platform: str, content: Dict[str, Any]) -> str:
         parts.append(content.get("headline", ""))
         parts.append(content.get("meta_description", ""))
         parts.append(content.get("body", ""))
+        if content.get("button_text"):
+            parts.append(content.get("button_text", ""))
     else:
         for val in content.values():
             if isinstance(val, list):
@@ -143,64 +145,242 @@ def _enforce_limits(platform: str, content: Dict[str, Any]) -> Dict[str, Any]:
             trimmed["meta_description"] = _truncate_cleanly(trimmed["meta_description"], limits.get("meta_description_max", 160))
         if "body" in trimmed and isinstance(trimmed["body"], str):
             trimmed["body"] = _truncate_cleanly(trimmed["body"], limits.get("body_max", 2000))
+        if "button_text" in trimmed and isinstance(trimmed["button_text"], str):
+            trimmed["button_text"] = _truncate_cleanly(trimmed["button_text"], limits.get("button_text_max", 40))
 
     return trimmed
+
+
+def _extract_source_keywords(source_text: str, brand_terms: Optional[List[str]] = None) -> List[str]:
+    """
+    Extracts 3-5 prominent keywords strictly present in source_text.
+    Prioritizes brand terms if present in source, then distinct source words.
+    Never fabricates words not in the source text.
+    """
+    keywords: List[str] = []
+    seen: Set[str] = set()
+
+    # 1. Prioritize approved brand terms if they appear in source text
+    if brand_terms:
+        for bt in brand_terms:
+            clean_bt = re.sub(r'[^a-zA-Z0-9]', '', bt)
+            if clean_bt and bt.lower() in source_text.lower() and clean_bt.lower() not in seen:
+                keywords.append(clean_bt)
+                seen.add(clean_bt.lower())
+                if len(keywords) >= 5:
+                    return keywords
+
+    # 2. Extract distinct alphabetical words of length >= 3 from source
+    stop_words = {
+        "and", "the", "for", "with", "that", "this", "from", "are", "was", "were",
+        "has", "have", "had", "been", "more", "less", "about", "into", "over",
+        "after", "all", "any", "some", "our", "your", "its", "their", "can", "will",
+        "https", "http", "www", "com", "org", "example", "learn", "costs", "serves",
+        "they", "them", "what", "which", "who", "when", "where", "why", "how", "out"
+    }
+
+    tokens = re.findall(r'[a-zA-Z]{3,}', source_text)
+    for t in tokens:
+        clean = re.sub(r'[^a-zA-Z0-9]', '', t)
+        if len(clean) >= 3 and clean.lower() not in stop_words and clean.lower() not in seen:
+            formatted = clean.capitalize() if clean.islower() else clean
+            keywords.append(formatted)
+            seen.add(clean.lower())
+            if len(keywords) >= 5:
+                break
+
+    # If fewer than 3, accept any tokens from source
+    if len(keywords) < 3:
+        for t in tokens:
+            clean = re.sub(r'[^a-zA-Z0-9]', '', t)
+            if clean and clean.lower() not in seen:
+                formatted = clean.capitalize() if clean.islower() else clean
+                keywords.append(formatted)
+                seen.add(clean.lower())
+                if len(keywords) >= 3:
+                    break
+
+    return keywords[:5]
 
 
 def _rule_based_adapt(source_text: str, platform: str, brand_terms: List[str]) -> Dict[str, Any]:
     """
     Deterministic rule-based adaptation fallback.
-    Does not require an LLM or network access. Guarantees limits, structure, and fact preservation.
+    Produces genuinely distinct platform-tailored shapes strictly respecting limits.
+    Adds NO new claims, numbers, or names, and never deletes or rewords source facts.
     """
     cfg = PLATFORM_CONFIGS[platform]
-    lines = [l.strip() for l in source_text.splitlines() if l.strip()]
-    first_sentence = lines[0] if lines else "Approved Brand Update"
-    body_text = "\n\n".join(lines) if lines else source_text
+    source_clean = source_text.strip()
 
-    # Extract tags from brand terms
-    brand_tags = [f"#{re.sub(r'[^a-zA-Z0-9]', '', t)}" for t in brand_terms if t][:5]
-    if not brand_tags:
-        brand_tags = ["#Enterprise", "#BrandGovernance", "#Update"]
+    sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', source_clean) if s.strip()]
+    if not sentences:
+        sentences = [source_clean]
+
+    first_sentence = sentences[0]
+    remaining_text = " ".join(sentences[1:]) if len(sentences) > 1 else ""
+
+    source_keywords = _extract_source_keywords(source_clean, brand_terms)
+    if not source_keywords:
+        source_keywords = ["Update", "Announcement", "Enterprise"]
 
     if platform == "instagram":
-        caption = f"{first_sentence}\n\n{body_text}"
-        caption = _truncate_cleanly(caption, cfg.get("max_characters", 2200) - 100)
+        # Shape: one-line hook, short body, call to action, 3-5 hashtags built from source keywords
+        hook = first_sentence
+        cta = "Tap the link in bio to learn more."
+        if remaining_text:
+            caption = f"{hook}\n\n{remaining_text}\n\n{cta}"
+        else:
+            caption = f"{hook}\n\n{cta}"
+
+        hashtags = [f"#{kw}" for kw in source_keywords[:5]]
+        if len(hashtags) < 3:
+            for bt in brand_terms:
+                cbt = re.sub(r'[^a-zA-Z0-9]', '', bt)
+                if cbt and f"#{cbt}" not in hashtags:
+                    hashtags.append(f"#{cbt}")
+                    if len(hashtags) >= 3:
+                        break
+
         return {
             "caption": caption,
-            "hashtags": brand_tags
+            "hashtags": hashtags[:5],
         }
 
     elif platform == "linkedin":
-        post_content = f"{first_sentence}\n\n{body_text}\n\nWhat are your thoughts on this milestone?"
-        post_content = _truncate_cleanly(post_content, cfg.get("max_characters", 3000))
+        # Shape: 2-3 short paragraphs with line breaks and one call to action
+        cta = "What are your team's thoughts on this milestone? Join the conversation below."
+        if len(sentences) >= 2:
+            p1 = sentences[0]
+            p2 = " ".join(sentences[1:])
+            post_content = f"{p1}\n\n{p2}\n\n{cta}"
+        else:
+            p1 = sentences[0]
+            post_content = f"{p1}\n\n{cta}"
+
         return {
-            "post": post_content
+            "post": post_content,
         }
 
     elif platform == "youtube":
+        # Shape: title (within limit), description, tags from source keywords
         limits = cfg.get("limits", {})
         title = _truncate_cleanly(first_sentence, limits.get("title_max", 100))
-        description = f"{body_text}\n\nLearn more and stay compliant with our enterprise updates."
+        description = f"{source_clean}\n\nSubscribe for the latest updates."
         description = _truncate_cleanly(description, limits.get("description_max", 5000))
-        tags = [t.lstrip("#") for t in brand_tags]
+        tags = [re.sub(r'[^a-zA-Z0-9\s]', '', kw).strip() for kw in source_keywords[:5]]
         return {
             "title": title,
             "description": description,
-            "tags": tags
+            "tags": [t for t in tags if t][:5],
         }
 
     elif platform == "website":
+        # Shape: headline, meta description (within limit), body, button text
         limits = cfg.get("limits", {})
         headline = _truncate_cleanly(first_sentence, limits.get("headline_max", 100))
         meta_desc = _truncate_cleanly(first_sentence, limits.get("meta_description_max", 160))
-        body = _truncate_cleanly(body_text, limits.get("body_max", 2000))
+        body = _truncate_cleanly(source_clean, limits.get("body_max", 2000))
+        button_text = "Learn More"
         return {
             "headline": headline,
             "meta_description": meta_desc,
-            "body": body
+            "body": body,
+            "button_text": button_text,
         }
 
-    return {"text": source_text}
+    return {"text": source_clean}
+
+
+def _get_finding_signature(f: Dict[str, Any]) -> tuple:
+    """Extracts invariant signature tuple from an audit finding."""
+    cat = str(f.get("category", "")).lower()
+    title = str(f.get("title", "")).lower()
+    ev = str(f.get("evidence", "")).strip().lower()
+    rule = str(f.get("rule_reference") or (f.get("source_reference") or {}).get("rule_name") or "").lower()
+    msg = str(f.get("message", "")).strip().lower()[:100]
+    return (cat, title, ev if ev else (rule if rule else msg))
+
+
+def _get_source_finding_signatures(
+    source_text: str,
+    active_guidelines: List[Dict[str, Any]],
+    source_id: str = "source_baseline",
+) -> Set[tuple]:
+    """Runs audit pass on source content to baseline existing approved claims/findings."""
+    res = AIAuditEngine.run_audit(
+        content_text=source_text,
+        content_id=f"audit_src_{source_id}",
+        active_guidelines=active_guidelines,
+    )
+    if hasattr(res, "model_dump"):
+        audit_dict = res.model_dump(mode="json")
+    elif hasattr(res, "model_dump_json"):
+        audit_dict = json.loads(res.model_dump_json())
+    else:
+        audit_dict = json.loads(json.dumps(res.dict(), default=str))
+
+    signatures = set()
+    for f in audit_dict.get("findings", []):
+        signatures.add(_get_finding_signature(f))
+    return signatures
+
+
+def _evaluate_variant_brand_check(
+    source_text: str,
+    variant_text: str,
+    variant_audit_dict: Dict[str, Any],
+    source_signatures: Set[tuple],
+    brand_terms: List[str],
+) -> tuple[str, Dict[str, Any]]:
+    """
+    Evaluates brand_check status and details.
+    A variant is NOT flagged merely because the source already contains an unverified claim.
+    Flags the variant ONLY for findings that are NEW compared with the source,
+    or when the fact checker finds a changed or missing number, price or URL.
+    """
+    facts_check = check_facts_preserved(
+        source_text=source_text,
+        variant_text=variant_text,
+        brand_terms=brand_terms,
+    )
+
+    new_findings = []
+    for f in variant_audit_dict.get("findings", []):
+        if f.get("severity") in ("critical", "high"):
+            sig = _get_finding_signature(f)
+            if sig not in source_signatures:
+                new_findings.append(f)
+
+    is_flagged = (not facts_check["passed"]) or bool(new_findings)
+    brand_check = "flagged" if is_flagged else "passed"
+
+    reasons = []
+    if not facts_check["passed"]:
+        reasons.append(facts_check.get("details", "Fact discrepancy detected"))
+    if new_findings:
+        finding_summaries = [f"{f.get('title', 'Violation')}: {f.get('message', '')}".strip() for f in new_findings]
+        reasons.append(f"New audit findings: {'; '.join(finding_summaries)}")
+
+    details_text = " ; ".join(reasons) if reasons else "All source facts, numbers, and brand terms preserved. No new brand violations."
+
+    brand_check_details = {
+        "passed": not is_flagged,
+        "missing_facts": facts_check.get("missing_facts", []),
+        "added_facts": facts_check.get("added_facts", []),
+        "new_findings": [
+            {
+                "id": f.get("id"),
+                "category": str(f.get("category")),
+                "severity": str(f.get("severity")),
+                "title": f.get("title"),
+                "message": f.get("message"),
+            }
+            for f in new_findings
+        ],
+        "details": details_text,
+    }
+
+    return brand_check, brand_check_details
 
 
 def _execute_llm_adaptation(
@@ -259,6 +439,8 @@ def _execute_llm_adaptation(
             cleaned = cleaned[:-3].strip()
 
         data = json.loads(cleaned)
+        if not isinstance(data, dict):
+            raise ValueError("LLM response did not parse as a JSON object.")
         # Verify required keys
         required_fields = cfg.get("fields", [])
         if any(f not in data for f in required_fields):
@@ -341,6 +523,13 @@ class CampaignAdaptationService:
         # 3. Fetch active brand rules & approved terminology for this tenant
         brand_terms, active_guidelines = _get_tenant_brand_rules(db, organization_id)
 
+        # Baseline source audit findings so existing approved claims do not flag variants
+        source_signatures = _get_source_finding_signatures(
+            source_text=source_text,
+            active_guidelines=active_guidelines,
+            source_id=submission.id,
+        )
+
         llm_adapter = get_llm_adapter()
         adaptations: List[CampaignAdaptation] = []
 
@@ -371,21 +560,14 @@ class CampaignAdaptationService:
             else:
                 audit_dict = json.loads(json.dumps(audit_res.dict(), default=str))
 
-            # 6. Check facts preserved
-            facts_check = check_facts_preserved(
+            # 6. Evaluate brand check (only new findings or changed/missing facts flag)
+            brand_check, brand_check_details = _evaluate_variant_brand_check(
                 source_text=source_text,
                 variant_text=variant_text,
+                variant_audit_dict=audit_dict,
+                source_signatures=source_signatures,
                 brand_terms=brand_terms,
             )
-
-            # Determine brand_check status
-            has_critical_findings = any(
-                f.get("severity") in ("critical", "high") for f in audit_dict.get("findings", [])
-            )
-            if not facts_check["passed"] or has_critical_findings or audit_dict.get("overall_score", 100) < 65:
-                brand_check = "flagged"
-            else:
-                brand_check = "passed"
 
             # Check if adaptation already exists for this source & platform in this tenant
             existing = (
@@ -404,7 +586,7 @@ class CampaignAdaptationService:
                 existing.status = "draft"
                 existing.audit_result = audit_dict
                 existing.brand_check = brand_check
-                existing.brand_check_details = facts_check
+                existing.brand_check_details = brand_check_details
                 existing.created_by = user_id
                 adaptation_record = existing
             else:
@@ -418,7 +600,7 @@ class CampaignAdaptationService:
                     mode=mode,
                     audit_result=audit_dict,
                     brand_check=brand_check,
-                    brand_check_details=facts_check,
+                    brand_check_details=brand_check_details,
                     created_by=user_id,
                 )
                 db.add(adaptation_record)
@@ -438,6 +620,20 @@ class CampaignAdaptationService:
         organization_id: str,
     ) -> List[CampaignAdaptation]:
         """Lists all campaign adaptations for a source content item within the tenant."""
+        submission = (
+            db.query(ContentSubmission)
+            .filter(
+                ContentSubmission.id == content_id,
+                ContentSubmission.organization_id == organization_id,
+            )
+            .first()
+        )
+        if not submission:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Content submission '{content_id}' not found in organization.",
+            )
+
         return (
             db.query(CampaignAdaptation)
             .filter(
@@ -485,6 +681,13 @@ class CampaignAdaptationService:
         # Fetch brand terms & guidelines
         brand_terms, active_guidelines = _get_tenant_brand_rules(db, organization_id)
 
+        # Baseline source audit findings
+        source_signatures = _get_source_finding_signatures(
+            source_text=source_text,
+            active_guidelines=active_guidelines,
+            source_id=adaptation.source_content_id,
+        )
+
         variant_text = _flatten_variant_text(adaptation.platform, trimmed)
 
         # Re-run audit
@@ -500,21 +703,17 @@ class CampaignAdaptationService:
         else:
             audit_dict = json.loads(json.dumps(audit_res.dict(), default=str))
 
-        # Re-check facts
-        facts_check = check_facts_preserved(
+        brand_check, brand_check_details = _evaluate_variant_brand_check(
             source_text=source_text,
             variant_text=variant_text,
+            variant_audit_dict=audit_dict,
+            source_signatures=source_signatures,
             brand_terms=brand_terms,
         )
 
-        has_critical = any(f.get("severity") in ("critical", "high") for f in audit_dict.get("findings", []))
-        if not facts_check["passed"] or has_critical or audit_dict.get("overall_score", 100) < 65:
-            adaptation.brand_check = "flagged"
-        else:
-            adaptation.brand_check = "passed"
-
+        adaptation.brand_check = brand_check
+        adaptation.brand_check_details = brand_check_details
         adaptation.audit_result = audit_dict
-        adaptation.brand_check_details = facts_check
 
         db.commit()
         db.refresh(adaptation)
@@ -561,6 +760,13 @@ class CampaignAdaptationService:
 
         brand_terms, active_guidelines = _get_tenant_brand_rules(db, organization_id)
 
+        # Baseline source audit findings
+        source_signatures = _get_source_finding_signatures(
+            source_text=source_text,
+            active_guidelines=active_guidelines,
+            source_id=adaptation.source_content_id,
+        )
+
         llm_adapter = get_llm_adapter()
         content_dict, mode = _execute_llm_adaptation(
             source_text=source_text,
@@ -583,22 +789,19 @@ class CampaignAdaptationService:
         else:
             audit_dict = json.loads(json.dumps(audit_res.dict(), default=str))
 
-        facts_check = check_facts_preserved(
+        brand_check, brand_check_details = _evaluate_variant_brand_check(
             source_text=source_text,
             variant_text=variant_text,
+            variant_audit_dict=audit_dict,
+            source_signatures=source_signatures,
             brand_terms=brand_terms,
         )
 
-        has_critical = any(f.get("severity") in ("critical", "high") for f in audit_dict.get("findings", []))
-        if not facts_check["passed"] or has_critical or audit_dict.get("overall_score", 100) < 65:
-            adaptation.brand_check = "flagged"
-        else:
-            adaptation.brand_check = "passed"
-
+        adaptation.brand_check = brand_check
+        adaptation.brand_check_details = brand_check_details
         adaptation.content = content_dict
         adaptation.mode = mode
         adaptation.audit_result = audit_dict
-        adaptation.brand_check_details = facts_check
         adaptation.created_by = user_id
 
         db.commit()

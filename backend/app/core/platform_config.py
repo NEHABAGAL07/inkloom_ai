@@ -63,18 +63,20 @@ PLATFORM_CONFIGS: Dict[str, Dict[str, Any]] = {
         "limits": {
             "headline_max": 100,
             "meta_description_max": 160,
-            "body_max": 2000
+            "body_max": 2000,
+            "button_text_max": 40
         },
         "tone": "Clear, concise, customer-centric, benefits-first, SEO-aligned",
         "format_notes": (
             "H1 headline clearly communicating value. Compelling meta description (120-160 chars) with keywords. "
             "Scannable body content with short paragraphs and bullet points."
         ),
-        "fields": ["headline", "meta_description", "body"],
+        "fields": ["headline", "meta_description", "body", "button_text"],
         "schema_example": {
             "headline": "Clear, Benefit-Driven Headline Communicating Value",
             "meta_description": "Precise summary for search engines under 160 characters highlighting key value.",
-            "body": "Scannable, engaging web copy detailing features, benefits, and next steps."
+            "body": "Scannable, engaging web copy detailing features, benefits, and next steps.",
+            "button_text": "Learn More"
         }
     }
 }

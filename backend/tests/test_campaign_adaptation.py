@@ -289,15 +289,35 @@ def test_flagged_when_facts_differ(db_session, test_setup):
     )
     adapt_id = res.json()[0]["id"]
 
-    # Now edit to remove all numbers and inject a fake stat
+    # 1. Edit to remove price ($50M) and URL -> flagged
     patch_res = client.patch(
         f"/api/v1/adaptations/{adapt_id}",
-        json={"content": {"post": "Acme Cloud had a great month with high growth!"}},
+        json={"content": {"post": "Acme Cloud achieved 99.9% uptime for 10,000 customers worldwide."}},
     )
     assert patch_res.status_code == 200
     updated = patch_res.json()
     assert updated["brand_check"] == "flagged"
-    assert len(updated["brand_check_details"]["missing_facts"]) > 0
+    missing = updated["brand_check_details"]["missing_facts"]
+    assert any("$50m" in m.lower() or "$50M" in m for m in missing)
+    assert any("acmecloud.com" in m.lower() for m in missing)
+
+    # 2. Edit to alter the price to $90M -> flagged (unauthorized added fact)
+    patch_res2 = client.patch(
+        f"/api/v1/adaptations/{adapt_id}",
+        json={"content": {"post": "Acme Cloud secured $90M in Series B! 99.9% uptime for 10,000 customers at https://acmecloud.com/press"}},
+    )
+    assert patch_res2.status_code == 200
+    updated2 = patch_res2.json()
+    assert updated2["brand_check"] == "flagged"
+
+    # 3. Edit to alter the number from 10,000 to 25,000 -> flagged
+    patch_res3 = client.patch(
+        f"/api/v1/adaptations/{adapt_id}",
+        json={"content": {"post": "Acme Cloud secured $50M in Series B! 99.9% uptime for 25,000 customers at https://acmecloud.com/press"}},
+    )
+    assert patch_res3.status_code == 200
+    updated3 = patch_res3.json()
+    assert updated3["brand_check"] == "flagged"
 
 
 # -------------------------------------------------------------
@@ -434,7 +454,7 @@ def test_submit_for_review_creates_new_draft(db_session, test_setup):
 
 
 # -------------------------------------------------------------
-# Test 10: Cross-org PATCH, regenerate, and submit-for-review denied
+# Test 10: Cross-org access denied on every endpoint
 # -------------------------------------------------------------
 def test_cross_org_actions_denied(db_session, test_setup):
     creator_client = make_auth_client(
@@ -458,18 +478,31 @@ def test_cross_org_actions_denied(db_session, test_setup):
         roles=[UserRole.MARKETING],
     )
 
-    # Cross-org PATCH -> 404
+    # 1. Cross-org adapt POST -> 404
+    post_res = other_org_client.post(
+        "/api/v1/adaptations",
+        json={"content_id": test_setup["approved_sub"].id, "platforms": ["linkedin"]},
+    )
+    assert post_res.status_code == 404
+
+    # 2. Cross-org GET adaptations -> 404
+    get_res = other_org_client.get(
+        f"/api/v1/adaptations?content_id={test_setup['approved_sub'].id}"
+    )
+    assert get_res.status_code == 404
+
+    # 3. Cross-org PATCH -> 404
     patch_res = other_org_client.patch(
         f"/api/v1/adaptations/{adapt_id}",
         json={"content": {"post": "Hacked post"}},
     )
     assert patch_res.status_code == 404
 
-    # Cross-org regenerate -> 404
+    # 4. Cross-org regenerate -> 404
     regen_res = other_org_client.post(f"/api/v1/adaptations/{adapt_id}/regenerate")
     assert regen_res.status_code == 404
 
-    # Cross-org submit-for-review -> 404
+    # 5. Cross-org submit-for-review -> 404
     sub_res = other_org_client.post(f"/api/v1/adaptations/{adapt_id}/submit-for-review")
     assert sub_res.status_code == 404
 
@@ -726,5 +759,288 @@ def test_adaptation_service_run_audit_no_db_records_and_status_unchanged(db_sess
     # Verify source submission status is completely unchanged ("approved")
     db_session.refresh(initial_sub)
     assert initial_sub.status == "approved"
+
+
+# -------------------------------------------------------------
+# Test 18: Adaptation preview safety rule: LLM failure or empty
+# falls back to rule_based for that platform, never a 500
+# -------------------------------------------------------------
+def test_adaptation_llm_failure_or_empty_falls_back_to_rule_based_never_500(db_session, test_setup, monkeypatch):
+    """
+    If the LLM output fails to parse, is empty, non-dict, or throws,
+    the service must fall back to the rule-based variant for that platform (mode 'rule_based')
+    and return HTTP 200, never a 500.
+    """
+    class MockFailingLLMAdapter:
+        def __init__(self, mode="empty"):
+            self.mode = mode
+
+        def complete(self, system: str, user: str, max_tokens: int = 1000, json_mode: bool = False) -> str:
+            if self.mode == "empty":
+                return ""
+            elif self.mode == "invalid_json":
+                return "This is not valid JSON at all {"
+            elif self.mode == "non_dict":
+                return json.dumps(["an", "array", "not", "an", "object"])
+            elif self.mode == "missing_keys":
+                return json.dumps({"unrelated_key": "some value"})
+            elif self.mode == "raises":
+                raise RuntimeError("LLM service unavailable")
+            return ""
+
+    client = make_auth_client(
+        db_session,
+        user_id=test_setup["user_creator"].id,
+        org_id=test_setup["org"].id,
+        roles=[UserRole.MARKETING],
+    )
+
+    for test_mode in ["empty", "invalid_json", "non_dict", "missing_keys", "raises"]:
+        monkeypatch.setattr(adaptation_service_module, "get_llm_adapter", lambda m=test_mode: MockFailingLLMAdapter(m))
+
+        res = client.post(
+            "/api/v1/adaptations",
+            json={"content_id": test_setup["approved_sub"].id, "platforms": ["instagram"]},
+        )
+        assert res.status_code == 200
+        data = res.json()[0]
+        assert data["mode"] == "rule_based"
+        assert "caption" in data["content"]
+        assert len(data["content"]["caption"]) > 0
+
+    # Also test regenerate endpoint with failing LLM
+    monkeypatch.setattr(adaptation_service_module, "get_llm_adapter", lambda: MockFailingLLMAdapter("raises"))
+    regen_res = client.post(f"/api/v1/adaptations/{data['id']}/regenerate")
+    assert regen_res.status_code == 200
+    assert regen_res.json()["mode"] == "rule_based"
+
+
+# -------------------------------------------------------------
+# Test 19: Distinct rule-based platform shapes strictly respecting limits
+# -------------------------------------------------------------
+def test_rule_based_distinct_platform_shapes_and_limits(db_session, test_setup, monkeypatch):
+    """
+    Verify rule-based adaptation gives genuinely distinct shapes per platform:
+    - Instagram: one-line hook, short body, call to action, 3-5 hashtags built from source keywords.
+    - LinkedIn: 2-3 short paragraphs with line breaks and one call to action.
+    - YouTube: title (within limit), description, tags from source keywords.
+    - Website: headline, meta description (within limit), body, button text.
+    """
+    from app.services.ai_audit.llm_adapter import OfflineRuleAdapter
+    from app.core.platform_config import PLATFORM_CONFIGS
+
+    monkeypatch.setattr(adaptation_service_module, "get_llm_adapter", lambda: OfflineRuleAdapter())
+
+    client = make_auth_client(
+        db_session,
+        user_id=test_setup["user_creator"].id,
+        org_id=test_setup["org"].id,
+        roles=[UserRole.MARKETING],
+    )
+
+    res = client.post(
+        "/api/v1/adaptations",
+        json={
+            "content_id": test_setup["approved_sub"].id,
+            "platforms": ["instagram", "linkedin", "youtube", "website"],
+        },
+    )
+    assert res.status_code == 200
+    by_platform = {item["platform"]: item["content"] for item in res.json()}
+
+    # 1. Instagram
+    insta = by_platform["instagram"]
+    assert "caption" in insta and "hashtags" in insta
+    caption = insta["caption"]
+    assert len(caption) <= PLATFORM_CONFIGS["instagram"]["max_characters"]
+    assert "Tap the link in bio to learn more." in caption
+    assert "\n\n" in caption  # Hook, body, CTA separated by line breaks
+    assert isinstance(insta["hashtags"], list)
+    assert 3 <= len(insta["hashtags"]) <= 5
+    for tag in insta["hashtags"]:
+        assert tag.startswith("#")
+
+    # 2. LinkedIn
+    linkedin = by_platform["linkedin"]
+    assert "post" in linkedin
+    post = linkedin["post"]
+    assert len(post) <= PLATFORM_CONFIGS["linkedin"]["max_characters"]
+    paragraphs = [p.strip() for p in post.split("\n\n") if p.strip()]
+    assert 2 <= len(paragraphs) <= 3
+    assert "What are your team's thoughts on this milestone? Join the conversation below." in paragraphs[-1]
+
+    # 3. YouTube
+    yt = by_platform["youtube"]
+    assert "title" in yt and "description" in yt and "tags" in yt
+    yt_limits = PLATFORM_CONFIGS["youtube"]["limits"]
+    assert len(yt["title"]) <= yt_limits["title_max"]
+    assert len(yt["description"]) <= yt_limits["description_max"]
+    assert isinstance(yt["tags"], list)
+    assert len(yt["tags"]) >= 3
+    for tag in yt["tags"]:
+        assert not tag.startswith("#")
+
+    # 4. Website
+    web = by_platform["website"]
+    assert "headline" in web and "meta_description" in web and "body" in web and "button_text" in web
+    web_limits = PLATFORM_CONFIGS["website"]["limits"]
+    assert len(web["headline"]) <= web_limits["headline_max"]
+    assert len(web["meta_description"]) <= web_limits["meta_description_max"]
+    assert len(web["body"]) <= web_limits["body_max"]
+    assert len(web["button_text"]) <= web_limits["button_text_max"]
+    assert web["button_text"] == "Learn More"
+
+
+# -------------------------------------------------------------
+# Test 20: Facts preserved and no new numbers in rule-based adaptation
+# -------------------------------------------------------------
+def test_rule_based_facts_preserved_and_no_unauthorized_numbers(db_session, test_setup, monkeypatch):
+    """
+    Verify rule-based adaptation preserves every number, percentage, currency, and URL,
+    and introduces NO new numbers or unauthorized claims.
+    """
+    from app.services.ai_audit.llm_adapter import OfflineRuleAdapter
+    from app.services.campaign_adaptation.service import _flatten_variant_text
+    from app.services.campaign_adaptation.fact_checker import check_facts_preserved
+
+    monkeypatch.setattr(adaptation_service_module, "get_llm_adapter", lambda: OfflineRuleAdapter())
+
+    client = make_auth_client(
+        db_session,
+        user_id=test_setup["user_creator"].id,
+        org_id=test_setup["org"].id,
+        roles=[UserRole.MARKETING],
+    )
+
+    res = client.post(
+        "/api/v1/adaptations",
+        json={
+            "content_id": test_setup["approved_sub"].id,
+            "platforms": ["instagram", "linkedin", "youtube", "website"],
+        },
+    )
+    assert res.status_code == 200
+
+    source_text = test_setup["approved_sub"].raw_text
+    for item in res.json():
+        flat = _flatten_variant_text(item["platform"], item["content"])
+        fc = check_facts_preserved(source_text, flat)
+        assert fc["passed"] is True, f"Platform {item['platform']} failed facts check: {fc['details']}"
+        assert len(fc["missing_facts"]) == 0
+        assert len(fc["added_facts"]) == 0
+        assert item["brand_check"] == "passed"
+
+
+# -------------------------------------------------------------
+# Test 21: Pre-existing source claim does NOT flag variant
+# -------------------------------------------------------------
+def test_source_claim_does_not_flag_variant(db_session, test_setup, monkeypatch):
+    """
+    If the source content itself contains an unverified quantitative claim (e.g. '30% faster')
+    that the audit engine flags, adapting it must NOT flag the variant because the claim
+    was already present in the approved source.
+    """
+    from app.services.ai_audit.llm_adapter import OfflineRuleAdapter
+
+    monkeypatch.setattr(adaptation_service_module, "get_llm_adapter", lambda: OfflineRuleAdapter())
+
+    # Create an approved submission containing an unverified quantitative percentage claim
+    claim_sub = ContentSubmission(
+        id="sub_approved_with_claim",
+        organization_id=test_setup["org"].id,
+        creator_id=test_setup["user_creator"].id,
+        title="Speed Benchmark Release",
+        status="approved",
+        current_revision_id="rev_claim_001",
+    )
+    claim_rev = ContentRevision(
+        id="rev_claim_001",
+        submission_id=claim_sub.id,
+        version_number=1,
+        raw_text="Acme Cloud is 30% faster, serves 5,000 users and costs $49/month. Learn more at https://acme.example/launch",
+    )
+    db_session.add_all([claim_sub, claim_rev])
+    db_session.commit()
+
+    client = make_auth_client(
+        db_session,
+        user_id=test_setup["user_creator"].id,
+        org_id=test_setup["org"].id,
+        roles=[UserRole.MARKETING],
+    )
+
+    res = client.post(
+        "/api/v1/adaptations",
+        json={"content_id": claim_sub.id, "platforms": ["instagram", "linkedin", "youtube", "website"]},
+    )
+    assert res.status_code == 200
+    for item in res.json():
+        assert item["brand_check"] == "passed", (
+            f"Variant for {item['platform']} was unexpectedly flagged: {item.get('brand_check_details')}"
+        )
+        assert item["brand_check_details"]["passed"] is True
+        assert len(item["brand_check_details"]["new_findings"]) == 0
+
+
+# -------------------------------------------------------------
+# Test 22: Changed or missing numbers/prices/URLs DO flag variant
+# -------------------------------------------------------------
+def test_changed_number_flags_variant(db_session, test_setup, monkeypatch):
+    """
+    When an adaptation variant alters or removes numbers, prices, or URLs from the source,
+    or introduces unauthorized new numbers, brand_check must be set to 'flagged' with the
+    reasons recorded in brand_check_details.
+    """
+    from app.services.ai_audit.llm_adapter import OfflineRuleAdapter
+
+    monkeypatch.setattr(adaptation_service_module, "get_llm_adapter", lambda: OfflineRuleAdapter())
+
+    claim_sub = ContentSubmission(
+        id="sub_approved_num_check",
+        organization_id=test_setup["org"].id,
+        creator_id=test_setup["user_creator"].id,
+        title="Price and Performance Update",
+        status="approved",
+        current_revision_id="rev_num_001",
+    )
+    claim_rev = ContentRevision(
+        id="rev_num_001",
+        submission_id=claim_sub.id,
+        version_number=1,
+        raw_text="Acme Cloud is 30% faster, serves 5,000 users and costs $49/month. Learn more at https://acme.example/launch",
+    )
+    db_session.add_all([claim_sub, claim_rev])
+    db_session.commit()
+
+    client = make_auth_client(
+        db_session,
+        user_id=test_setup["user_creator"].id,
+        org_id=test_setup["org"].id,
+        roles=[UserRole.MARKETING],
+    )
+
+    res = client.post(
+        "/api/v1/adaptations",
+        json={"content_id": claim_sub.id, "platforms": ["linkedin"]},
+    )
+    assert res.status_code == 200
+    adaptation_id = res.json()[0]["id"]
+    assert res.json()[0]["brand_check"] == "passed"
+
+    # Now edit via PATCH to tamper with price: change $49 to $99
+    tampered_post = "Acme Cloud is 30% faster, serves 5,000 users and costs $99/month. Learn more at https://acme.example/launch"
+    patch_res = client.patch(
+        f"/api/v1/adaptations/{adaptation_id}",
+        json={"content": {"post": tampered_post}},
+    )
+    assert patch_res.status_code == 200
+    patched = patch_res.json()
+    assert patched["brand_check"] == "flagged"
+    assert patched["brand_check_details"]["passed"] is False
+    assert "$49" in patched["brand_check_details"]["missing_facts"]
+    assert "$99" in patched["brand_check_details"]["added_facts"]
+    assert "Missing facts from source" in patched["brand_check_details"]["details"]
+
+
 
 
