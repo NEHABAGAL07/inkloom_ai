@@ -41,6 +41,7 @@ import {
   KnowledgeDocument,
   DocumentListResponse,
   ChatStatusResponse,
+  CampaignAdaptation,
 } from "../types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -785,6 +786,62 @@ export class ApiService implements IApiService {
       return await this.fetchJson<ChatStatusResponse>("/chat/status");
     } catch {
       return mockApi.getChatStatus();
+    }
+  }
+
+  // --- Campaign Adaptation ---
+  async adaptCampaign(contentId: string, platforms: string[]): Promise<CampaignAdaptation[]> {
+    if (USE_MOCK) return mockApi.adaptCampaign(contentId, platforms);
+    try {
+      return await this.fetchJson<CampaignAdaptation[]>(`/campaigns/${contentId}/adapt`, {
+        method: "POST",
+        body: JSON.stringify({ platforms }),
+      });
+    } catch {
+      return mockApi.adaptCampaign(contentId, platforms);
+    }
+  }
+
+  async getCampaignAdaptations(contentId: string): Promise<CampaignAdaptation[]> {
+    if (USE_MOCK) return mockApi.getCampaignAdaptations(contentId);
+    try {
+      return await this.fetchJson<CampaignAdaptation[]>(`/campaigns/${contentId}/adaptations`);
+    } catch {
+      return mockApi.getCampaignAdaptations(contentId);
+    }
+  }
+
+  async editAdaptation(adaptationId: string, content: Record<string, any>): Promise<CampaignAdaptation> {
+    if (USE_MOCK) return mockApi.editAdaptation(adaptationId, content);
+    try {
+      return await this.fetchJson<CampaignAdaptation>(`/adaptations/${adaptationId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ content }),
+      });
+    } catch {
+      return mockApi.editAdaptation(adaptationId, content);
+    }
+  }
+
+  async regenerateAdaptation(adaptationId: string): Promise<CampaignAdaptation> {
+    if (USE_MOCK) return mockApi.regenerateAdaptation(adaptationId);
+    try {
+      return await this.fetchJson<CampaignAdaptation>(`/adaptations/${adaptationId}/regenerate`, {
+        method: "POST",
+      });
+    } catch {
+      return mockApi.regenerateAdaptation(adaptationId);
+    }
+  }
+
+  async submitAdaptationForReview(adaptationId: string): Promise<{ message: string; submission_id: string; adaptation_id: string; status: string }> {
+    if (USE_MOCK) return mockApi.submitAdaptationForReview(adaptationId);
+    try {
+      return await this.fetchJson<{ message: string; submission_id: string; adaptation_id: string; status: string }>(`/adaptations/${adaptationId}/submit-for-review`, {
+        method: "POST",
+      });
+    } catch {
+      return mockApi.submitAdaptationForReview(adaptationId);
     }
   }
 }

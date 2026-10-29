@@ -9,7 +9,8 @@ import { FindingsFilter } from "@/components/audits/FindingsFilter";
 import { FindingCard } from "@/components/audits/FindingCard";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
-import { ShieldCheck, ArrowRight, FileText, Eye } from "lucide-react";
+import { CampaignAdaptationModal } from "@/components/campaigns/CampaignAdaptationModal";
+import { ShieldCheck, ArrowRight, FileText, Eye, Sparkles } from "lucide-react";
 
 function AuditsContent() {
   const searchParams = useSearchParams();
@@ -22,6 +23,7 @@ function AuditsContent() {
   const [selectedSeverity, setSelectedSeverity] = useState("all");
   const [loading, setLoading] = useState(true);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [isAdaptationOpen, setIsAdaptationOpen] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -173,6 +175,17 @@ function AuditsContent() {
             </div>
           )}
 
+          {activeSub && activeSub.status === "approved" && (
+            <button
+              onClick={() => setIsAdaptationOpen(true)}
+              aria-label="Adapt approved campaign across channels"
+              className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md transition flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Adapt Campaign</span>
+            </button>
+          )}
+
           {activeSub && (
             <button
               onClick={() => setIsViewerOpen(true)}
@@ -243,6 +256,15 @@ function AuditsContent() {
         submission={activeSub || null}
         canAuthorize={true}
       />
+
+      {/* Campaign Adaptation Modal */}
+      {activeSub && (
+        <CampaignAdaptationModal
+          isOpen={isAdaptationOpen}
+          onClose={() => setIsAdaptationOpen(false)}
+          sourceSubmission={activeSub}
+        />
+      )}
     </div>
   );
 }

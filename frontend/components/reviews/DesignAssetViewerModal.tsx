@@ -34,6 +34,7 @@ import {
   MessageSquare,
   Lock,
 } from "lucide-react";
+import { CampaignAdaptationModal } from "@/components/campaigns/CampaignAdaptationModal";
 
 interface DesignAssetViewerModalProps {
   isOpen: boolean;
@@ -66,6 +67,7 @@ export function DesignAssetViewerModal({
   const [activeMediaUrl, setActiveMediaUrl] = useState<string | null>(null);
   const [isUpdatingImage, setIsUpdatingImage] = useState(false);
   const [updateFeedback, setUpdateFeedback] = useState<string | null>(null);
+  const [isAdaptationOpen, setIsAdaptationOpen] = useState(false);
 
   // Initialize and resolve actual uploaded image or media URL
   useEffect(() => {
@@ -418,6 +420,17 @@ export function DesignAssetViewerModal({
                 <ZoomIn className="w-3.5 h-3.5" />
               </button>
             </div>
+
+            {submission.status === "approved" && (
+              <button
+                onClick={() => setIsAdaptationOpen(true)}
+                aria-label="Adapt Campaign"
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600 shadow-sm flex items-center gap-1.5 transition"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Adapt Campaign</span>
+              </button>
+            )}
 
             <button
               onClick={onClose}
@@ -789,6 +802,14 @@ export function DesignAssetViewerModal({
           </div>
         </div>
       </div>
+
+      {submission && (
+        <CampaignAdaptationModal
+          isOpen={isAdaptationOpen}
+          onClose={() => setIsAdaptationOpen(false)}
+          sourceSubmission={submission}
+        />
+      )}
     </div>
   );
 }

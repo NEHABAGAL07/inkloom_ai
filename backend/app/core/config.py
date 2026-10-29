@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     LLM_TIMEOUT_SECONDS: float = 20.0
     LLM_MAX_OUTPUT_TOKENS: int = 800
     CHAT_RATE_LIMIT_PER_MINUTE: int = 10
+    ADAPTATION_RATE_LIMIT_PER_MINUTE: int = 10
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -1,3 +1,4 @@
+import type { AuditResult } from "./audit";
 export * from "./audit";
 
 export interface ContentSubmission {
@@ -21,6 +22,7 @@ export interface ContentSubmission {
     | "approved"
     | "rejected";
   current_revision_id?: string;
+  source_content_id?: string;
   raw_text?: string;
   file_name?: string;
   file_path?: string;
@@ -28,6 +30,29 @@ export interface ContentSubmission {
   revisions?: ContentRevision[];
   created_at: string;
   updated_at: string;
+}
+
+export type PlatformType = "instagram" | "linkedin" | "youtube" | "website";
+
+export interface CampaignAdaptation {
+  id: string;
+  organization_id: string;
+  source_content_id: string;
+  platform: PlatformType;
+  content: Record<string, any>;
+  status: "draft" | "submitted" | "approved" | "rejected";
+  mode: "llm" | "rule_based";
+  audit_result?: AuditResult | null;
+  brand_check: "passed" | "flagged";
+  brand_check_details?: {
+    passed: boolean;
+    missing_facts: string[];
+    added_facts: string[];
+    details: string;
+  } | null;
+  created_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ContentRevision {

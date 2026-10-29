@@ -14,6 +14,7 @@ from app.api.routes.intelligence import router as intelligence_router
 from app.api.routes.comments import router as comments_router
 from app.api.routes.documents import router as documents_router
 from app.api.routes.chat import router as chat_router
+from app.api.routes.campaign_adaptations import router as campaign_adaptations_router
 
 api_router = APIRouter()
 
@@ -32,5 +33,6 @@ api_router.include_router(knowledge_router)
 api_router.include_router(intelligence_router)
 api_router.include_router(documents_router)
 api_router.include_router(chat_router)
+api_router.include_router(campaign_adaptations_router)
 
 __all__ = ["api_router"]

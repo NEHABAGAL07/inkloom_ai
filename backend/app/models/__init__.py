@@ -15,6 +15,7 @@ from app.models.revoked_token import RevokedToken
 from app.models.knowledge import KnowledgeItem
 from app.models.document import KnowledgeDocument, DocumentChunk
 from app.models.chat import ChatSession, ChatMessage
+from app.models.campaign_adaptation import CampaignAdaptation
 
 __all__ = [
     "TimestampedModel",
@@ -40,5 +41,6 @@ __all__ = [
     "DocumentChunk",
     "ChatSession",
     "ChatMessage",
+    "CampaignAdaptation",
 ]
 

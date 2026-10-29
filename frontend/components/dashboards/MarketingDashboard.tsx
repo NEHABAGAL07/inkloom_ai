@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
+import { CampaignAdaptationModal } from "@/components/campaigns/CampaignAdaptationModal";
 
 interface MarketingDashboardProps {
   submissions: ContentSubmission[];
@@ -63,6 +64,10 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
   // Asset Viewer Modal state
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [viewingSub, setViewingSub] = useState<ContentSubmission | null>(null);
+
+  // Campaign Adaptation Modal state
+  const [isAdaptationOpen, setIsAdaptationOpen] = useState(false);
+  const [adaptationSub, setAdaptationSub] = useState<ContentSubmission | null>(null);
 
   useEffect(() => {
     if (!selectedMarketingSub && submissions.length > 0) {
@@ -454,6 +459,21 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
                           <span>Revise</span>
                         </button>
                       )}
+                      {sub.status === "approved" && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAdaptationSub(sub);
+                            setIsAdaptationOpen(true);
+                          }}
+                          className="text-xs px-2.5 py-1 bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-700 hover:to-indigo-700 text-white rounded-lg font-semibold transition flex items-center gap-1 shadow-subtle"
+                          title="Adapt approved content across social & web channels"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          <span>Adapt</span>
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -498,6 +518,19 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
               <h3 className="text-base font-bold text-navy mt-0.5">{selectedMarketingSub.title}</h3>
             </div>
             <div className="flex items-center gap-2">
+              {selectedMarketingSub.status === "approved" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdaptationSub(selectedMarketingSub);
+                    setIsAdaptationOpen(true);
+                  }}
+                  className="px-3 py-1.5 bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-700 hover:to-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Adapt Campaign</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => handleOpenRevision(selectedMarketingSub)}
@@ -640,6 +673,16 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
         submission={viewingSub}
         canAuthorize={false}
       />
+
+      {/* Campaign Adaptation Modal */}
+      {adaptationSub && (
+        <CampaignAdaptationModal
+          isOpen={isAdaptationOpen}
+          onClose={() => setIsAdaptationOpen(false)}
+          sourceSubmission={adaptationSub}
+          onSubmissionCreated={onRefresh}
+        />
+      )}
     </div>
   );
 }

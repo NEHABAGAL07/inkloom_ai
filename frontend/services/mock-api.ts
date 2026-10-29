@@ -35,6 +35,7 @@ import {
   KnowledgeDocument,
   DocumentListResponse,
   ChatStatusResponse,
+  CampaignAdaptation,
 } from "../types";
 
 export interface CreateSubmissionInput {
@@ -117,6 +118,13 @@ export interface IApiService {
   getKnowledgeDocument(documentId: string): Promise<KnowledgeDocument>;
   deleteKnowledgeDocument(documentId: string): Promise<void>;
   getChatStatus(): Promise<ChatStatusResponse>;
+
+  // One-Click Campaign Adaptation
+  adaptCampaign(contentId: string, platforms: string[]): Promise<CampaignAdaptation[]>;
+  getCampaignAdaptations(contentId: string): Promise<CampaignAdaptation[]>;
+  editAdaptation(adaptationId: string, content: Record<string, any>): Promise<CampaignAdaptation>;
+  regenerateAdaptation(adaptationId: string): Promise<CampaignAdaptation>;
+  submitAdaptationForReview(adaptationId: string): Promise<{ message: string; submission_id: string; adaptation_id: string; status: string }>;
 }
 
 // In-memory deterministic mock state
@@ -2327,6 +2335,165 @@ export class MockApiService implements IApiService {
       llm_enabled: true,
       provider: "gemini",
       model: "gemini-1.5-flash",
+    };
+  }
+
+  // --- Campaign Adaptation Mock Store & Handlers ---
+  private mockAdaptationsStore: CampaignAdaptation[] = [];
+
+  private generateMockContent(platform: string, sourceText: string, title: string): Record<string, any> {
+    const text = sourceText || title || "Official Enterprise Brand Update";
+    const firstLine = text.split("\n")[0] || title;
+    if (platform === "instagram") {
+      return {
+        caption: `✨ Exciting update from our team!\n\n${text}\n\n👉 Learn more at the link in our bio.`,
+        hashtags: ["#BrandExcellence", "#Enterprise", "#Innovation", "#Governance", "#Leadership"],
+      };
+    } else if (platform === "linkedin") {
+      return {
+        post: `We are proud to share a significant milestone for our platform.\n\n${text}\n\nMaintaining strict compliance and trust for our global customers is our top priority.\n\nHow is your organization approaching governance this year? We'd love to hear your thoughts in the comments.`,
+      };
+    } else if (platform === "youtube") {
+      return {
+        title: `${firstLine.slice(0, 60)} | Enterprise Governance Overview`,
+        description: `${text}\n\n🔔 Subscribe to our channel for verified brand governance tutorials and insights.\n\n0:00 Introduction\n1:15 Key Milestones\n3:40 Next Steps`,
+        tags: ["enterprise", "brand", "governance", "ai", "compliance"],
+      };
+    } else {
+      return {
+        headline: firstLine.slice(0, 80),
+        meta_description: `${firstLine.slice(0, 130)}... Learn about our verified enterprise standards.`,
+        body: `## Overview\n\n${text}\n\n### Key Highlights\n- Verified brand alignment\n- Multi-tenant compliance assurance\n- Reliable enterprise governance`,
+      };
+    }
+  }
+
+  async adaptCampaign(contentId: string, platforms: string[]): Promise<CampaignAdaptation[]> {
+    const subs = getStoredSubmissions();
+    const sub = subs.find((s) => s.id === contentId);
+    if (!sub) throw new Error("Content submission not found.");
+    if (sub.status !== "approved") {
+      throw new Error(`Only content with status 'approved' can be adapted. Current status: '${sub.status}'.`);
+    }
+
+    const sourceText = sub.raw_text || sub.description || sub.title;
+    const results: CampaignAdaptation[] = [];
+
+    for (const p of platforms) {
+      const platformKey = p.toLowerCase() as "instagram" | "linkedin" | "youtube" | "website";
+      const content = this.generateMockContent(platformKey, sourceText, sub.title);
+      const existing = this.mockAdaptationsStore.find(
+        (a) => a.source_content_id === contentId && a.platform === platformKey
+      );
+
+      const adaptation: CampaignAdaptation = {
+        id: existing ? existing.id : `adapt-${platformKey}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        organization_id: "org_acme_cloud",
+        source_content_id: contentId,
+        platform: platformKey,
+        content,
+        status: "draft",
+        mode: "rule_based",
+        brand_check: "passed",
+        brand_check_details: {
+          passed: true,
+          missing_facts: [],
+          added_facts: [],
+          details: "All source facts, numbers, and brand terms preserved.",
+        },
+        audit_result: {
+          audit_id: `aud-adapt-${Date.now()}`,
+          content_id: `adapt_${platformKey}_${contentId}`,
+          schema_version: "1.0.0",
+          overall_status: "compliant",
+          created_at: new Date().toISOString(),
+          summary: {
+            compliance_score: 96,
+            total_findings: 0,
+            critical_count: 0,
+            high_count: 0,
+            medium_count: 0,
+            low_count: 0,
+            info_count: 0,
+            human_review_required: false,
+          },
+          findings: [],
+          engine_metadata: {
+            engine_version: "0.2.0-brand-governance",
+            execution_time_ms: 45.2,
+            modules_executed: ["guideline_retrieval", "terminology_checker", "claim_verifier"],
+            models_used: ["rule_engine_v1"],
+          },
+        },
+        created_by: "user_acme_marketing",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      if (existing) {
+        Object.assign(existing, adaptation);
+        results.push(existing);
+      } else {
+        this.mockAdaptationsStore.unshift(adaptation);
+        results.push(adaptation);
+      }
+    }
+
+    return results;
+  }
+
+  async getCampaignAdaptations(contentId: string): Promise<CampaignAdaptation[]> {
+    return this.mockAdaptationsStore.filter((a) => a.source_content_id === contentId);
+  }
+
+  async editAdaptation(adaptationId: string, content: Record<string, any>): Promise<CampaignAdaptation> {
+    const item = this.mockAdaptationsStore.find((a) => a.id === adaptationId);
+    if (!item) throw new Error("Campaign adaptation not found.");
+    item.content = { ...item.content, ...content };
+    item.updated_at = new Date().toISOString();
+    return { ...item };
+  }
+
+  async regenerateAdaptation(adaptationId: string): Promise<CampaignAdaptation> {
+    const item = this.mockAdaptationsStore.find((a) => a.id === adaptationId);
+    if (!item) throw new Error("Campaign adaptation not found.");
+    const subs = getStoredSubmissions();
+    const sub = subs.find((s) => s.id === item.source_content_id);
+    const sourceText = sub?.raw_text || sub?.description || sub?.title || "";
+    item.content = this.generateMockContent(item.platform, sourceText, sub?.title || "Campaign");
+    item.updated_at = new Date().toISOString();
+    return { ...item };
+  }
+
+  async submitAdaptationForReview(adaptationId: string): Promise<{ message: string; submission_id: string; adaptation_id: string; status: string }> {
+    const item = this.mockAdaptationsStore.find((a) => a.id === adaptationId);
+    if (!item) throw new Error("Campaign adaptation not found.");
+    const subs = getStoredSubmissions();
+    const sourceSub = subs.find((s) => s.id === item.source_content_id);
+
+    const newSubId = `sub-adapted-${Date.now()}`;
+    const newSubmission: ContentSubmission = {
+      id: newSubId,
+      organization_id: "org_acme_cloud",
+      title: `[${item.platform.toUpperCase()} Campaign] ${sourceSub?.title || "Adapted Content"}`,
+      description: `Adapted for ${item.platform} from approved submission '${sourceSub?.title || ""}'. Brand Check: ${item.brand_check.toUpperCase()}.`,
+      content_type: "text",
+      status: "draft",
+      source_content_id: item.source_content_id,
+      raw_text: typeof item.content === "object" ? Object.values(item.content).join("\n\n") : String(item.content),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    subs.unshift(newSubmission);
+    saveStoredSubmissions(subs);
+    item.status = "submitted";
+
+    return {
+      message: "Campaign variant submitted for human review as a new draft submission.",
+      submission_id: newSubId,
+      adaptation_id: adaptationId,
+      status: "submitted",
     };
   }
 }
