@@ -1,8 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/services/theme-context";
 import { AuthProvider } from "@/services/auth-context";
 import { AppShell } from "@/components/layout/AppShell";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   title: "Inkloom AI — Enterprise Brand Governance Platform",

@@ -272,6 +272,32 @@ export class ApiService implements IApiService {
     }
   }
 
+  async getAllComments(): Promise<ContentComment[]> {
+    if (USE_MOCK) return mockApi.getAllComments();
+    try {
+      const res = await this.fetchJson<CommentsListResponse>("/comments");
+      if (res && Array.isArray(res.comments)) {
+        return res.comments;
+      }
+      return mockApi.getAllComments();
+    } catch {
+      // Graceful fallback: load submissions and their comments
+      try {
+        const subs = await this.getSubmissions();
+        const results = await Promise.all(
+          subs.map((s) => this.getSubmissionComments(s.id).catch(() => ({ comments: [] })))
+        );
+        const combined = results.flatMap((r) => r.comments || []);
+        if (combined.length > 0) {
+          return combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+        return mockApi.getAllComments();
+      } catch {
+        return mockApi.getAllComments();
+      }
+    }
+  }
+
   async addSubmissionComment(submissionId: string, commentText: string, category: string = "visual_design"): Promise<ContentComment> {
     if (USE_MOCK) return mockApi.addSubmissionComment(submissionId, commentText, category);
     try {

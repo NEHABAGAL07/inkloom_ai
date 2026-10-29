@@ -174,7 +174,7 @@ function LoginContent() {
             initial={{ opacity: 0, y: 22, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 24 }}
-            className="bg-white dark:bg-[#1C1C1C] rounded-3xl p-6 sm:p-10 shadow-2xl border border-slate-200 dark:border-[#383838] w-full max-w-md sm:max-w-lg space-y-5 relative my-auto"
+            className="bg-white dark:bg-[#1C1C1C] rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-10 shadow-2xl border border-slate-200 dark:border-[#383838] w-full max-w-md sm:max-w-lg space-y-4 sm:space-y-5 relative my-auto"
           >
             {/* Animated Alerts with AnimatePresence */}
             <AnimatePresence>
@@ -313,7 +313,7 @@ function LoginContent() {
                 disabled={isLoading || !!signingInDept}
                 whileHover={{ scale: 1.015, y: -1 }}
                 whileTap={{ scale: 0.985 }}
-                className="w-full py-3 px-4 bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white dark:btn-gradient-warm rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-md hover:opacity-95 disabled:opacity-50"
+                className="w-full min-h-[44px] py-3 px-4 bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white dark:btn-gradient-warm rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-md hover:opacity-95 disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
@@ -344,7 +344,7 @@ function LoginContent() {
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleQuickDeptLogin("admin@acmecloud.com", "admin")}
-                className="p-2.5 rounded-xl border border-slate-200 dark:border-[#383838] bg-white hover:bg-slate-50 dark:bg-[#202020] dark:hover:bg-[#272727] flex items-center justify-center gap-2 text-xs font-semibold text-slate-700 dark:text-[#F7F3ED] transition shadow-2xs"
+                className="p-2.5 min-h-[42px] rounded-xl border border-slate-200 dark:border-[#383838] bg-white hover:bg-slate-50 dark:bg-[#202020] dark:hover:bg-[#272727] flex items-center justify-center gap-2 text-xs font-semibold text-slate-700 dark:text-[#F7F3ED] transition shadow-2xs"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path
@@ -372,7 +372,7 @@ function LoginContent() {
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleQuickDeptLogin("marketing@acmecloud.com", "marketing")}
-                className="p-2.5 rounded-xl border border-slate-200 dark:border-[#383838] bg-white hover:bg-slate-50 dark:bg-[#202020] dark:hover:bg-[#272727] flex items-center justify-center gap-2 text-xs font-semibold text-slate-700 dark:text-[#F7F3ED] transition shadow-2xs"
+                className="p-2.5 min-h-[42px] rounded-xl border border-slate-200 dark:border-[#383838] bg-white hover:bg-slate-50 dark:bg-[#202020] dark:hover:bg-[#272727] flex items-center justify-center gap-2 text-xs font-semibold text-slate-700 dark:text-[#F7F3ED] transition shadow-2xs"
               >
                 <svg className="w-4 h-4 fill-slate-800 dark:fill-white" viewBox="0 0 24 24">
                   <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />

@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import { Lock, ArrowRight, Home, AlertTriangle, RefreshCw, ServerOff } from "lucide-react";
 
 import { InkloomLoadingScreen } from "./InkloomLoadingScreen";
+import { SidebarProvider } from "./SidebarContext";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, backendError, retryAuth } = useAuth();
@@ -41,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Public routes render immediately without being blocked by background auth verification
   if (isPublicRoute) {
-    return <main className="min-h-screen bg-workspace text-ink-primary">{children}</main>;
+    return <div className="min-h-screen bg-workspace text-ink-primary">{children}</div>;
   }
 
   // Handle backend connection error / service unavailable
@@ -107,7 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Public Landing page (/) for unauthenticated visitors
   if (!isAuthenticated && pathname === "/") {
-    return <main className="min-h-screen bg-workspace text-ink-primary">{children}</main>;
+    return <div className="min-h-screen bg-workspace text-ink-primary">{children}</div>;
   }
 
   // If unauthenticated on a protected subroute, provide clean login prompt with redirect
@@ -146,12 +147,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex w-full bg-workspace text-ink-primary antialiased">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <Header />
-        <main className="flex-1 p-6 lg:p-8 overflow-y-auto bg-workspace">{children}</main>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-workspace text-ink-primary antialiased">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+          <Header />
+          <main className="flex-1 p-3.5 sm:p-5 lg:p-8 overflow-y-auto bg-workspace">{children}</main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

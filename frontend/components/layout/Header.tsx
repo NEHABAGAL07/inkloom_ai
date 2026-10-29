@@ -7,9 +7,12 @@ import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/services/theme-context";
 import { GlobalSearchBar } from "./GlobalSearchBar";
 import { NotificationBell } from "./NotificationBell";
+import { useSidebar } from "./SidebarContext";
 import {
   Building2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   LogOut,
   ShieldCheck,
   Check,
@@ -18,6 +21,7 @@ import {
   Loader2,
   ArrowLeft,
   Bell,
+  Menu,
 } from "lucide-react";
 
 export function Header() {
@@ -30,16 +34,21 @@ export function Header() {
     switchOrganization,
     logout,
   } = useAuth();
+  const {
+    toggleMobileDrawer,
+    isMobileDrawerOpen,
+    menuTriggerRef,
+    isDesktopCollapsed,
+    toggleDesktopCollapsed,
+  } = useSidebar();
   const router = useRouter();
-  const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const orgDropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
 
-  // Close dropdowns on outside click and handle Escape key globally
+  // Close dropdown on outside click and handle Escape key globally
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
@@ -49,12 +58,6 @@ export function Header() {
       ) {
         setIsProfileOpen(false);
       }
-      if (
-        orgDropdownRef.current &&
-        !orgDropdownRef.current.contains(target)
-      ) {
-        setIsOrgDropdownOpen(false);
-      }
     }
 
     function handleGlobalKeyDown(event: KeyboardEvent) {
@@ -62,9 +65,6 @@ export function Header() {
         if (isProfileOpen) {
           setIsProfileOpen(false);
           profileTriggerRef.current?.focus();
-        }
-        if (isOrgDropdownOpen) {
-          setIsOrgDropdownOpen(false);
         }
       }
     }
@@ -75,7 +75,7 @@ export function Header() {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleGlobalKeyDown);
     };
-  }, [isProfileOpen, isOrgDropdownOpen]);
+  }, [isProfileOpen]);
 
   const getRoleBadge = (role: string | null) => {
     switch (role) {
@@ -178,11 +178,36 @@ export function Header() {
     : user?.email?.substring(0, 2).toUpperCase() || "JD";
 
   return (
-    <header className="h-16 border-b border-border bg-surface px-4 lg:px-6 flex items-center justify-between sticky top-0 z-30 select-none shadow-subtle gap-3 transition-colors duration-150">
+    <header className="h-16 border-b border-border bg-surface px-3 sm:px-4 lg:px-6 flex items-center justify-between sticky top-0 z-30 select-none shadow-subtle gap-2 sm:gap-3 transition-colors duration-150">
       {/* ----------------------------------------------------
-          Left Section: Back Button & Workspace Switcher
+          Left Section: Mobile Menu Trigger, Back Button & Workspace Switcher
           ---------------------------------------------------- */}
-      <div className="flex items-center space-x-2.5 shrink-0">
+      <div className="flex items-center space-x-1.5 sm:space-x-2.5 shrink-0">
+        {/* Desktop Bringing Back / Expand Sidebar Button in Header (shown only when collapsed) */}
+        {isDesktopCollapsed && (
+          <button
+            type="button"
+            onClick={toggleDesktopCollapsed}
+            aria-label="Expand sidebar"
+            title="Expand sidebar ( [ )"
+            className="hidden lg:flex w-8 h-8 rounded-xl border border-slate-200 dark:border-[#383838] bg-white dark:bg-[#1C1C1C] items-center justify-center text-slate-700 dark:text-[#85817D] hover:text-[#087F70] dark:hover:text-[#FFAA35] hover:bg-slate-100 dark:hover:bg-[#252525] shadow-xs transition shrink-0 focus:outline-none focus:ring-2 focus:ring-teal select-none"
+          >
+            <ChevronRight className="w-4 h-4 text-ink-primary" />
+          </button>
+        )}
+
+        {/* Mobile Navigation Drawer Trigger (< lg screens) */}
+        <button
+          ref={menuTriggerRef}
+          type="button"
+          onClick={toggleMobileDrawer}
+          aria-label="Open navigation menu"
+          aria-expanded={isMobileDrawerOpen}
+          className="w-8 h-8 rounded-xl border border-slate-200 dark:border-[#383838] bg-white dark:bg-[#1C1C1C] flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252525] shadow-xs transition lg:hidden shrink-0 focus:outline-none focus:ring-2 focus:ring-teal"
+        >
+          <Menu className="w-4 h-4 text-ink-primary" />
+        </button>
+
         <button
           type="button"
           onClick={() => {
@@ -191,69 +216,23 @@ export function Header() {
             }
           }}
           aria-label="Go back"
-          className="w-8 h-8 rounded-full border border-slate-200 dark:border-[#383838] bg-white dark:bg-[#1C1C1C] flex items-center justify-center text-slate-600 dark:text-[#85817D] hover:bg-slate-50 dark:hover:bg-[#252525] shadow-xs transition"
+          className="w-8 h-8 rounded-full border border-slate-200 dark:border-[#383838] bg-white dark:bg-[#1C1C1C] hidden xs:flex items-center justify-center text-slate-600 dark:text-[#85817D] hover:bg-slate-50 dark:hover:bg-[#252525] shadow-xs transition"
           title="Back"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
 
-        <div className="relative" ref={orgDropdownRef}>
-          <button
-            type="button"
-            onClick={() => {
-              setIsProfileOpen(false);
-              setIsOrgDropdownOpen(!isOrgDropdownOpen);
-            }}
-            className="flex items-center space-x-2 bg-workspace border border-border hover:border-teal/50 rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-primary transition shadow-subtle"
-            aria-expanded={isOrgDropdownOpen}
-            aria-label="Select organization workspace"
-          >
-            <Building2 className="w-3.5 h-3.5 text-teal shrink-0" />
-            <span className="max-w-[130px] sm:max-w-[170px] truncate">
-              {activeOrgName || "Workspace"}
-            </span>
-            <ChevronDown
-              className={`w-3.5 h-3.5 text-ink-muted shrink-0 transition-transform duration-200 ${
-                isOrgDropdownOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
+        {/* Company Identity: Logo Emblem and Company Name */}
+        <div className="flex items-center gap-2.5 select-none py-1">
+          {/* Branded Company Logo Emblem */}
+          <div className="w-8 h-8 rounded-xl bg-teal-500/10 dark:bg-[#FFAA35]/15 border border-teal-500/20 dark:border-[#FFAA35]/30 flex items-center justify-center shrink-0 shadow-xs">
+            <Building2 className="w-4 h-4 text-teal-600 dark:text-[#FFAA35]" />
+          </div>
 
-          {isOrgDropdownOpen && (
-            <div className="absolute left-0 mt-2 w-64 bg-surface border border-border rounded-xl shadow-dropdown p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
-              <div className="px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase text-ink-muted border-b border-border">
-                Switch Organization Workspace
-              </div>
-              <div className="space-y-1 my-1 max-h-56 overflow-y-auto">
-                {memberships.map((m) => {
-                  const isCurrent = m.organization_id === activeOrgId;
-                  return (
-                    <button
-                      key={m.organization_id}
-                      type="button"
-                      onClick={() => {
-                        setIsOrgDropdownOpen(false);
-                        switchOrganization(m.organization_id);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between transition-colors ${
-                        isCurrent
-                          ? "bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 font-semibold border border-teal-200 dark:border-teal-800/60"
-                          : "text-ink-secondary hover:bg-workspace hover:text-ink-primary"
-                      }`}
-                    >
-                      <span className="truncate">{m.organization_name}</span>
-                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                        <span className="text-[10px] text-ink-muted capitalize bg-workspace px-1.5 py-0.5 rounded border border-border">
-                          {m.role}
-                        </span>
-                        {isCurrent && <Check className="w-3 h-3 text-teal" />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* Company Name */}
+          <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F7F3ED] tracking-tight truncate max-w-[160px] xs:max-w-[200px] sm:max-w-[260px] md:max-w-[340px]">
+            {activeOrgName || "Acme Cloud Systems"}
+          </span>
         </div>
       </div>
 
@@ -272,63 +251,42 @@ export function Header() {
         {/* Global Light / Dark Theme Toggle */}
         <ThemeToggle className="!w-8 !h-8 !rounded-full bg-white dark:bg-[#1C1C1C] border-slate-200 dark:border-[#383838] shadow-xs text-slate-600 dark:text-[#85817D]" />
 
-        {/* Unified Profile Trigger & Dropdown Menu */}
+        {/* User Account Avatar Trigger (shows ONLY the avatar logo; no text in header) */}
         <div className="relative" ref={profileDropdownRef}>
           <button
             ref={profileTriggerRef}
             type="button"
-            onClick={() => {
-              setIsOrgDropdownOpen(false);
-              setIsProfileOpen((prev) => !prev);
-            }}
+            onClick={() => setIsProfileOpen((prev) => !prev)}
             onKeyDown={handleTriggerKeyDown}
             aria-expanded={isProfileOpen}
             aria-haspopup="true"
             aria-controls="user-profile-menu"
             id="user-profile-trigger"
-            title={`${user?.full_name || user?.email || "Account"} (${roleInfo.label})`}
-            className={`flex items-center space-x-2 sm:space-x-2.5 p-1 sm:pl-1.5 sm:pr-2.5 sm:py-1.5 rounded-xl border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-teal select-none ${
+            title={`Account: ${user?.full_name || user?.email || "User"} (${roleInfo.label})`}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal select-none ${
               isProfileOpen
-                ? "bg-workspace border-teal/40 shadow-subtle"
-                : "border-border/60 hover:border-border hover:bg-workspace"
+                ? "ring-2 ring-teal dark:ring-[#FFAA35] shadow-xs"
+                : "hover:opacity-90 hover:scale-105 active:scale-95"
             }`}
           >
-            {/* User Avatar / Initials */}
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#087F70] via-[#10A995] to-[#43D6B3] text-white dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-[#111111] flex items-center justify-center font-bold text-xs shadow-subtle shrink-0">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#087F70] via-[#10A995] to-[#43D6B3] text-white dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-[#111111] flex items-center justify-center font-bold text-xs shadow-xs select-none">
               {initials}
             </div>
-
-            {/* Authenticated User Name & Role Label */}
-            <div className="text-left hidden sm:block leading-tight max-w-[120px] md:max-w-[150px] lg:max-w-[170px]">
-              <div className="text-xs font-semibold text-ink-primary truncate">
-                {user?.full_name || user?.email?.split("@")[0] || "User"}
-              </div>
-              <div className="text-[10.5px] font-medium text-ink-muted truncate">
-                {roleInfo.label}
-              </div>
-            </div>
-
-            {/* Chevron Indicator */}
-            <ChevronDown
-              className={`w-3.5 h-3.5 text-ink-muted transition-transform duration-200 shrink-0 ${
-                isProfileOpen ? "rotate-180 text-teal" : ""
-              }`}
-            />
           </button>
 
-          {/* Polished Profile Dropdown Menu */}
+          {/* Polished Profile Dropdown Menu in Table Format */}
           {isProfileOpen && (
             <div
               id="user-profile-menu"
               role="menu"
               aria-labelledby="user-profile-trigger"
               onKeyDown={handleMenuKeyDown}
-              className="absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] bg-surface border border-border rounded-2xl shadow-dropdown p-2.5 z-50 animate-in fade-in zoom-in-95 duration-100 focus:outline-none"
+              className="absolute right-0 mt-2 w-72 sm:w-84 max-w-[calc(100vw-2rem)] bg-surface border border-border rounded-2xl shadow-dropdown p-3 z-50 animate-in fade-in zoom-in-95 duration-100 focus:outline-none"
             >
-              {/* 1. Identity & Role Summary Card (Profile) */}
-              <div className="p-3 bg-workspace rounded-xl border border-border mb-2">
-                <div className="flex items-start space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#087F70] via-[#10A995] to-[#43D6B3] text-white dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-[#111111] flex items-center justify-center font-bold text-sm shadow-subtle shrink-0 mt-0.5">
+              {/* Header Identity Card */}
+              <div className="p-3 bg-workspace rounded-xl border border-border mb-2.5">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#087F70] via-[#10A995] to-[#43D6B3] text-white dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-[#111111] flex items-center justify-center font-bold text-sm shadow-subtle shrink-0">
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -338,26 +296,55 @@ export function Header() {
                     <div className="text-[11px] text-ink-muted truncate">
                       {user?.email}
                     </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${roleInfo.bg}`}
-                        title={`Assigned Role: ${roleInfo.label}`}
-                      >
-                        <ShieldCheck className="w-3 h-3 text-teal shrink-0" />
-                        <span className="truncate max-w-[130px]">{roleInfo.label}</span>
-                      </span>
-                      {activeOrgName && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-ink-muted bg-surface border border-border truncate max-w-[110px]">
-                          <Building2 className="w-2.5 h-2.5 text-teal shrink-0" />
-                          <span className="truncate">{activeOrgName}</span>
-                        </span>
-                      )}
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* 2. Functional Menu Items */}
+              {/* Account Details Table */}
+              <div className="rounded-xl border border-border overflow-hidden mb-2.5">
+                <table className="w-full text-left text-xs border-collapse">
+                  <tbody className="divide-y divide-border">
+                    <tr className="bg-surface">
+                      <td className="py-2 px-3 font-semibold text-ink-muted text-[11px] w-24 bg-workspace/50">
+                        Role
+                      </td>
+                      <td className="py-2 px-3">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-semibold border ${roleInfo.bg}`}
+                          title={`Assigned Role: ${roleInfo.label}`}
+                        >
+                          <ShieldCheck className="w-3 h-3 text-teal shrink-0" />
+                          <span className="truncate max-w-[140px]">{roleInfo.label}</span>
+                        </span>
+                      </td>
+                    </tr>
+                    <tr className="bg-surface">
+                      <td className="py-2 px-3 font-semibold text-ink-muted text-[11px] bg-workspace/50">
+                        Workspace
+                      </td>
+                      <td className="py-2 px-3 font-medium text-ink-primary text-xs">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <Building2 className="w-3.5 h-3.5 text-teal shrink-0" />
+                          <span className="truncate">{activeOrgName || "Acme Cloud Systems"}</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className="bg-surface">
+                      <td className="py-2 px-3 font-semibold text-ink-muted text-[11px] bg-workspace/50">
+                        Access
+                      </td>
+                      <td className="py-2 px-3 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>Active Authenticated</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Functional Menu Items */}
               <div className="space-y-1">
                 <Link
                   href="/settings"
@@ -388,10 +375,10 @@ export function Header() {
                 </Link>
               </div>
 
-              {/* 3. Divider */}
+              {/* Divider */}
               <div className="my-1.5 border-t border-border" />
 
-              {/* 4. Cautionary / Destructive Sign Out Action */}
+              {/* Sign Out Action */}
               <button
                 type="button"
                 role="menuitem"

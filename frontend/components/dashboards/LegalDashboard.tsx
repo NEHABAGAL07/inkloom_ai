@@ -302,7 +302,7 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                   <div className="text-xs text-ink-secondary mt-1">{selectedSubmission.description}</div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => setIsAssetViewerOpen(true)}
                     className="px-3.5 py-2 btn-dark-secondary text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
@@ -451,7 +451,7 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
       {/* Review Decision Modal */}
       {isDecisionModalOpen && selectedSubmission && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95">
+          <div className="bg-surface border border-border rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="text-base font-bold text-navy flex items-center gap-2">
                 <Shield className="w-4 h-4 text-teal" />

@@ -655,3 +655,22 @@
   }
 }
 
+/* Responsive mobile navbar utility: keep Sign In in header on >=375px, move to dropdown on <375px */
+.nav-signin-compact {
+  display: none !important;
+}
+@media (min-width: 375px) {
+  .nav-signin-compact {
+    display: inline-flex !important;
+  }
+}
+
+.nav-menu-signin {
+  display: block !important;
+}
+@media (min-width: 375px) {
+  .nav-menu-signin {
+    display: none !important;
+  }
+}
+

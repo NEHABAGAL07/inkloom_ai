@@ -9,6 +9,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: "375px",
+      },
       colors: {
         workspace: "var(--bg-workspace)",
         surface: {

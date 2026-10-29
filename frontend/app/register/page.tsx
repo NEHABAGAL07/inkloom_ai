@@ -155,26 +155,27 @@ export default function RegisterCompanyPage() {
         <BackgroundAtmosphere variant="split-auth" />
 
         {/* Header */}
-        <header className="px-6 lg:px-12 py-5 flex items-center justify-between border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-40 transition-colors duration-150">
-          <Link href="/" className="group">
+        <header className="px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex items-center justify-between border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-40 transition-colors duration-150">
+          <Link href="/" className="group shrink-0">
             <InkloomLogo size="md" />
           </Link>
-          <div className="flex items-center gap-3 sm:gap-4">
-            <ThemeToggle />
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <ThemeToggle className="!w-8 !h-8 !rounded-full shrink-0" />
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link
                 href="/login"
-                className="text-xs text-ink-secondary hover:text-ink-primary flex items-center gap-1 font-medium transition"
+                className="text-xs text-ink-secondary hover:text-ink-primary flex items-center gap-1 font-medium transition py-1"
               >
-                <ChevronLeft className="w-4 h-4" />
-                <span>Already have an account? Sign In</span>
+                <ChevronLeft className="w-4 h-4 shrink-0" />
+                <span className="hidden sm:inline">Already have an account? Sign In</span>
+                <span className="sm:hidden">Sign In</span>
               </Link>
             </motion.div>
           </div>
         </header>
 
         {/* Main Registration Box */}
-        <main className="flex-1 flex items-center justify-center py-10 px-6 relative z-20">
+        <main className="flex-1 flex items-center justify-center py-6 sm:py-10 px-4 sm:px-6 relative z-20">
           <div className="w-full max-w-xl space-y-6">
             <div className="text-center space-y-2">
               <motion.div
@@ -210,7 +211,7 @@ export default function RegisterCompanyPage() {
               initial={{ opacity: 0, y: 22, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ type: "spring", stiffness: 240, damping: 22, delay: 0.1 }}
-              className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl p-7 sm:p-9 shadow-[0_16px_40px_rgba(22,91,72,0.08)] dark:shadow-2xl relative overflow-hidden"
+              className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl p-5 sm:p-8 lg:p-9 shadow-[0_16px_40px_rgba(22,91,72,0.08)] dark:shadow-2xl relative overflow-hidden"
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#58D9D0] dark:from-[#FFD84D] dark:via-[#FF7A36] dark:to-[#F45B91]" />
 
@@ -381,7 +382,7 @@ export default function RegisterCompanyPage() {
                         disabled={isLoading}
                         whileHover={{ scale: 1.015, y: -1 }}
                         whileTap={{ scale: 0.985 }}
-                        className="w-full py-3 px-4 btn-gradient-warm rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-warmGlow disabled:opacity-50"
+                        className="w-full min-h-[44px] py-3 px-4 btn-gradient-warm rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-warmGlow disabled:opacity-50"
                       >
                         {isLoading ? (
                           <>
