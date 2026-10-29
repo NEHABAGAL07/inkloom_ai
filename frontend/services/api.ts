@@ -3,12 +3,40 @@
  * Implements IApiService with dynamic JWT authentication & tenant scoping.
  * Automatically falls back to MockApiService if NEXT_PUBLIC_USE_MOCK=true or backend is unavailable.
  */
-import {
+import type {
   IApiService,
   CreateSubmissionInput,
   ReviewDecisionInput,
-  mockApi,
 } from "./mock-api";
+
+// Lazy-loaded Mock API proxy: Prevents bundling 3,750+ lines of mock fixtures in production client bundles
+let _mockApiPromise: Promise<any> | null = null;
+let _mockApiInstance: any = null;
+
+async function getMockApiInstance(): Promise<any> {
+  if (_mockApiInstance) return _mockApiInstance;
+  if (!_mockApiPromise) {
+    _mockApiPromise = import("./mock-api").then((mod) => {
+      _mockApiInstance = mod.mockApi;
+      return _mockApiInstance;
+    });
+  }
+  return _mockApiPromise;
+}
+
+const mockApi: any = new Proxy({}, {
+  get(_target, prop: string) {
+    if (prop === "then") return undefined;
+    return async (...args: any[]) => {
+      const realMock = await getMockApiInstance();
+      const fn = realMock[prop];
+      if (typeof fn === "function") {
+        return fn.apply(realMock, args);
+      }
+      return fn;
+    };
+  },
+});
 import {
   AuditResult,
   ContentSubmission,
@@ -1357,5 +1385,6 @@ export class ApiService implements IApiService {
 }
 
 export const api = new ApiService();
+export { mockApi };
 export type { IApiService, CreateSubmissionInput, ReviewDecisionInput };
 

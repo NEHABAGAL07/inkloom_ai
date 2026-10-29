@@ -3,7 +3,20 @@ const nextConfig = {
   reactStrictMode: true,
   output: process.env.BUILD_STANDALONE === "1" ? "standalone" : undefined,
   images: {
-    domains: ["brand.inkloom.internal", "localhost"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "brand.inkloom.internal",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
+      {
+        protocol: "https",
+        hostname: "localhost",
+      },
+    ],
   },
   async rewrites() {
     const backendUrl =
