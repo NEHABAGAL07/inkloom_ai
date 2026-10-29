@@ -12,11 +12,12 @@ Security & Resilience Controls:
 - Bounded retries and graceful fallback to OfflineRuleAdapter if provider fails
 - Structured schema validation for model outputs
 """
+from __future__ import annotations
 import json
 import logging
 import re
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from app.schemas.audit_contract import (
     Finding,

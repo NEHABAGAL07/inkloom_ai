@@ -27,11 +27,15 @@ jobs:
           pip install -r backend/requirements.txt
 
       - name: Run AI Quality & Evaluation Benchmark
+        env:
+          PYTHONPATH: .
         run: |
           cd backend
           python -m pytest tests/test_ai_evaluation.py -v -s
 
       - name: Run Backend & Security Tests
+        env:
+          PYTHONPATH: .
         run: |
           cd backend
           python -m pytest tests/ -v
