@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
@@ -19,6 +20,7 @@ import {
   ContentSubmission,
 } from "@/types";
 import { BrandStandardsAndVisualAnalysis } from "@/components/designer/BrandStandardsAndVisualAnalysis";
+import { DESIGN_STARTER_TEMPLATES } from "@/components/designer/socialPresets";
 import {
   Palette,
   Sparkles,
@@ -60,13 +62,33 @@ function DesignerCopilotContent() {
   const searchParams = useSearchParams();
   const queryTab = searchParams?.get("tab");
   const queryAction = searchParams?.get("action");
+  const queryPlatform = searchParams?.get("platform");
+  const queryFormat = searchParams?.get("format");
+  const queryWidth = searchParams?.get("w");
+  const queryHeight = searchParams?.get("h");
+  const queryRatio = searchParams?.get("ratio");
+  const queryTitle = searchParams?.get("title");
+  const querySafe = searchParams?.get("safe");
+  const queryTemplate = searchParams?.get("template");
 
   // Active workspace tab (defaults to canvas_audit so Design Studio, Canvas & Audit tools are immediately visible)
   const [activeTab, setActiveTab] = useState<"brief_concepts" | "canvas_audit" | "asset_library" | "history" | "copilot_chat">("canvas_audit");
 
-  // Automatically activate canvas_audit tab when navigating via "New Design"
+  // Active Social Media Canvas Preset from Designer Dashboard
+  const [activeCanvasPreset, setActiveCanvasPreset] = useState<{
+    platform: string;
+    format: string;
+    width: number;
+    height: number;
+    aspectRatio: string;
+    safeArea?: string;
+  } | null>(null);
+
+  const [showSafeZoneOverlay, setShowSafeZoneOverlay] = useState(true);
+
+  // Automatically activate canvas_audit tab and apply canvas preset when navigating via Designer Dashboard
   useEffect(() => {
-    if (queryTab === "canvas_audit" || queryAction === "upload" || queryAction === "new_design") {
+    if (queryTab === "canvas_audit" || queryAction === "upload" || queryAction === "new_design" || queryAction === "template" || queryAction === "custom" || queryPlatform || queryWidth) {
       setActiveTab("canvas_audit");
     } else if (queryTab === "brief_concepts") {
       setActiveTab("brief_concepts");
@@ -77,7 +99,55 @@ function DesignerCopilotContent() {
     } else if (queryTab === "copilot_chat") {
       setActiveTab("copilot_chat");
     }
-  }, [queryTab, queryAction]);
+
+    if (queryWidth && queryHeight) {
+      const w = parseInt(queryWidth, 10);
+      const h = parseInt(queryHeight, 10);
+      if (!isNaN(w) && !isNaN(h)) {
+        setCustomDimensions(`${w}x${h}px`);
+
+        const validRatios: DesignAspectRatio[] = ["1:1", "16:9", "9:16", "4:5", "1.91:1"];
+        if (queryRatio && validRatios.includes(queryRatio as DesignAspectRatio)) {
+          setAspectRatio(queryRatio as DesignAspectRatio);
+        } else if (w === h) {
+          setAspectRatio("1:1");
+        } else if (w > h) {
+          setAspectRatio("1.91:1");
+        } else {
+          setAspectRatio("9:16");
+        }
+
+        if (queryPlatform === "instagram") setChannel("instagram");
+        else if (queryPlatform === "linkedin") setChannel("linkedin");
+        else if (queryPlatform === "email") setChannel("email");
+        else if (queryPlatform === "blog") setChannel("website");
+        else if (["facebook", "youtube", "twitter", "pinterest", "tiktok"].includes(queryPlatform || "")) setChannel("ad");
+        else setChannel("general");
+
+        if (queryTitle) {
+          setProjectName(decodeURIComponent(queryTitle));
+        }
+
+        setActiveCanvasPreset({
+          platform: queryPlatform || "custom",
+          format: queryFormat || "Custom Canvas",
+          width: w,
+          height: h,
+          aspectRatio: queryRatio || `${w}:${h}`,
+          safeArea: querySafe ? decodeURIComponent(querySafe) : undefined,
+        });
+      }
+    }
+
+    if (queryTemplate) {
+      const tpl = DESIGN_STARTER_TEMPLATES.find((t) => t.id === queryTemplate);
+      if (tpl) {
+        setProjectName(tpl.title);
+        setRequiredCopy(tpl.starterCopy);
+        setDesignObjective(tpl.description);
+      }
+    }
+  }, [queryTab, queryAction, queryPlatform, queryFormat, queryWidth, queryHeight, queryRatio, queryTitle, querySafe, queryTemplate]);
 
   // ==========================================
   // Creative Brief Builder State
@@ -1291,6 +1361,64 @@ function DesignerCopilotContent() {
               </div>
             )}
 
+            {/* Active Social Media Canvas Preset Banner */}
+            {activeCanvasPreset && (
+              <div className="p-4 rounded-xl border border-teal/30 bg-gradient-to-r from-teal/10 via-[#0B132B] to-[#121E36] shadow-md space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-xl bg-teal/20 border border-teal/40 flex items-center justify-center text-teal font-black text-xs uppercase tracking-wider shadow-sm">
+                      {activeCanvasPreset.platform.slice(0, 3)}
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-bold text-ink-primary capitalize">
+                          {activeCanvasPreset.platform} • {activeCanvasPreset.format}
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal/20 text-teal border border-teal/30">
+                          Active Canvas
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-ink-secondary mt-0.5 font-mono">
+                        <span className="font-semibold text-teal">{activeCanvasPreset.width} × {activeCanvasPreset.height} px</span>
+                        <span>•</span>
+                        <span>Ratio {activeCanvasPreset.aspectRatio}</span>
+                        {activeCanvasPreset.safeArea && (
+                          <>
+                            <span>•</span>
+                            <span className="text-ink-muted text-[11px] font-sans">
+                              {activeCanvasPreset.safeArea}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    {activeCanvasPreset.safeArea && (
+                      <button
+                        type="button"
+                        onClick={() => setShowSafeZoneOverlay(!showSafeZoneOverlay)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border cursor-pointer ${
+                          showSafeZoneOverlay
+                            ? "bg-teal/20 border-teal text-teal shadow-sm"
+                            : "bg-surface border-border text-ink-muted hover:text-ink-primary"
+                        }`}
+                      >
+                        {showSafeZoneOverlay ? "Safe Margin: ON" : "Safe Margin: OFF"}
+                      </button>
+                    )}
+                    <Link
+                      href="/dashboard"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface hover:bg-surface-elevated border border-border text-ink-secondary hover:text-ink-primary transition"
+                    >
+                      Change Preset
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Design Upload & Canvas Preview Box */}
             <div className="bg-surface rounded-xl border border-border p-5 space-y-4 shadow-sm">
               <div className="flex items-center justify-between">
@@ -1452,6 +1580,19 @@ function DesignerCopilotContent() {
                     alt="Design Preview"
                     className="max-h-[480px] max-w-full object-contain rounded shadow-lg"
                   />
+
+                  {/* Safe Zone Margin Overlay Guide */}
+                  {showSafeZoneOverlay && activeCanvasPreset?.safeArea && (
+                    <div className="absolute inset-8 pointer-events-none border border-dashed border-teal/50 rounded flex flex-col justify-between p-2">
+                      <div className="flex justify-between items-center text-[10px] font-mono text-teal bg-black/75 px-2 py-0.5 rounded backdrop-blur-sm self-start border border-teal/30">
+                        <span>Safe Margin Guide</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] font-mono text-slate-300 bg-black/75 px-2 py-0.5 rounded backdrop-blur-sm self-end border border-white/10">
+                        <span>{activeCanvasPreset.width} × {activeCanvasPreset.height} px ({activeCanvasPreset.aspectRatio})</span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
                     <span className="bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] text-slate-300 font-mono border border-white/10">
                       Target: {aspectRatio}
@@ -1474,6 +1615,29 @@ function DesignerCopilotContent() {
                         Cut
                       </span>
                     </button>
+                  </div>
+                </div>
+              ) : activeCanvasPreset ? (
+                <div className="rounded-lg border border-teal/20 bg-[#0B132B] p-8 text-center text-ink-muted flex flex-col items-center justify-center min-h-[300px] relative overflow-hidden">
+                  <div className="absolute inset-4 pointer-events-none border border-dashed border-teal/20 rounded-lg"></div>
+                  <div className="relative z-10 flex flex-col items-center max-w-sm">
+                    <div className="w-12 h-12 rounded-xl bg-teal/10 border border-teal/30 flex items-center justify-center text-teal mb-3 shadow-inner">
+                      <Maximize2 className="w-6 h-6" />
+                    </div>
+                    <span className="text-sm font-bold text-ink-primary capitalize">
+                      {activeCanvasPreset.platform} Canvas ({activeCanvasPreset.width} × {activeCanvasPreset.height} px)
+                    </span>
+                    <span className="text-xs text-ink-secondary mt-1">
+                      {activeCanvasPreset.format} • Ratio {activeCanvasPreset.aspectRatio}
+                    </span>
+                    {activeCanvasPreset.safeArea && (
+                      <span className="text-[11px] text-teal/90 mt-2 font-mono bg-teal/10 px-2.5 py-1 rounded border border-teal/20">
+                        Guide: {activeCanvasPreset.safeArea}
+                      </span>
+                    )}
+                    <span className="text-[11px] text-ink-muted mt-3">
+                      Drop creative artwork above or load sample mockup to begin live AI brand evaluation.
+                    </span>
                   </div>
                 </div>
               ) : (
