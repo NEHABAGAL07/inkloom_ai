@@ -21,6 +21,7 @@ import {
   ContentSubmission,
 } from "@/types";
 import { BrandStandardsAndVisualAnalysis } from "@/components/designer/BrandStandardsAndVisualAnalysis";
+import { DESIGN_STARTER_TEMPLATES } from "@/components/designer/socialPresets";
 import {
   Palette,
   Sparkles,
@@ -62,15 +63,35 @@ function DesignerCopilotContent() {
   const searchParams = useSearchParams();
   const queryTab = searchParams?.get("tab");
   const queryAction = searchParams?.get("action");
+  const queryPlatform = searchParams?.get("platform");
+  const queryFormat = searchParams?.get("format");
+  const queryWidth = searchParams?.get("w");
+  const queryHeight = searchParams?.get("h");
+  const queryRatio = searchParams?.get("ratio");
+  const queryTitle = searchParams?.get("title");
+  const querySafe = searchParams?.get("safe");
+  const queryTemplate = searchParams?.get("template");
   const campaignIdParam = searchParams?.get("campaign_id");
   const campaignNameParam = searchParams?.get("campaign_name");
 
   // Active workspace tab (defaults to canvas_audit so Design Studio, Canvas & Audit tools are immediately visible)
   const [activeTab, setActiveTab] = useState<"brief_concepts" | "canvas_audit" | "asset_library" | "history" | "copilot_chat">("canvas_audit");
 
-  // Automatically activate canvas_audit tab when navigating via "New Design"
+  // Active Social Media Canvas Preset from Designer Dashboard
+  const [activeCanvasPreset, setActiveCanvasPreset] = useState<{
+    platform: string;
+    format: string;
+    width: number;
+    height: number;
+    aspectRatio: string;
+    safeArea?: string;
+  } | null>(null);
+
+  const [showSafeZoneOverlay, setShowSafeZoneOverlay] = useState(true);
+
+  // Automatically activate canvas_audit tab and apply canvas preset when navigating via Designer Dashboard
   useEffect(() => {
-    if (queryTab === "canvas_audit" || queryAction === "upload" || queryAction === "new_design") {
+    if (queryTab === "canvas_audit" || queryAction === "upload" || queryAction === "new_design" || queryAction === "template" || queryAction === "custom" || queryPlatform || queryWidth) {
       setActiveTab("canvas_audit");
     } else if (queryTab === "brief_concepts") {
       setActiveTab("brief_concepts");
@@ -81,7 +102,55 @@ function DesignerCopilotContent() {
     } else if (queryTab === "copilot_chat") {
       setActiveTab("copilot_chat");
     }
-  }, [queryTab, queryAction]);
+
+    if (queryWidth && queryHeight) {
+      const w = parseInt(queryWidth, 10);
+      const h = parseInt(queryHeight, 10);
+      if (!isNaN(w) && !isNaN(h)) {
+        setCustomDimensions(`${w}x${h}px`);
+
+        const validRatios: DesignAspectRatio[] = ["1:1", "16:9", "9:16", "4:5", "1.91:1"];
+        if (queryRatio && validRatios.includes(queryRatio as DesignAspectRatio)) {
+          setAspectRatio(queryRatio as DesignAspectRatio);
+        } else if (w === h) {
+          setAspectRatio("1:1");
+        } else if (w > h) {
+          setAspectRatio("1.91:1");
+        } else {
+          setAspectRatio("9:16");
+        }
+
+        if (queryPlatform === "instagram") setChannel("instagram");
+        else if (queryPlatform === "linkedin") setChannel("linkedin");
+        else if (queryPlatform === "email") setChannel("email");
+        else if (queryPlatform === "blog") setChannel("website");
+        else if (["facebook", "youtube", "twitter", "pinterest", "tiktok"].includes(queryPlatform || "")) setChannel("ad");
+        else setChannel("general");
+
+        if (queryTitle) {
+          setProjectName(decodeURIComponent(queryTitle));
+        }
+
+        setActiveCanvasPreset({
+          platform: queryPlatform || "custom",
+          format: queryFormat || "Custom Canvas",
+          width: w,
+          height: h,
+          aspectRatio: queryRatio || `${w}:${h}`,
+          safeArea: querySafe ? decodeURIComponent(querySafe) : undefined,
+        });
+      }
+    }
+
+    if (queryTemplate) {
+      const tpl = DESIGN_STARTER_TEMPLATES.find((t) => t.id === queryTemplate);
+      if (tpl) {
+        setProjectName(tpl.title);
+        setRequiredCopy(tpl.starterCopy);
+        setDesignObjective(tpl.description);
+      }
+    }
+  }, [queryTab, queryAction, queryPlatform, queryFormat, queryWidth, queryHeight, queryRatio, queryTitle, querySafe, queryTemplate]);
 
   // ==========================================
   // Creative Brief Builder State
@@ -741,11 +810,10 @@ function DesignerCopilotContent() {
       <div className="flex items-center space-x-2 border-b border-border">
         <button
           onClick={() => setActiveTab("brief_concepts")}
-          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
-            activeTab === "brief_concepts"
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${activeTab === "brief_concepts"
               ? "border-teal text-teal bg-teal/5"
               : "border-transparent text-ink-secondary hover:text-ink-primary"
-          }`}
+            }`}
         >
           <Sliders className="w-4 h-4" />
           <span>Creative Brief & Concepts</span>
@@ -758,11 +826,10 @@ function DesignerCopilotContent() {
 
         <button
           onClick={() => setActiveTab("canvas_audit")}
-          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
-            activeTab === "canvas_audit"
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${activeTab === "canvas_audit"
               ? "border-teal text-teal bg-teal/5"
               : "border-transparent text-ink-secondary hover:text-ink-primary"
-          }`}
+            }`}
         >
           <FileImage className="w-4 h-4" />
           <span>Design Canvas & Audit</span>
@@ -775,11 +842,10 @@ function DesignerCopilotContent() {
 
         <button
           onClick={() => setActiveTab("asset_library")}
-          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
-            activeTab === "asset_library"
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${activeTab === "asset_library"
               ? "border-teal text-teal bg-teal/5"
               : "border-transparent text-ink-secondary hover:text-ink-primary"
-          }`}
+            }`}
         >
           <Layers className="w-4 h-4" />
           <span>Brand Asset Library</span>
@@ -790,11 +856,10 @@ function DesignerCopilotContent() {
 
         <button
           onClick={() => setActiveTab("history")}
-          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
-            activeTab === "history"
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${activeTab === "history"
               ? "border-teal text-teal bg-teal/5"
               : "border-transparent text-ink-secondary hover:text-ink-primary"
-          }`}
+            }`}
         >
           <Clock className="w-4 h-4" />
           <span>Project History</span>
@@ -805,11 +870,10 @@ function DesignerCopilotContent() {
 
         <button
           onClick={() => setActiveTab("copilot_chat")}
-          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
-            activeTab === "copilot_chat"
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${activeTab === "copilot_chat"
               ? "border-teal text-teal bg-teal/5"
               : "border-transparent text-ink-secondary hover:text-ink-primary"
-          }`}
+            }`}
         >
           <Sparkles className="w-4 h-4 text-indigo-400" />
           <span>Gemini AI Assistant</span>
@@ -1087,11 +1151,10 @@ function DesignerCopilotContent() {
                           key={asset.id}
                           type="button"
                           onClick={() => toggleAssetSelection(asset.id)}
-                          className={`text-[10px] px-2 py-1 rounded-md border font-medium flex items-center space-x-1 transition ${
-                            isSelected
+                          className={`text-[10px] px-2 py-1 rounded-md border font-medium flex items-center space-x-1 transition ${isSelected
                               ? "bg-teal/15 text-teal border-teal/30"
                               : "bg-surface text-ink-secondary border-border hover:border-border/80"
-                          }`}
+                            }`}
                         >
                           <span>{isSelected ? "✓" : "+"}</span>
                           <span>{asset.name}</span>
@@ -1360,293 +1423,364 @@ function DesignerCopilotContent() {
       {activeTab === "canvas_audit" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: Canvas Preview, Upload, & Version History (7 Cols) */}
-          <div className="lg:col-span-7 space-y-4">
-            {/* Active Concept Summary Banner */}
-            {selectedConcept && (
-              <div className="p-4 bg-teal/5 border border-teal/20 rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Palette className="w-4 h-4 text-teal" />
-                    <span className="text-xs font-bold text-ink-primary">Active Blueprint: {selectedConcept.concept_name}</span>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-teal/20 text-teal font-semibold">
-                    {aspectRatio} • {channel.toUpperCase()}
-                  </span>
-                </div>
-                <p className="text-xs text-ink-secondary">{selectedConcept.visual_direction_composition}</p>
-                <div className="flex items-center space-x-3 text-[11px] text-ink-muted pt-1">
-                  <span>Logo: <strong>{selectedConcept.logo_asset_placement}</strong></span>
-                  <span>•</span>
-                  <span>CTA: <strong>{selectedConcept.call_to_action_placement}</strong></span>
-                </div>
-              </div>
-            )}
-
-            {/* Design Upload & Canvas Preview Box */}
-            <div className="bg-surface rounded-xl border border-border p-5 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-ink-primary">Design Canvas & Visualizer</h3>
-                  <p className="text-[11px] text-ink-secondary">
-                    Upload your creative mockup or exported artwork for brand compliance evaluation.
-                  </p>
-                </div>
-
-                {activeDraft && (
-                  <span className="text-xs font-semibold px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                    Draft v{activeDraft.version_number} ({activeDraft.status})
-                  </span>
-                )}
-              </div>
-
-              {/* Design Metadata Inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-workspace rounded-xl border border-border">
-                <div className="sm:col-span-1 space-y-1">
-                  <label className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
-                    Design Title *
-                  </label>
-                  <input
-                    type="text"
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    placeholder="e.g. Q4 Hero Campaign Graphic"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary font-medium focus:outline-none focus:border-teal"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
-                    Target Placement
-                  </label>
-                  <select
-                    value={channel}
-                    onChange={(e) => setChannel(e.target.value as any)}
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary focus:outline-none focus:border-teal capitalize"
-                  >
-                    <option value="linkedin">LinkedIn</option>
-                    <option value="instagram">Instagram</option>
-                    <option value="facebook">Facebook</option>
-                    <option value="twitter">X / Twitter</option>
-                    <option value="print">Print & Outdoor</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
-                    Creative Format
-                  </label>
-                  <select
-                    value={creativeFormat}
-                    onChange={(e) => setCreativeFormat(e.target.value as any)}
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary focus:outline-none focus:border-teal capitalize"
-                  >
-                    <option value="social_post">Social Post</option>
-                    <option value="banner">Display Banner</option>
-                    <option value="story">Story / Vertical</option>
-                    <option value="carousel">Carousel Card</option>
-                    <option value="email_header">Email Header</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Upload Dropzone */}
-              <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-teal/40 transition bg-workspace">
-                <input
-                  type="file"
-                  id="design_file_input"
-                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <label htmlFor="design_file_input" className="cursor-pointer flex flex-col items-center justify-center">
-                  <div className="w-12 h-12 rounded-xl bg-teal/10 border border-teal/20 flex items-center justify-center text-teal mb-2">
-                    <Upload className="w-6 h-6" />
-                  </div>
-                  <span className="text-xs font-bold text-ink-primary">Click to select or drag design artwork</span>
-                  <span className="text-[11px] text-ink-muted mt-0.5">
-                    Supports PNG, JPEG, WebP, SVG (Max 25MB)
-                  </span>
-                </label>
-                <div className="mt-3 flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleLoadSampleMockup();
-                    }}
-                    className="text-[11px] font-semibold text-teal hover:underline flex items-center space-x-1 px-2.5 py-1 rounded bg-teal/10 hover:bg-teal/20 transition cursor-pointer"
-                  >
-                    <span>Or load sample creative asset for testing</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Upload Controls & Revision Summary */}
-              {uploadedFile && (
-                <div className="p-3 bg-workspace rounded-lg border border-border space-y-3">
-                  <div className="flex items-center justify-between text-xs">
+            {/* Left Column: Canvas Preview, Upload, & Version History (7 Cols) */}
+            <div className="lg:col-span-7 space-y-4">
+              {/* Active Concept Summary Banner */}
+              {selectedConcept && (
+                <div className="p-4 bg-teal/5 border border-teal/20 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <FileImage className="w-4 h-4 text-teal" />
-                      <span className="font-semibold text-ink-primary">{uploadedFile.name}</span>
-                      <span className="text-ink-muted">({(uploadedFile.size / 1024).toFixed(1)} KB)</span>
+                      <Palette className="w-4 h-4 text-teal" />
+                      <span className="text-xs font-bold text-ink-primary">Active Blueprint: {selectedConcept.concept_name}</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-teal/20 text-teal font-semibold">
+                      {aspectRatio} • {channel.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-xs text-ink-secondary">{selectedConcept.visual_direction_composition}</p>
+                  <div className="flex items-center space-x-3 text-[11px] text-ink-muted pt-1">
+                    <span>Logo: <strong>{selectedConcept.logo_asset_placement}</strong></span>
+                    <span>•</span>
+                    <span>CTA: <strong>{selectedConcept.call_to_action_placement}</strong></span>
+                  </div>
+                </div>
+              )}
+
+              {/* Active Social Media Canvas Preset Banner */}
+              {activeCanvasPreset && (
+                <div className="p-4 rounded-xl border border-teal/30 bg-gradient-to-r from-teal/10 via-[#0B132B] to-[#121E36] shadow-md space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-xl bg-teal/20 border border-teal/40 flex items-center justify-center text-teal font-black text-xs uppercase tracking-wider shadow-sm">
+                        {activeCanvasPreset.platform.slice(0, 3)}
+                      </div>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-bold text-ink-primary capitalize">
+                            {activeCanvasPreset.platform} • {activeCanvasPreset.format}
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal/20 text-teal border border-teal/30">
+                            Active Canvas
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-ink-secondary mt-0.5 font-mono">
+                          <span className="font-semibold text-teal">{activeCanvasPreset.width} × {activeCanvasPreset.height} px</span>
+                          <span>•</span>
+                          <span>Ratio {activeCanvasPreset.aspectRatio}</span>
+                          {activeCanvasPreset.safeArea && (
+                            <>
+                              <span>•</span>
+                              <span className="text-ink-muted text-[11px] font-sans">
+                                {activeCanvasPreset.safeArea}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      {activeCanvasPreset.safeArea && (
+                        <button
+                          type="button"
+                          onClick={() => setShowSafeZoneOverlay(!showSafeZoneOverlay)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border cursor-pointer ${showSafeZoneOverlay
+                              ? "bg-teal/20 border-teal text-teal shadow-sm"
+                              : "bg-surface border-border text-ink-muted hover:text-ink-primary"
+                            }`}
+                        >
+                          {showSafeZoneOverlay ? "Safe Margin: ON" : "Safe Margin: OFF"}
+                        </button>
+                      )}
+                      <Link
+                        href="/dashboard"
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface hover:bg-surface-elevated border border-border text-ink-secondary hover:text-ink-primary transition"
+                      >
+                        Change Preset
+                      </Link>
                     </div>
                   </div>
+                </div>
+              )}
 
+              {/* Design Upload & Canvas Preview Box */}
+              <div className="bg-surface rounded-xl border border-border p-5 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between">
                   <div>
-                    <label className="text-[11px] font-semibold text-ink-primary block mb-1">
-                      Change Summary (for Version History)
+                    <h3 className="text-sm font-bold text-ink-primary">Design Canvas & Visualizer</h3>
+                    <p className="text-[11px] text-ink-secondary">
+                      Upload your creative mockup or exported artwork for brand compliance evaluation.
+                    </p>
+                  </div>
+
+                  {activeDraft && (
+                    <span className="text-xs font-semibold px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      Draft v{activeDraft.version_number} ({activeDraft.status})
+                    </span>
+                  )}
+                </div>
+
+                {/* Design Metadata Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-workspace rounded-xl border border-border">
+                  <div className="sm:col-span-1 space-y-1">
+                    <label className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
+                      Design Title *
                     </label>
                     <input
                       type="text"
-                      value={revisionSummary}
-                      onChange={(e) => setRevisionSummary(e.target.value)}
-                      placeholder="e.g. Adjusted logo clearspace to 34px and corrected contrast ratio to 4.8:1"
-                      className="w-full px-3 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary"
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                      placeholder="e.g. Q4 Hero Campaign Graphic"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary font-medium focus:outline-none focus:border-teal"
                     />
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <button
-                      type="button"
-                      onClick={handleUploadVersion}
-                      disabled={isUploading}
-                      className="flex-1 py-1.5 px-3 rounded-lg bg-teal text-white text-xs font-semibold hover:bg-teal/90 transition shadow-sm flex items-center justify-center space-x-1.5"
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
+                      Target Placement
+                    </label>
+                    <select
+                      value={channel}
+                      onChange={(e) => setChannel(e.target.value as any)}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary focus:outline-none focus:border-teal capitalize"
                     >
-                      {isUploading ? (
-                        <>
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          <span>Uploading Version...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-3.5 h-3.5" />
-                          <span>Commit Design Version</span>
-                        </>
-                      )}
-                    </button>
+                      <option value="linkedin">LinkedIn</option>
+                      <option value="instagram">Instagram</option>
+                      <option value="facebook">Facebook</option>
+                      <option value="twitter">X / Twitter</option>
+                      <option value="print">Print & Outdoor</option>
+                    </select>
                   </div>
 
-                  {uploadError && (
-                    <div className="text-xs text-red-400 flex items-center space-x-1">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      <span>{uploadError}</span>
-                    </div>
-                  )}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
+                      Creative Format
+                    </label>
+                    <select
+                      value={creativeFormat}
+                      onChange={(e) => setCreativeFormat(e.target.value as any)}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary focus:outline-none focus:border-teal capitalize"
+                    >
+                      <option value="social_post">Social Post</option>
+                      <option value="banner">Display Banner</option>
+                      <option value="story">Story / Vertical</option>
+                      <option value="carousel">Carousel Card</option>
+                      <option value="email_header">Email Header</option>
+                    </select>
+                  </div>
                 </div>
-              )}
 
-              {/* Visual Preview Frame */}
-              {previewUrl ? (
-                <div className="relative rounded-lg overflow-hidden border border-border bg-[#0B132B] flex items-center justify-center p-4 min-h-[360px] lg:min-h-[440px]">
-                  <img
-                    src={previewUrl}
-                    alt="Design Preview"
-                    className="max-h-[480px] max-w-full object-contain rounded shadow-lg"
+                {/* Upload Dropzone */}
+                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-teal/40 transition bg-workspace">
+                  <input
+                    type="file"
+                    id="design_file_input"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    onChange={handleFileChange}
+                    className="hidden"
                   />
-                  <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-                    <span className="bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] text-slate-300 font-mono border border-white/10">
-                      Target: {aspectRatio}
+                  <label htmlFor="design_file_input" className="cursor-pointer flex flex-col items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl bg-teal/10 border border-teal/20 flex items-center justify-center text-teal mb-2">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <span className="text-xs font-bold text-ink-primary">Click to select or drag design artwork</span>
+                    <span className="text-[11px] text-ink-muted mt-0.5">
+                      Supports PNG, JPEG, WebP, SVG (Max 25MB)
                     </span>
+                  </label>
+                  <div className="mt-3 flex items-center justify-center">
                     <button
                       type="button"
-                      onClick={() => {
-                        setPreviewUrl(null);
-                        setUploadedFile(null);
-                        setUploadError(null);
-                        const fileInput = document.getElementById("design_file_input") as HTMLInputElement | null;
-                        if (fileInput) fileInput.value = "";
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleLoadSampleMockup();
                       }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/85 hover:bg-rose-600 active:bg-rose-700 text-white border border-white/25 shadow-lg backdrop-blur-md text-xs font-bold font-mono transition-all cursor-pointer group/cut focus:outline-none focus:ring-2 focus:ring-rose-400"
-                      title="Cut existing image to upload a new one"
-                      aria-label="Cut existing image to upload a new one"
+                      className="text-[11px] font-semibold text-teal hover:underline flex items-center space-x-1 px-2.5 py-1 rounded bg-teal/10 hover:bg-teal/20 transition cursor-pointer"
                     >
-                      <X className="w-4 h-4 text-white stroke-[2.5] group-hover/cut:rotate-90 transition-transform duration-200" />
-                      <span className="text-xs font-bold font-mono tracking-tight text-white select-none">
-                        Cut
-                      </span>
+                      <span>Or load sample creative asset for testing</span>
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="rounded-lg border border-border bg-[#0B132B] p-8 text-center text-ink-muted flex flex-col items-center justify-center min-h-[280px]">
-                  <FileImage className="w-8 h-8 text-slate-600 mb-2" />
-                  <span className="text-xs">No artwork preview loaded. Upload an image to view canvas layout.</span>
-                </div>
-              )}
 
-              {/* Version History Drawer */}
-              {activeDraft && activeDraft.revisions && activeDraft.revisions.length > 0 && (
-                <div className="pt-3 border-t border-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-ink-primary uppercase tracking-wide">Version History</span>
-                    <span className="text-[11px] text-ink-muted">{activeDraft.revisions.length} total iterations</span>
-                  </div>
+                {/* Upload Controls & Revision Summary */}
+                {uploadedFile && (
+                  <div className="p-3 bg-workspace rounded-lg border border-border space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center space-x-2">
+                        <FileImage className="w-4 h-4 text-teal" />
+                        <span className="font-semibold text-ink-primary">{uploadedFile.name}</span>
+                        <span className="text-ink-muted">({(uploadedFile.size / 1024).toFixed(1)} KB)</span>
+                      </div>
+                    </div>
 
-                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                    {activeDraft.revisions.map((rev) => {
-                      const isSelected = selectedRevisionId === rev.id;
-                      return (
-                        <div
-                          key={rev.id}
-                          onClick={() => {
-                            setSelectedRevisionId(rev.id);
-                            if (rev.file_path) setPreviewUrl(rev.file_path);
-                          }}
-                          className={`p-2 rounded-lg border text-xs cursor-pointer flex items-center justify-between transition ${
-                            isSelected
-                              ? "bg-teal/10 border-teal/40 text-teal"
-                              : "bg-workspace border-border text-ink-secondary hover:text-ink-primary"
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <span className="font-bold">v{rev.version_number}</span>
-                            <span className="truncate max-w-[200px] text-ink-primary font-medium">
-                              {rev.file_name || "creative-export.png"}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-[10px] text-ink-muted">
-                            <span>{rev.created_at ? new Date(rev.created_at).toLocaleTimeString() : "Just now"}</span>
-                            {isSelected && <span className="font-bold text-teal">Active</span>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-ink-primary block mb-1">
+                        Change Summary (for Version History)
+                      </label>
+                      <input
+                        type="text"
+                        value={revisionSummary}
+                        onChange={(e) => setRevisionSummary(e.target.value)}
+                        placeholder="e.g. Adjusted logo clearspace to 34px and corrected contrast ratio to 4.8:1"
+                        className="w-full px-3 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary"
+                      />
+                    </div>
 
-          {/* Right Column: AI Visual Audit & Findings Panel (5 Cols) */}
-          <div className="lg:col-span-5 space-y-4">
-            <div className="bg-surface rounded-xl border border-border p-5 space-y-4 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div>
-                  <h3 className="text-sm font-bold text-ink-primary uppercase tracking-wide">AI Visual Audit</h3>
-                  <p className="text-[11px] text-ink-secondary">Multi-layer brand rule and accessibility verification.</p>
-                </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={handleUploadVersion}
+                        disabled={isUploading}
+                        className="flex-1 py-1.5 px-3 rounded-lg bg-teal text-white text-xs font-semibold hover:bg-teal/90 transition shadow-sm flex items-center justify-center space-x-1.5"
+                      >
+                        {isUploading ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Uploading Version...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Commit Design Version</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
 
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={handleAnalyzeImageWithGemini}
-                    disabled={isAnalyzingImage || (!previewUrl && !uploadedFile)}
-                    className="flex items-center space-x-1.5 py-1.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Run real-time Gemini AI analysis for brand guidelines, typography, and color improvements"
-                  >
-                    {isAnalyzingImage ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Analyzing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Gemini Critique</span>
-                      </>
+                    {uploadError && (
+                      <div className="text-xs text-red-400 flex items-center space-x-1">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span>{uploadError}</span>
+                      </div>
                     )}
-                  </button>
+                  </div>
+                )}
+
+                {/* Visual Preview Frame */}
+                {previewUrl ? (
+                  <div className="relative rounded-lg overflow-hidden border border-border bg-[#0B132B] flex items-center justify-center p-4 min-h-[360px] lg:min-h-[440px]">
+                    <img
+                      src={previewUrl}
+                      alt="Design Preview"
+                      className="max-h-[480px] max-w-full object-contain rounded shadow-lg"
+                    />
+
+                    {/* Safe Zone Margin Overlay Guide */}
+                    {showSafeZoneOverlay && activeCanvasPreset?.safeArea && (
+                      <div className="absolute inset-8 pointer-events-none border border-dashed border-teal/50 rounded flex flex-col justify-between p-2">
+                        <div className="flex justify-between items-center text-[10px] font-mono text-teal bg-black/75 px-2 py-0.5 rounded backdrop-blur-sm self-start border border-teal/30">
+                          <span>Safe Margin Guide</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] font-mono text-slate-300 bg-black/75 px-2 py-0.5 rounded backdrop-blur-sm self-end border border-white/10">
+                          <span>{activeCanvasPreset.width} × {activeCanvasPreset.height} px ({activeCanvasPreset.aspectRatio})</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+                      <span className="bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] text-slate-300 font-mono border border-white/10">
+                        Target: {aspectRatio}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewUrl(null);
+                          setUploadedFile(null);
+                          setUploadError(null);
+                          const fileInput = document.getElementById("design_file_input") as HTMLInputElement | null;
+                          if (fileInput) fileInput.value = "";
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/85 hover:bg-rose-600 active:bg-rose-700 text-white border border-white/25 shadow-lg backdrop-blur-md text-xs font-bold font-mono transition-all cursor-pointer group/cut focus:outline-none focus:ring-2 focus:ring-rose-400"
+                        title="Cut existing image to upload a new one"
+                        aria-label="Cut existing image to upload a new one"
+                      >
+                        <X className="w-4 h-4 text-white stroke-[2.5] group-hover/cut:rotate-90 transition-transform duration-200" />
+                        <span className="text-xs font-bold font-mono tracking-tight text-white select-none">
+                          Cut
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                ) : activeCanvasPreset ? (
+                  <div className="rounded-lg border border-teal/20 bg-[#0B132B] p-8 text-center text-ink-muted flex flex-col items-center justify-center min-h-[300px] relative overflow-hidden">
+                    <div className="absolute inset-4 pointer-events-none border border-dashed border-teal/20 rounded-lg"></div>
+                    <div className="relative z-10 flex flex-col items-center max-w-sm">
+                      <div className="w-12 h-12 rounded-xl bg-teal/10 border border-teal/30 flex items-center justify-center text-teal mb-3 shadow-inner">
+                        <Maximize2 className="w-6 h-6" />
+                      </div>
+                      <span className="text-sm font-bold text-ink-primary capitalize">
+                        {activeCanvasPreset.platform} Canvas ({activeCanvasPreset.width} × {activeCanvasPreset.height} px)
+                      </span>
+                      <span className="text-xs text-ink-secondary mt-1">
+                        {activeCanvasPreset.format} • Ratio {activeCanvasPreset.aspectRatio}
+                      </span>
+                      {activeCanvasPreset.safeArea && (
+                        <span className="text-[11px] text-teal/90 mt-2 font-mono bg-teal/10 px-2.5 py-1 rounded border border-teal/20">
+                          Guide: {activeCanvasPreset.safeArea}
+                        </span>
+                      )}
+                      <span className="text-[11px] text-ink-muted mt-3">
+                        Drop creative artwork above or load sample mockup to begin live AI brand evaluation.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-border bg-[#0B132B] p-8 text-center text-ink-muted flex flex-col items-center justify-center min-h-[280px]">
+                    <FileImage className="w-8 h-8 text-slate-600 mb-2" />
+                    <span className="text-xs">No artwork preview loaded. Upload an image to view canvas layout.</span>
+                  </div>
+                )}
+
+                {/* Version History Drawer */}
+                {activeDraft && activeDraft.revisions && activeDraft.revisions.length > 0 && (
+                  <div className="pt-3 border-t border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-ink-primary uppercase tracking-wide">Version History</span>
+                      <span className="text-[11px] text-ink-muted">{activeDraft.revisions.length} total iterations</span>
+                    </div>
+
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                      {activeDraft.revisions.map((rev) => {
+                        const isSelected = selectedRevisionId === rev.id;
+                        return (
+                          <div
+                            key={rev.id}
+                            onClick={() => {
+                              setSelectedRevisionId(rev.id);
+                              if (rev.file_path) setPreviewUrl(rev.file_path);
+                            }}
+                            className={`p-2 rounded-lg border text-xs cursor-pointer flex items-center justify-between transition ${isSelected
+                                ? "bg-teal/10 border-teal/40 text-teal"
+                                : "bg-workspace border-border text-ink-secondary hover:text-ink-primary"
+                              }`}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <span className="font-bold">v{rev.version_number}</span>
+                              <span className="truncate max-w-[200px] text-ink-primary font-medium">
+                                {rev.file_name || "creative-export.png"}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2 text-[10px] text-ink-muted">
+                              <span>{rev.created_at ? new Date(rev.created_at).toLocaleTimeString() : "Just now"}</span>
+                              {isSelected && <span className="font-bold text-teal">Active</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: AI Visual Audit & Findings Panel (5 Cols) */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="bg-surface rounded-xl border border-border p-5 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-ink-primary uppercase tracking-wide">AI Visual Audit</h3>
+                    <p className="text-[11px] text-ink-secondary">Multi-layer brand rule and accessibility verification.</p>
+                  </div>
 
                   <button
                     type="button"
@@ -1667,364 +1801,193 @@ function DesignerCopilotContent() {
                     )}
                   </button>
                 </div>
-              </div>
 
-              {/* Gemini AI Analysis Loading State */}
-              {isAnalyzingImage && (
-                <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/25 text-xs text-indigo-300 flex items-center space-x-3">
-                  <RefreshCw className="w-4 h-4 animate-spin text-indigo-400 shrink-0" />
-                  <div>
-                    <span className="font-bold block text-white text-xs">Gemini AI Image Analysis Running</span>
-                    <span className="text-[11px] text-slate-300">
-                      Evaluating brand guidelines, color harmony, typography pairing, and visual hierarchy...
-                    </span>
+                {auditError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{auditError}</span>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Gemini AI Analysis Error State */}
-              {analysisError && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{analysisError}</span>
-                </div>
-              )}
-
-              {/* Gemini AI Brand & Visual Design Intelligence Card */}
-              {imageAnalysis && (
-                <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-950/40 via-surface to-teal/5 border border-indigo-500/30 space-y-3.5 shadow-sm">
-                  {/* Header */}
-                  <div className="flex items-center justify-between border-b border-border/70 pb-2.5">
-                    <div className="flex items-center space-x-2">
-                      <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300">
-                        <Sparkles className="w-4 h-4" />
-                      </div>
+                {/* Audit Overall Verdict Card */}
+                {auditResult && (
+                  <div className="p-4 rounded-xl bg-workspace border border-border space-y-3">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                          <span>Gemini AI Design Suggestions</span>
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">
-                            gemini-3.1-flash-lite
-                          </span>
-                        </h4>
-                        <span className="text-[10px] text-ink-muted">
-                          Brand Guidelines Alignment & Design Polish
-                        </span>
-                      </div>
-                    </div>
-
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                        imageAnalysis.brand_palette_concordance === "brand_aligned"
-                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                          : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                      }`}
-                    >
-                      {imageAnalysis.brand_palette_concordance === "brand_aligned" ? "Brand Aligned" : "Palette Review Needed"}
-                    </span>
-                  </div>
-
-                  {/* Visual Hierarchy Critique */}
-                  {imageAnalysis.visual_hierarchy_critique && (
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1">
-                        <Layers className="w-3 h-3" />
-                        <span>Visual Hierarchy & Composition Critique</span>
-                      </span>
-                      <p className="text-xs text-ink-secondary leading-relaxed bg-surface/70 p-2.5 rounded-lg border border-border/60">
-                        {imageAnalysis.visual_hierarchy_critique}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Color-wise Improvements */}
-                  {imageAnalysis.color_recommendations && imageAnalysis.color_recommendations.length > 0 && (
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-teal flex items-center gap-1">
-                        <Palette className="w-3 h-3" />
-                        <span>Color-wise Design Improvements</span>
-                      </span>
-                      <div className="space-y-1">
-                        {imageAnalysis.color_recommendations.map((rec, i) => (
-                          <div
-                            key={i}
-                            className="p-2 rounded-lg bg-teal/5 border border-teal/20 text-[11px] text-ink-primary flex items-start gap-2"
-                          >
-                            <span className="text-teal font-bold shrink-0">•</span>
-                            <span className="leading-snug">{rec}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Typography & Font-wise Improvements */}
-                  {imageAnalysis.typography_recommendations && imageAnalysis.typography_recommendations.length > 0 && (
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1">
-                        <Type className="w-3 h-3" />
-                        <span>Font & Typography Improvements</span>
-                      </span>
-                      <div className="space-y-1">
-                        {imageAnalysis.typography_recommendations.map((rec, i) => (
-                          <div
-                            key={i}
-                            className="p-2 rounded-lg bg-sky-500/5 border border-sky-500/20 text-[11px] text-ink-primary flex items-start gap-2"
-                          >
-                            <span className="text-sky-400 font-bold shrink-0">•</span>
-                            <span className="leading-snug">{rec}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Key Image Facts & Extracted Palette */}
-                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border/50 text-[10px]">
-                    <div className="p-2 rounded-lg bg-surface/60 border border-border/50 space-y-1">
-                      <span className="text-ink-muted block font-semibold">Contrast & Accessibility</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-white">
-                          {imageAnalysis.contrast_ratio ? `${imageAnalysis.contrast_ratio.toFixed(1)}:1` : "N/A"}
-                        </span>
-                        <span
-                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
-                            imageAnalysis.wcag_aa_compliant
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "bg-red-500/20 text-red-400"
-                          }`}
-                        >
-                          {imageAnalysis.wcag_aa_compliant ? "WCAG AA PASS" : "FAIL 4.5:1"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-2 rounded-lg bg-surface/60 border border-border/50 space-y-1">
-                      <span className="text-ink-muted block font-semibold">Extracted Dominant Colors</span>
-                      <div className="flex items-center gap-1">
-                        {imageAnalysis.dominant_colors_hex?.slice(0, 4).map((hex, i) => (
-                          <div
-                            key={i}
-                            className="w-5 h-5 rounded border border-white/20 shadow-sm"
-                            style={{ backgroundColor: hex }}
-                            title={hex}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actionable Recommendations Checklist */}
-                  {imageAnalysis.actionable_recommendations && imageAnalysis.actionable_recommendations.length > 0 && (
-                    <div className="space-y-1 pt-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                        Actionable Next Steps
-                      </span>
-                      <ul className="space-y-1 text-[11px] text-ink-secondary">
-                        {imageAnalysis.actionable_recommendations.map((step, idx) => (
-                          <li key={idx} className="flex items-start gap-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-teal shrink-0 mt-0.5" />
-                            <span>{step}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {auditError && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{auditError}</span>
-                </div>
-              )}
-
-              {/* Audit Overall Verdict Card */}
-              {auditResult && (
-                <div className="p-4 rounded-xl bg-workspace border border-border space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-ink-muted">Audit Status</span>
-                      <div className="flex items-center space-x-2 mt-0.5">
-                        <span
-                          className={`px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
-                            auditResult.overall_status === "compliant"
-                              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
-                              : auditResult.overall_status === "needs_review"
-                              ? "bg-amber-500/15 text-amber-400 border border-amber-500/25"
-                              : "bg-red-500/15 text-red-400 border border-red-500/25"
-                          }`}
-                        >
-                          {auditResult.overall_status}
-                        </span>
-                        <span className="text-xs font-bold text-ink-primary">
-                          Score: {auditResult.summary?.compliance_score ?? 94}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-[10px] text-ink-muted">Findings</span>
-                      <div className="text-xs font-semibold text-ink-primary">
-                        {auditResult.findings.length} evaluated
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-ink-secondary leading-relaxed border-t border-border/60 pt-2">
-                    {auditResult.summary?.verdict_overview}
-                  </p>
-
-                  {/* Findings Category Filters */}
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setFindingCategoryFilter("all")}
-                      className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
-                        findingCategoryFilter === "all"
-                          ? "bg-teal text-white"
-                          : "bg-surface text-ink-secondary hover:text-ink-primary border border-border"
-                      }`}
-                    >
-                      All ({auditResult.findings.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFindingCategoryFilter("violations")}
-                      className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
-                        findingCategoryFilter === "violations"
-                          ? "bg-red-500 text-white"
-                          : "bg-surface text-ink-secondary hover:text-ink-primary border border-border"
-                      }`}
-                    >
-                      Violations
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFindingCategoryFilter("a11y")}
-                      className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
-                        findingCategoryFilter === "a11y"
-                          ? "bg-indigo-500 text-white"
-                          : "bg-surface text-ink-secondary hover:text-ink-primary border border-border"
-                      }`}
-                    >
-                      A11y / Contrast
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFindingCategoryFilter("creative")}
-                      className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
-                        findingCategoryFilter === "creative"
-                          ? "bg-amber-500 text-white"
-                          : "bg-surface text-ink-secondary hover:text-ink-primary border border-border"
-                      }`}
-                    >
-                      Suggestions
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Individual Findings List */}
-              {auditResult && filteredFindings && filteredFindings.length > 0 && (
-                <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1">
-                  {filteredFindings.map((finding) => (
-                    <div
-                      key={finding.id}
-                      className="p-3.5 rounded-xl bg-workspace border border-border space-y-2 text-xs"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center space-x-2">
+                        <span className="text-[10px] uppercase font-bold text-ink-muted">Audit Status</span>
+                        <div className="flex items-center space-x-2 mt-0.5">
                           <span
-                            className={`w-2 h-2 rounded-full ${
-                              finding.severity === "high" || finding.severity === "critical"
-                                ? "bg-red-400"
-                                : finding.severity === "medium"
-                                ? "bg-amber-400"
-                                : "bg-teal"
-                            }`}
-                          />
-                          <h4 className="font-bold text-ink-primary text-xs">{finding.title}</h4>
+                            className={`px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${auditResult.overall_status === "compliant"
+                                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
+                                : auditResult.overall_status === "needs_review"
+                                  ? "bg-amber-500/15 text-amber-400 border border-amber-500/25"
+                                  : "bg-red-500/15 text-red-400 border border-red-500/25"
+                              }`}
+                          >
+                            {auditResult.overall_status}
+                          </span>
+                          <span className="text-xs font-bold text-ink-primary">
+                            Score: {auditResult.summary?.compliance_score ?? 94}%
+                          </span>
                         </div>
-                        <span
-                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${
-                            finding.severity === "high" || finding.severity === "critical"
-                              ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                              : finding.severity === "medium"
-                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                              : "bg-teal/10 text-teal border border-teal/20"
-                          }`}
-                        >
-                          {finding.severity}
-                        </span>
                       </div>
 
-                      <p className="text-ink-secondary text-[11px] leading-relaxed">{finding.message}</p>
-
-                      {/* Evidence */}
-                      {finding.evidence && (
-                        <div className="p-2 rounded bg-surface border border-border/70 text-[10px] text-ink-muted">
-                          <span className="font-bold text-ink-primary block mb-0.5">Evidence & Detected Layer:</span>
-                          <span className="italic">{finding.evidence}</span>
+                      <div className="text-right">
+                        <span className="text-[10px] text-ink-muted">Findings</span>
+                        <div className="text-xs font-semibold text-ink-primary">
+                          {auditResult.findings.length} evaluated
                         </div>
-                      )}
-
-                      {/* Suggested Fix */}
-                      {(finding.suggested_correction?.replacement_text || (finding as any).suggested_fix) && (
-                        <div className="p-2 rounded bg-teal/5 border border-teal/20 text-[11px] text-teal">
-                          <span className="font-bold block mb-0.5">Suggested Correction:</span>
-                          <span>{finding.suggested_correction?.replacement_text || (finding as any).suggested_fix}</span>
-                        </div>
-                      )}
-
-                      {/* Reference Badge */}
-                      {(finding.rule_reference || (finding as any).rule_code) && (
-                        <div className="flex items-center justify-between text-[10px] text-ink-muted pt-1">
-                          <span>Rule: <strong>{finding.rule_reference || (finding as any).rule_code}</strong></span>
-                          <span>Confidence: <strong>{finding.confidence ? `${Math.round(finding.confidence * 100)}%` : "High"}</strong></span>
-                        </div>
-                      )}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
 
-              {/* Submit for Review Button */}
-              {(activeDraft || uploadedFile || previewUrl) && (
-                <div className="pt-3 border-t border-border flex items-center justify-between">
-                  <div className="text-[11px] text-ink-muted">
-                    {activeDraft?.status === "submitted"
-                      ? "Submitted to Review Queue"
-                      : "Ready for human brand & compliance sign-off?"}
+                    <p className="text-xs text-ink-secondary leading-relaxed border-t border-border/60 pt-2">
+                      {auditResult.summary?.verdict_overview}
+                    </p>
+
+                    {/* Findings Category Filters */}
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setFindingCategoryFilter("all")}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${findingCategoryFilter === "all"
+                            ? "bg-teal text-white"
+                            : "bg-surface text-ink-secondary hover:text-ink-primary border border-border"
+                          }`}
+                      >
+                        All ({auditResult.findings.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFindingCategoryFilter("violations")}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${findingCategoryFilter === "violations"
+                            ? "bg-red-500 text-white"
+                            : "bg-surface text-ink-secondary hover:text-ink-primary border border-border"
+                          }`}
+                      >
+                        Violations
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFindingCategoryFilter("a11y")}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${findingCategoryFilter === "a11y"
+                            ? "bg-indigo-500 text-white"
+                            : "bg-surface text-ink-secondary hover:text-ink-primary border border-border"
+                          }`}
+                      >
+                        A11y / Contrast
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFindingCategoryFilter("creative")}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${findingCategoryFilter === "creative"
+                            ? "bg-amber-500 text-white"
+                            : "bg-surface text-ink-secondary hover:text-ink-primary border border-border"
+                          }`}
+                      >
+                        Suggestions
+                      </button>
+                    </div>
                   </div>
+                )}
 
-                  <button
-                    type="button"
-                    onClick={handleSubmitForReview}
-                    disabled={isSubmittingReview || activeDraft?.status === "submitted"}
-                    className="flex items-center space-x-1.5 py-2 px-3.5 rounded-lg bg-teal text-white text-xs font-semibold hover:bg-teal/90 transition shadow-sm disabled:opacity-50"
-                  >
-                    {isSubmittingReview ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Submitting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-3.5 h-3.5" />
-                        <span>
-                          {activeDraft?.status === "submitted" ? "Submitted for Review" : "Submit for Human Review"}
-                        </span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
+                {/* Individual Findings List */}
+                {auditResult && filteredFindings && filteredFindings.length > 0 && (
+                  <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1">
+                    {filteredFindings.map((finding) => (
+                      <div
+                        key={finding.id}
+                        className="p-3.5 rounded-xl bg-workspace border border-border space-y-2 text-xs"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center space-x-2">
+                            <span
+                              className={`w-2 h-2 rounded-full ${finding.severity === "high" || finding.severity === "critical"
+                                  ? "bg-red-400"
+                                  : finding.severity === "medium"
+                                    ? "bg-amber-400"
+                                    : "bg-teal"
+                                }`}
+                            />
+                            <h4 className="font-bold text-ink-primary text-xs">{finding.title}</h4>
+                          </div>
+                          <span
+                            className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${finding.severity === "high" || finding.severity === "critical"
+                                ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                                : finding.severity === "medium"
+                                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                  : "bg-teal/10 text-teal border border-teal/20"
+                              }`}
+                          >
+                            {finding.severity}
+                          </span>
+                        </div>
+
+                        <p className="text-ink-secondary text-[11px] leading-relaxed">{finding.message}</p>
+
+                        {/* Evidence */}
+                        {finding.evidence && (
+                          <div className="p-2 rounded bg-surface border border-border/70 text-[10px] text-ink-muted">
+                            <span className="font-bold text-ink-primary block mb-0.5">Evidence & Detected Layer:</span>
+                            <span className="italic">{finding.evidence}</span>
+                          </div>
+                        )}
+
+                        {/* Suggested Fix */}
+                        {(finding.suggested_correction?.replacement_text || (finding as any).suggested_fix) && (
+                          <div className="p-2 rounded bg-teal/5 border border-teal/20 text-[11px] text-teal">
+                            <span className="font-bold block mb-0.5">Suggested Correction:</span>
+                            <span>{finding.suggested_correction?.replacement_text || (finding as any).suggested_fix}</span>
+                          </div>
+                        )}
+
+                        {/* Reference Badge */}
+                        {(finding.rule_reference || (finding as any).rule_code) && (
+                          <div className="flex items-center justify-between text-[10px] text-ink-muted pt-1">
+                            <span>Rule: <strong>{finding.rule_reference || (finding as any).rule_code}</strong></span>
+                            <span>Confidence: <strong>{finding.confidence ? `${Math.round(finding.confidence * 100)}%` : "High"}</strong></span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Submit for Review Button */}
+                {(activeDraft || uploadedFile || previewUrl) && (
+                  <div className="pt-3 border-t border-border flex items-center justify-between">
+                    <div className="text-[11px] text-ink-muted">
+                      {activeDraft?.status === "submitted"
+                        ? "Submitted to Review Queue"
+                        : "Ready for human brand & compliance sign-off?"}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSubmitForReview}
+                      disabled={isSubmittingReview || activeDraft?.status === "submitted"}
+                      className="flex items-center space-x-1.5 py-2 px-3.5 rounded-lg bg-teal text-white text-xs font-semibold hover:bg-teal/90 transition shadow-sm disabled:opacity-50"
+                    >
+                      {isSubmittingReview ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5" />
+                          <span>
+                            {activeDraft?.status === "submitted" ? "Submitted for Review" : "Submit for Human Review"}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
       {/* ==========================================
           TAB 3: BRAND ASSET LIBRARY
@@ -2039,11 +2002,10 @@ function DesignerCopilotContent() {
                   <button
                     key={cat}
                     onClick={() => setAssetFilter(cat)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition ${
-                      assetFilter === cat
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition ${assetFilter === cat
                         ? "bg-teal text-white"
                         : "bg-workspace text-ink-secondary hover:text-ink-primary border border-border"
-                    }`}
+                      }`}
                   >
                     {cat}
                   </button>
@@ -2083,13 +2045,12 @@ function DesignerCopilotContent() {
                     </div>
 
                     <span
-                      className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${
-                        asset.approval_status === "approved"
+                      className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${asset.approval_status === "approved"
                           ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
                           : (asset.approval_status as string) === "restricted"
-                          ? "bg-amber-500/15 text-amber-400 border border-amber-500/25"
-                          : "bg-red-500/15 text-red-400 border border-red-500/25"
-                      }`}
+                            ? "bg-amber-500/15 text-amber-400 border border-amber-500/25"
+                            : "bg-red-500/15 text-red-400 border border-red-500/25"
+                        }`}
                     >
                       {asset.approval_status}
                     </span>
@@ -2198,13 +2159,12 @@ function DesignerCopilotContent() {
                     </div>
 
                     <span
-                      className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                        draft.status === "approved"
+                      className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${draft.status === "approved"
                           ? "bg-emerald-500/15 text-emerald-400"
                           : draft.status === "submitted"
-                          ? "bg-indigo-500/15 text-indigo-400"
-                          : "bg-amber-500/15 text-amber-400"
-                      }`}
+                            ? "bg-indigo-500/15 text-indigo-400"
+                            : "bg-amber-500/15 text-amber-400"
+                        }`}
                     >
                       {draft.status}
                     </span>
@@ -2374,9 +2334,8 @@ function DesignerCopilotContent() {
             {copilotMessages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex flex-col space-y-2.5 ${
-                  msg.role === "user" ? "items-end" : "items-start"
-                }`}
+                className={`flex flex-col space-y-2.5 ${msg.role === "user" ? "items-end" : "items-start"
+                  }`}
               >
                 <div className="flex items-center space-x-2 text-[10px] text-ink-muted">
                   <span className="font-bold uppercase tracking-wider">
@@ -2384,13 +2343,12 @@ function DesignerCopilotContent() {
                   </span>
                   {msg.confidence && (
                     <span
-                      className={`px-1.5 py-0.2 rounded font-semibold text-[9px] uppercase ${
-                        msg.confidence === "high"
+                      className={`px-1.5 py-0.2 rounded font-semibold text-[9px] uppercase ${msg.confidence === "high"
                           ? "bg-emerald-500/15 text-emerald-400"
                           : msg.confidence === "medium"
-                          ? "bg-amber-500/15 text-amber-400"
-                          : "bg-red-500/15 text-red-400"
-                      }`}
+                            ? "bg-amber-500/15 text-amber-400"
+                            : "bg-red-500/15 text-red-400"
+                        }`}
                     >
                       {msg.confidence} Confidence
                     </span>
@@ -2398,11 +2356,10 @@ function DesignerCopilotContent() {
                 </div>
 
                 <div
-                  className={`max-w-3xl p-4 rounded-xl text-xs space-y-3 leading-relaxed shadow-sm ${
-                    msg.role === "user"
+                  className={`max-w-3xl p-4 rounded-xl text-xs space-y-3 leading-relaxed shadow-sm ${msg.role === "user"
                       ? "bg-indigo-600/20 border border-indigo-500/30 text-ink-primary"
                       : "bg-workspace border border-border text-ink-primary"
-                  }`}
+                    }`}
                 >
                   {/* Message Prose */}
                   <div className="whitespace-pre-line font-normal">{msg.content}</div>
@@ -2414,11 +2371,10 @@ function DesignerCopilotContent() {
                       {msg.toolsExecuted.map((t, idx) => (
                         <span
                           key={idx}
-                          className={`text-[10px] px-2 py-0.5 rounded font-mono flex items-center space-x-1 ${
-                            t.success
+                          className={`text-[10px] px-2 py-0.5 rounded font-mono flex items-center space-x-1 ${t.success
                               ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                               : "bg-red-500/10 text-red-400 border border-red-500/20"
-                          }`}
+                            }`}
                         >
                           <span>{t.tool_name}</span>
                           <span>{t.success ? "✓" : "✗"}</span>
@@ -2455,11 +2411,10 @@ function DesignerCopilotContent() {
                               <span>Visual Reference Analysis: {msg.deliverable.file_name}</span>
                             </span>
                             <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                                msg.deliverable.wcag_aa_compliant
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${msg.deliverable.wcag_aa_compliant
                                   ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
                                   : "bg-red-500/15 text-red-400 border border-red-500/25"
-                              }`}
+                                }`}
                             >
                               {msg.deliverable.wcag_aa_compliant ? "Passes WCAG 2.1 AA" : "Fails WCAG AA (min 4.5:1)"}
                             </span>
