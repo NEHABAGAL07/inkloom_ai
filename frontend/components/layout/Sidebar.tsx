@@ -49,7 +49,7 @@ export const ROLE_NAV_ITEMS: Record<"admin" | "designer" | "marketing" | "legal"
   ],
   designer: [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Media Audit & Guidelines", href: "/media-audit", icon: ImageIcon },
+    { name: "Media Audit ", href: "/media-audit", icon: ImageIcon },
     { name: "Designer Studio & Copilot", href: "/designer", icon: Palette },
     { name: "Campaigns", href: "/campaigns", icon: Briefcase },
     { name: "Review history", href: "/audits", icon: Folder },
