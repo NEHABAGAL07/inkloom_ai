@@ -14,7 +14,6 @@ import {
   CheckCircle,
   Users,
   FileText,
-  Plus,
   RefreshCw,
   ExternalLink,
   Search,
@@ -281,13 +280,6 @@ export function ManagerDashboard({
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Link
-              href="/content"
-              className="px-5 py-3 rounded-xl btn-gradient-warm text-xs font-bold transition flex items-center gap-2 shadow-warmGlow text-white dark:text-[#111111]"
-            >
-              <Plus className="w-4 h-4 text-white dark:text-[#111111] stroke-[2.5]" />
-              <span>Start a Content Review</span>
-            </Link>
 
             <button
               onClick={() => setIsInviteModalOpen(true)}
