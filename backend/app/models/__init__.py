@@ -7,9 +7,9 @@ from app.models.submission import ContentSubmission
 from app.models.revision import ContentRevision
 from app.models.audit import AuditRun, AuditFinding
 from app.models.review import ReviewDecision
+from app.models.review_cycle import ReviewCycle, DepartmentReview, DepartmentFeedback
 from app.models.comment import ContentComment
 from app.models.audit_event import AuditEvent
-
 from app.models.invitation import Invitation
 from app.models.revoked_token import RevokedToken
 from app.models.knowledge import KnowledgeItem
@@ -35,6 +35,9 @@ __all__ = [
     "AuditRun",
     "AuditFinding",
     "ReviewDecision",
+    "ReviewCycle",
+    "DepartmentReview",
+    "DepartmentFeedback",
     "ContentComment",
     "AuditEvent",
     "RevokedToken",
@@ -47,4 +50,3 @@ __all__ = [
     "Notification",
     "MediaItem",
 ]
-

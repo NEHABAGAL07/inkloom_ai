@@ -19,6 +19,7 @@ import {
   FileText,
   Scale,
   Loader2,
+  ChevronLeft,
 } from "lucide-react";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
 
@@ -28,6 +29,7 @@ interface QuickDept {
   role: string;
   email: string;
   badge: string;
+  description: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
@@ -38,6 +40,7 @@ const QUICK_DEPARTMENTS: QuickDept[] = [
     role: "Brand Admin",
     email: "admin@acmecloud.com",
     badge: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-[#272727] dark:text-[#FFAA35] dark:border-[#383838]",
+    description: "Workspace governance & team admin",
     icon: Shield,
   },
   {
@@ -46,6 +49,7 @@ const QUICK_DEPARTMENTS: QuickDept[] = [
     role: "Brand Designer",
     email: "designer@acmecloud.com",
     badge: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-[#272727] dark:text-[#C084FC] dark:border-[#383838]",
+    description: "Design studio, assets & visual audit",
     icon: Palette,
   },
   {
@@ -54,6 +58,7 @@ const QUICK_DEPARTMENTS: QuickDept[] = [
     role: "Marketing Lead",
     email: "marketing@acmecloud.com",
     badge: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-[#272727] dark:text-[#FFD84D] dark:border-[#383838]",
+    description: "Campaign workflows & content claims",
     icon: FileText,
   },
   {
@@ -62,6 +67,7 @@ const QUICK_DEPARTMENTS: QuickDept[] = [
     role: "Legal & Regulatory",
     email: "compliance@acmecloud.com",
     badge: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-[#272727] dark:text-[#72D6A1] dark:border-[#383838]",
+    description: "Statutory review & claim governance",
     icon: Scale,
   },
 ];
@@ -70,7 +76,14 @@ function LoginContent() {
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams?.get("redirect") || "/";
+  const rawRedirect = searchParams?.get("redirect");
+  const redirectUrl =
+    rawRedirect &&
+    rawRedirect.startsWith("/") &&
+    !rawRedirect.startsWith("//") &&
+    !rawRedirect.includes("://")
+      ? rawRedirect
+      : "/";
   const reason = searchParams?.get("reason");
   const action = searchParams?.get("action");
 
@@ -83,7 +96,6 @@ function LoginContent() {
   const [signingInDept, setSigningInDept] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [showDemoPersonas, setShowDemoPersonas] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && action !== "switch") {
@@ -152,7 +164,14 @@ function LoginContent() {
 
         {/* Top Bar */}
         <header className="px-4 sm:px-6 lg:px-12 py-3.5 flex items-center justify-between border-b border-slate-200 dark:border-[#292929] bg-white/95 dark:bg-[#111111]/95 backdrop-blur-md sticky top-0 z-40 transition-colors duration-150">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1F1F1F] border border-slate-200/80 dark:border-[#383838] transition shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0284C7]"
+            >
+              <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
+              <span>Back to home</span>
+            </Link>
             <Link href="/" className="group inline-flex items-center gap-2">
               <InkloomLogo size="md" showSubtitle={false} />
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 uppercase tracking-wider dark:bg-[#202020] dark:text-[#FFAA35] dark:border-[#383838]">
@@ -223,9 +242,18 @@ function LoginContent() {
 
             {/* Header */}
             <div className="space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-[#85817D]">
-                YOUR WORKSPACE AWAITS
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-[#85817D]">
+                  YOUR WORKSPACE AWAITS
+                </span>
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition"
+                >
+                  <ChevronLeft className="w-3 h-3" />
+                  <span>Back to home</span>
+                </Link>
+              </div>
               <div className="flex items-center gap-2.5 pt-1">
                 <motion.div
                   whileHover={{ rotate: [0, -10, 10, -5, 5, 0], scale: 1.1 }}
@@ -381,54 +409,63 @@ function LoginContent() {
               </motion.button>
             </div>
 
-            {/* 1-Click Instant Department Persona Switcher with AnimatePresence Accordion */}
-            <div className="pt-1">
-              <button
-                type="button"
-                onClick={() => setShowDemoPersonas(!showDemoPersonas)}
-                className="w-full text-center text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition"
-              >
-                {showDemoPersonas ? "Hide 1-Click Demo Personas ▲" : "Show 1-Click Demo Personas ▼"}
-              </button>
+            {/* Quick Demo Login Section */}
+            <div className="pt-2 space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-0.5">
+                <h2 className="text-xs font-bold text-[#0F172A] dark:text-[#F7F3ED] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] dark:bg-[#FFAA35] animate-pulse shrink-0" />
+                  <span>Quick Demo Login</span>
+                </h2>
+                <span className="text-[10px] text-slate-400 dark:text-[#85817D] font-mono">
+                  1-Click Role Access
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-[#85817D] leading-normal">
+                Explore Inkloom AI using one of the demo accounts. Select a role to continue.
+              </p>
 
-              <AnimatePresence>
-                {showDemoPersonas && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ type: "spring", stiffness: 320, damping: 26 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="grid grid-cols-2 gap-2 pt-2">
-                      {QUICK_DEPARTMENTS.map((dept, idx) => (
-                        <motion.button
-                          key={dept.id}
-                          type="button"
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.04 }}
-                          whileHover={{ scale: 1.03, y: -2 }}
-                          whileTap={{ scale: 0.97 }}
-                          disabled={!!signingInDept || isLoading}
-                          onClick={() => handleQuickDeptLogin(dept.email, dept.id)}
-                          className="p-2.5 rounded-xl border border-slate-200 dark:border-[#383838] bg-slate-50 hover:bg-slate-100 dark:bg-[#202020] text-left transition disabled:opacity-50"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-[#10B981] dark:text-[#FFAA35]">{dept.role}</span>
-                            {signingInDept === dept.id && (
-                              <Loader2 className="w-3 h-3 animate-spin text-[#10B981] dark:text-[#FFAA35]" />
-                            )}
-                          </div>
-                          <div className="text-xs font-bold text-slate-800 dark:text-white truncate">
-                            {signingInDept === dept.id ? "Signing in..." : dept.name}
-                          </div>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                {QUICK_DEPARTMENTS.map((dept, idx) => {
+                  const IconComponent = dept.icon;
+                  const isCurrentSigningIn = signingInDept === dept.id;
+                  return (
+                    <motion.button
+                      key={dept.id}
+                      type="button"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.03 }}
+                      whileHover={{ scale: 1.015, y: -1 }}
+                      whileTap={{ scale: 0.985 }}
+                      disabled={!!signingInDept || isLoading}
+                      onClick={() => handleQuickDeptLogin(dept.email, dept.id)}
+                      className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-[#383838] bg-slate-50/90 hover:bg-slate-100 dark:bg-[#202020] dark:hover:bg-[#272727] hover:border-slate-300 dark:hover:border-[#4A4A4A] text-left transition shadow-2xs group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#10B981] dark:focus-visible:ring-[#FFAA35] disabled:opacity-50 relative flex flex-col justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <IconComponent className="w-3.5 h-3.5 text-[#10B981] dark:text-[#FFAA35] shrink-0" />
+                          <span className="text-[11px] font-bold text-[#0F172A] dark:text-[#F7F3ED] truncate">
+                            {dept.role}
+                          </span>
+                        </div>
+                        {isCurrentSigningIn ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-[#10B981] dark:text-[#FFAA35] shrink-0" />
+                        ) : (
+                          <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-[#10B981] dark:group-hover:text-[#FFAA35] group-hover:translate-x-0.5 transition shrink-0" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold text-slate-800 dark:text-white truncate">
+                          {isCurrentSigningIn ? "Signing in..." : dept.name}
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-[#85817D] line-clamp-1 mt-0.5">
+                          {dept.description}
+                        </div>
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Footer text */}

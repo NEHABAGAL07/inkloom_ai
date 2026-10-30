@@ -64,9 +64,17 @@ import {
   CampaignPerformanceMetrics,
   CampaignAIInsights,
   NotificationItem,
-  MediaItem,
+  ReviewCycleRecord,
+  DepartmentReviewRecord,
+  DepartmentFeedbackItem,
+  DesignerFeedbackSummaryData,
+  DesignerFeedbackGroupItem,
+  DesignVersionSummaryItem,
+  SubmitDepartmentReviewInput,
+MediaItem,
   MediaItemListResponse,
   UploadMediaInput,
+
 } from "../types";
 
 export interface CreateSubmissionInput {
@@ -196,11 +204,18 @@ export interface IApiService {
   markNotificationRead(notificationId: string): Promise<any>;
   markAllNotificationsRead(): Promise<any>;
 
-  // Persistent Media Management
+  // Centralized Review Cycles & Department Reviews
+  getReviewCycles(submissionId?: string): Promise<ReviewCycleRecord[]>;
+  getReviewCycle(cycleId: string): Promise<ReviewCycleRecord>;
+  submitDepartmentReview(cycleId: string, data: SubmitDepartmentReviewInput): Promise<DepartmentReviewRecord>;
+  grantFinalApproval(cycleId: string, rationale?: string): Promise<ReviewCycleRecord>;
+  getDesignerFeedbackSummary(): Promise<DesignerFeedbackSummaryData>;
+// Persistent Media Management
   uploadMedia(file: File, options?: { description?: string; campaign_id?: string; title?: string }): Promise<MediaItem>;
   getAdminMedia(filters?: { status?: string; uploaded_by?: string; file_type?: string; limit?: number; offset?: number }): Promise<MediaItemListResponse>;
   getMedia(filters?: { status?: string; file_type?: string; limit?: number; offset?: number }): Promise<MediaItemListResponse>;
   getMediaItem(mediaId: string): Promise<MediaItem>;
+
 }
 
 // In-memory deterministic mock state
@@ -1774,6 +1789,13 @@ export class MockApiService implements IApiService {
   }
 
   // --- Multi-Tenant Mock Implementations ---
+  private mockSessionUser: {
+    user: User;
+    active_organization_id: string;
+    active_role: string;
+    memberships: OrgMembership[];
+  } | null = null;
+
   async login(email: string, password?: string): Promise<AuthResponse> {
     const cleanEmail = email.toLowerCase().trim();
     const isNova = cleanEmail.includes("novabio");
@@ -1808,7 +1830,7 @@ export class MockApiService implements IApiService {
         .replace(/[._-]/g, " ")
         .replace(/\b\w/g, (c) => c.toUpperCase());
 
-    return {
+    const response: AuthResponse = {
       access_token: `mock_jwt_token_${Date.now()}`,
       token_type: "bearer",
       user: {
@@ -1827,11 +1849,25 @@ export class MockApiService implements IApiService {
         },
       ],
     };
+
+    this.mockSessionUser = {
+      user: response.user,
+      active_organization_id: response.active_organization_id,
+      active_role: response.active_role,
+      memberships: response.memberships,
+    };
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("inkloom_mock_user", JSON.stringify(this.mockSessionUser));
+      } catch {}
+    }
+
+    return response;
   }
 
   async register(data: { email: string; password?: string; full_name: string; organization_name: string; industry?: string }): Promise<AuthResponse> {
     const orgId = `org_${Math.random().toString(36).substring(2, 9)}`;
-    return {
+    const response: AuthResponse = {
       access_token: `mock_jwt_token_${Date.now()}`,
       token_type: "bearer",
       user: {
@@ -1850,32 +1886,41 @@ export class MockApiService implements IApiService {
         },
       ],
     };
+
+    this.mockSessionUser = {
+      user: response.user,
+      active_organization_id: response.active_organization_id,
+      active_role: response.active_role,
+      memberships: response.memberships,
+    };
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("inkloom_mock_user", JSON.stringify(this.mockSessionUser));
+      } catch {}
+    }
+
+    return response;
   }
 
   async getCurrentUser() {
-    return {
-      user: {
-        id: "user_acme_admin",
-        email: "admin@acmecloud.com",
-        full_name: "Alex Mercer (Manager)",
-      },
-      active_organization_id: "org_acme_cloud",
-      active_role: "admin",
-      memberships: [
-        {
-          organization_id: "org_acme_cloud",
-          organization_name: "Acme Cloud Systems",
-          organization_slug: "acme-cloud",
-          role: "admin",
-        },
-        {
-          organization_id: "org_novabio_health",
-          organization_name: "NovaBio Health Sciences",
-          organization_slug: "novabio-health",
-          role: "admin",
-        },
-      ],
-    };
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("inkloom_token");
+      if (!token) {
+        this.mockSessionUser = null;
+        return null;
+      }
+      if (!this.mockSessionUser) {
+        const storedUser = localStorage.getItem("inkloom_mock_user");
+        if (storedUser) {
+          try {
+            this.mockSessionUser = JSON.parse(storedUser);
+          } catch {
+            this.mockSessionUser = null;
+          }
+        }
+      }
+    }
+    return this.mockSessionUser;
   }
 
   async getOrganizations(): Promise<Organization[]> {
@@ -1993,7 +2038,7 @@ export class MockApiService implements IApiService {
   }
 
   async acceptInvitation(data: { token: string; full_name: string; password?: string }): Promise<AuthResponse> {
-    return {
+    const res: AuthResponse = {
       access_token: `mock_jwt_${Date.now()}`,
       token_type: "bearer",
       user: {
@@ -2012,9 +2057,29 @@ export class MockApiService implements IApiService {
         },
       ],
     };
+
+    this.mockSessionUser = {
+      user: res.user,
+      active_organization_id: res.active_organization_id,
+      active_role: res.active_role,
+      memberships: res.memberships,
+    };
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("inkloom_mock_user", JSON.stringify(this.mockSessionUser));
+      } catch {}
+    }
+
+    return res;
   }
 
   async logout(): Promise<{ message: string; revoked: boolean }> {
+    this.mockSessionUser = null;
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("inkloom_mock_user");
+      } catch {}
+    }
     return { message: "Mock logout successful", revoked: true };
   }
 
@@ -4016,7 +4081,473 @@ export class MockApiService implements IApiService {
     return { success: true };
   }
 
-  // Persistent Media Management (Mock Fallback)
+  // --- Centralized Review Cycles & Department Reviews (Mock Implementation) ---
+  private getStoredReviewCycles(): ReviewCycleRecord[] {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("inkloom_mock_review_cycles_v2");
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+    }
+    return this.getDefaultMockReviewCycles();
+  }
+
+  private saveStoredReviewCycles(cycles: ReviewCycleRecord[]): void {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("inkloom_mock_review_cycles_v2", JSON.stringify(cycles));
+      } catch (e) {}
+    }
+  }
+
+  private getDefaultMockReviewCycles(): ReviewCycleRecord[] {
+    return [
+      {
+        id: "cycle_designer_banner_v1",
+        organization_id: "org_default_inkloom",
+        submission_id: "sub_designer_banner",
+        revision_id: "rev_001",
+        cycle_number: 1,
+        status: "in_progress",
+        final_approval_status: "pending_approval",
+        started_at: "2026-10-23T10:15:00Z",
+        departmental_reviews: [
+          {
+            id: "rev_dep_mgr_001",
+            cycle_id: "cycle_designer_banner_v1",
+            submission_id: "sub_designer_banner",
+            revision_id: "rev_001",
+            organization_id: "org_default_inkloom",
+            department: "manager",
+            reviewer_id: "usr_admin_alex",
+            reviewer_name: "Alex Mercer (Brand Admin)",
+            review_status: "completed",
+            outcome: "no_changes_required",
+            comments: "Visual layout and color tokens match executive brand standards.",
+            submitted_at: "2026-10-23T10:45:00Z",
+            feedback_items: [
+              {
+                id: "fb_mgr_001",
+                organization_id: "org_default_inkloom",
+                submission_id: "sub_designer_banner",
+                revision_id: "rev_001",
+                cycle_id: "cycle_designer_banner_v1",
+                department_review_id: "rev_dep_mgr_001",
+                reviewer_id: "usr_admin_alex",
+                reviewer_name: "Alex Mercer (Brand Admin)",
+                reviewer_department: "manager",
+                feedback_category: "Brand Compliance",
+                feedback_description: "Palette adheres strictly to #14263D and safe wordmark margins are respected.",
+                review_outcome: "no_changes_required",
+                status: "approved",
+                created_at: "2026-10-23T10:45:00Z",
+              },
+            ],
+          },
+          {
+            id: "rev_dep_mkt_001",
+            cycle_id: "cycle_designer_banner_v1",
+            submission_id: "sub_designer_banner",
+            revision_id: "rev_001",
+            organization_id: "org_default_inkloom",
+            department: "marketing",
+            reviewer_id: "usr_mkt_maya",
+            reviewer_name: "Maya Lin (Marketing Lead)",
+            review_status: "completed",
+            outcome: "no_changes_required",
+            comments: "Hero banner composition aligns with Q4 enterprise messaging hierarchy.",
+            submitted_at: "2026-10-23T11:00:00Z",
+            feedback_items: [
+              {
+                id: "fb_mkt_001",
+                organization_id: "org_default_inkloom",
+                submission_id: "sub_designer_banner",
+                revision_id: "rev_001",
+                cycle_id: "cycle_designer_banner_v1",
+                department_review_id: "rev_dep_mkt_001",
+                reviewer_id: "usr_mkt_maya",
+                reviewer_name: "Maya Lin (Marketing Lead)",
+                reviewer_department: "marketing",
+                feedback_category: "Visual Hierarchy",
+                feedback_description: "Typography sizing and CTA emphasis are well placed for desktop and responsive hero slots.",
+                review_outcome: "no_changes_required",
+                status: "approved",
+                created_at: "2026-10-23T11:00:00Z",
+              },
+            ],
+          },
+          {
+            id: "rev_dep_leg_001",
+            cycle_id: "cycle_designer_banner_v1",
+            submission_id: "sub_designer_banner",
+            revision_id: "rev_001",
+            organization_id: "org_default_inkloom",
+            department: "legal",
+            reviewer_id: "usr_legal_elena",
+            reviewer_name: "Elena Rostova (Legal Counsel)",
+            review_status: "pending",
+          },
+        ],
+        feedback_records: [],
+      },
+      {
+        id: "cycle_launch_ann_v1",
+        organization_id: "org_default_inkloom",
+        submission_id: "sub_9281729a",
+        revision_id: "rev_001",
+        cycle_number: 1,
+        status: "changes_requested",
+        final_approval_status: "pending_approval",
+        started_at: "2026-10-22T16:30:00Z",
+        departmental_reviews: [
+          {
+            id: "rev_dep_mgr_002",
+            cycle_id: "cycle_launch_ann_v1",
+            submission_id: "sub_9281729a",
+            revision_id: "rev_001",
+            organization_id: "org_default_inkloom",
+            department: "manager",
+            reviewer_id: "usr_admin_alex",
+            reviewer_name: "Alex Mercer (Brand Admin)",
+            review_status: "completed",
+            outcome: "no_changes_required",
+            comments: "Strategic positioning is sound.",
+            submitted_at: "2026-10-22T16:45:00Z",
+          },
+          {
+            id: "rev_dep_mkt_002",
+            cycle_id: "cycle_launch_ann_v1",
+            submission_id: "sub_9281729a",
+            revision_id: "rev_001",
+            organization_id: "org_default_inkloom",
+            department: "marketing",
+            reviewer_id: "usr_mkt_maya",
+            reviewer_name: "Maya Lin (Marketing Lead)",
+            review_status: "completed",
+            outcome: "changes_requested",
+            comments: "Tone in paragraph 2 is overly aggressive ('crush your competitors'). Please soften to collaborative value proposition.",
+            submitted_at: "2026-10-22T17:00:00Z",
+            feedback_items: [
+              {
+                id: "fb_mkt_002",
+                organization_id: "org_default_inkloom",
+                submission_id: "sub_9281729a",
+                revision_id: "rev_001",
+                cycle_id: "cycle_launch_ann_v1",
+                department_review_id: "rev_dep_mkt_002",
+                reviewer_id: "usr_mkt_maya",
+                reviewer_name: "Maya Lin (Marketing Lead)",
+                reviewer_department: "marketing",
+                feedback_category: "Copywriting",
+                feedback_description: "Competitive tone violates brand voice guidelines.",
+                requested_correction: "Replace 'crush your competitors' with 'empower your distributed teams to lead with confidence'.",
+                review_outcome: "changes_requested",
+                status: "action_required",
+                created_at: "2026-10-22T17:00:00Z",
+              },
+            ],
+          },
+          {
+            id: "rev_dep_leg_002",
+            cycle_id: "cycle_launch_ann_v1",
+            submission_id: "sub_9281729a",
+            revision_id: "rev_001",
+            organization_id: "org_default_inkloom",
+            department: "legal",
+            reviewer_id: "usr_legal_elena",
+            reviewer_name: "Elena Rostova (Legal Counsel)",
+            review_status: "completed",
+            outcome: "changes_requested",
+            comments: "Performance claim regarding 'guaranteed 10x latency reduction' lacks certified test citation.",
+            submitted_at: "2026-10-22T17:15:00Z",
+            feedback_items: [
+              {
+                id: "fb_leg_002",
+                organization_id: "org_default_inkloom",
+                submission_id: "sub_9281729a",
+                revision_id: "rev_001",
+                cycle_id: "cycle_launch_ann_v1",
+                department_review_id: "rev_dep_leg_002",
+                reviewer_id: "usr_legal_elena",
+                reviewer_name: "Elena Rostova (Legal Counsel)",
+                reviewer_department: "legal",
+                feedback_category: "Legal Disclaimer",
+                feedback_description: "Unsubstantiated performance claim cannot be published without verifiable methodology disclaimer.",
+                requested_correction: "Add footnote: '*Results based on internal benchmark testing of 100 enterprise datasets in Q3 2026.'",
+                review_outcome: "changes_requested",
+                status: "action_required",
+                created_at: "2026-10-22T17:15:00Z",
+              },
+            ],
+          },
+        ],
+        feedback_records: [],
+      },
+      {
+        id: "cycle_sustainability_v1",
+        organization_id: "org_default_inkloom",
+        submission_id: "sub_4102941b",
+        revision_id: "rev_002",
+        cycle_number: 1,
+        status: "approved",
+        final_approval_status: "approved",
+        final_approved_by: "usr_admin_alex",
+        final_approved_at: "2026-10-21T15:00:00Z",
+        started_at: "2026-10-21T11:20:00Z",
+        completed_at: "2026-10-21T14:45:00Z",
+        departmental_reviews: [
+          {
+            id: "rev_dep_mgr_003",
+            cycle_id: "cycle_sustainability_v1",
+            submission_id: "sub_4102941b",
+            revision_id: "rev_002",
+            organization_id: "org_default_inkloom",
+            department: "manager",
+            reviewer_id: "usr_admin_alex",
+            reviewer_name: "Alex Mercer (Brand Admin)",
+            review_status: "completed",
+            outcome: "no_changes_required",
+            comments: "Fully compliant with enterprise sustainability disclosures.",
+            submitted_at: "2026-10-21T14:00:00Z",
+          },
+          {
+            id: "rev_dep_mkt_003",
+            cycle_id: "cycle_sustainability_v1",
+            submission_id: "sub_4102941b",
+            revision_id: "rev_002",
+            organization_id: "org_default_inkloom",
+            department: "marketing",
+            reviewer_id: "usr_mkt_maya",
+            reviewer_name: "Maya Lin (Marketing Lead)",
+            review_status: "completed",
+            outcome: "no_changes_required",
+            comments: "Verified.",
+            submitted_at: "2026-10-21T14:20:00Z",
+          },
+          {
+            id: "rev_dep_leg_003",
+            cycle_id: "cycle_sustainability_v1",
+            submission_id: "sub_4102941b",
+            revision_id: "rev_002",
+            organization_id: "org_default_inkloom",
+            department: "legal",
+            reviewer_id: "usr_legal_elena",
+            reviewer_name: "Elena Rostova (Legal Counsel)",
+            review_status: "completed",
+            outcome: "no_changes_required",
+            comments: "ISO 14001 citation cross-verified with registry certificate.",
+            submitted_at: "2026-10-21T14:45:00Z",
+          },
+        ],
+        feedback_records: [],
+      },
+    ];
+  }
+
+  async getReviewCycles(submissionId?: string): Promise<ReviewCycleRecord[]> {
+    const cycles = this.getStoredReviewCycles();
+    if (submissionId) {
+      return cycles.filter((c) => c.submission_id === submissionId);
+    }
+    return cycles;
+  }
+
+  async getReviewCycle(cycleId: string): Promise<ReviewCycleRecord> {
+    const cycles = this.getStoredReviewCycles();
+    const cycle = cycles.find((c) => c.id === cycleId);
+    if (!cycle) {
+      throw new Error(`Review cycle ${cycleId} not found`);
+    }
+    return cycle;
+  }
+
+  async submitDepartmentReview(cycleId: string, data: SubmitDepartmentReviewInput): Promise<DepartmentReviewRecord> {
+    const cycles = this.getStoredReviewCycles();
+    const cycle = cycles.find((c) => c.id === cycleId);
+    if (!cycle) {
+      throw new Error(`Review cycle ${cycleId} not found`);
+    }
+
+    let depReview = cycle.departmental_reviews.find((d) => d.department === data.department);
+    const now = new Date().toISOString();
+    const currentSession = this.mockSessionUser?.user;
+    const reviewerId = currentSession?.id || "usr_active_reviewer";
+    const reviewerName = currentSession?.full_name || "Department Reviewer";
+
+    if (!depReview) {
+      depReview = {
+        id: `rev_dep_${data.department}_${Date.now()}`,
+        cycle_id: cycle.id,
+        submission_id: cycle.submission_id,
+        revision_id: cycle.revision_id,
+        organization_id: cycle.organization_id,
+        department: data.department,
+        review_status: "completed",
+        outcome: data.outcome,
+        comments: data.comments,
+        submitted_at: now,
+        reviewer_id: reviewerId,
+        reviewer_name: reviewerName,
+      };
+      cycle.departmental_reviews.push(depReview);
+    } else {
+      depReview.review_status = "completed";
+      depReview.outcome = data.outcome;
+      depReview.comments = data.comments;
+      depReview.submitted_at = now;
+      depReview.reviewer_id = reviewerId;
+      depReview.reviewer_name = reviewerName;
+    }
+
+    // Attach feedback items
+    if (data.feedback_items && data.feedback_items.length > 0) {
+      depReview.feedback_items = data.feedback_items.map((fb, idx) => ({
+        id: `fb_${data.department}_${Date.now()}_${idx}`,
+        organization_id: cycle.organization_id,
+        submission_id: cycle.submission_id,
+        revision_id: cycle.revision_id,
+        cycle_id: cycle.id,
+        department_review_id: depReview.id,
+        reviewer_id: reviewerId,
+        reviewer_name: reviewerName,
+        reviewer_department: data.department,
+        feedback_category: fb.category,
+        feedback_description: fb.description,
+        requested_correction: fb.requested_correction,
+        review_outcome: data.outcome,
+        status: data.outcome === "changes_requested" ? "action_required" : "approved",
+        relevant_audit_evidence: fb.evidence,
+        created_at: now,
+      }));
+    }
+
+    // Check completion of all 3 departments
+    const allCompleted = ["manager", "marketing", "legal"].every((dep) => {
+      const r = cycle.departmental_reviews.find((d) => d.department === dep);
+      return r && r.review_status === "completed";
+    });
+
+    if (allCompleted) {
+      const hasChanges = cycle.departmental_reviews.some((d) => d.outcome === "changes_requested");
+      if (hasChanges) {
+        cycle.status = "changes_requested";
+      } else {
+        cycle.status = "review_complete";
+      }
+      cycle.completed_at = now;
+    }
+
+    this.saveStoredReviewCycles(cycles);
+    return depReview;
+  }
+
+  async grantFinalApproval(cycleId: string, rationale?: string): Promise<ReviewCycleRecord> {
+    const cycles = this.getStoredReviewCycles();
+    const cycle = cycles.find((c) => c.id === cycleId);
+    if (!cycle) {
+      throw new Error(`Review cycle ${cycleId} not found`);
+    }
+
+    if (cycle.status !== "review_complete") {
+      throw new Error("Cannot grant final approval until all 3 departments have completed review without changes.");
+    }
+
+    const now = new Date().toISOString();
+    const currentSession = this.mockSessionUser?.user;
+    const adminId = currentSession?.id || "usr_admin_alex";
+    cycle.status = "approved";
+    cycle.final_approval_status = "approved";
+    cycle.final_approved_by = adminId;
+    cycle.final_approved_at = now;
+
+    // Update parent submission status
+    const subs = getStoredSubmissions();
+    const sub = subs.find((s: ContentSubmission) => s.id === cycle.submission_id);
+    if (sub) {
+      sub.status = "approved";
+      sub.updated_at = now;
+      saveStoredSubmissions(subs);
+    }
+
+    this.saveStoredReviewCycles(cycles);
+    return cycle;
+  }
+
+  async getDesignerFeedbackSummary(): Promise<DesignerFeedbackSummaryData> {
+    const cycles = this.getStoredReviewCycles();
+    const subs = getStoredSubmissions();
+
+    let totalFeedback = 0;
+    let changesRequested = 0;
+    let reviewsCompleted = 0;
+    let awaitingReview = 0;
+
+    const designGroups: DesignerFeedbackGroupItem[] = [];
+
+    subs.forEach((sub: ContentSubmission) => {
+      const subCycles = cycles.filter((c) => c.submission_id === sub.id);
+      const activeCycle = subCycles.sort((a, b) => b.cycle_number - a.cycle_number)[0];
+
+      let hasChanges = false;
+      let allCompleted = false;
+
+      if (activeCycle) {
+        const completedDeps = activeCycle.departmental_reviews.filter((d) => d.review_status === "completed");
+        reviewsCompleted += completedDeps.length;
+        awaitingReview += 3 - completedDeps.length;
+
+        hasChanges = activeCycle.departmental_reviews.some((d) => d.outcome === "changes_requested");
+        allCompleted = completedDeps.length === 3;
+
+        activeCycle.departmental_reviews.forEach((dr) => {
+          if (dr.feedback_items) {
+            totalFeedback += dr.feedback_items.length;
+            dr.feedback_items.forEach((fb) => {
+              if (fb.review_outcome === "changes_requested") {
+                changesRequested += 1;
+              }
+            });
+          }
+        });
+      } else {
+        awaitingReview += 3;
+      }
+
+      designGroups.push({
+        submission_id: sub.id,
+        title: sub.title,
+        description: sub.description,
+        content_type: sub.content_type,
+        current_version: sub.current_revision_id === "rev_002" ? 2 : 1,
+        thumbnail_url: sub.media_url,
+        file_name: sub.file_name,
+        created_at: sub.created_at,
+        workflow_status: activeCycle ? activeCycle.status : sub.status,
+        active_cycle: activeCycle,
+        cycles: subCycles,
+        versions: [
+          {
+            version_id: sub.current_revision_id || "rev_001",
+            version_number: sub.current_revision_id === "rev_002" ? 2 : 1,
+            file_name: sub.file_name,
+            created_at: sub.created_at,
+            change_summary: sub.raw_text,
+          },
+        ],
+        has_changes_requested: hasChanges,
+        all_reviews_completed: allCompleted,
+      });
+    });
+
+    return {
+      total_feedback_items: totalFeedback,
+      changes_requested_count: changesRequested,
+      reviews_completed_count: reviewsCompleted,
+      designs_awaiting_review_count: awaitingReview,
+      design_groups: designGroups,
+    };
+  }
+// Persistent Media Management (Mock Fallback)
   async uploadMedia(file: File, options?: { description?: string; campaign_id?: string; title?: string }): Promise<MediaItem> {
     const mediaId = `med_${Date.now()}`;
     const cleanFn = file.name.replace(/[^\w\.\-\_]/g, "_");
@@ -4098,6 +4629,7 @@ export class MockApiService implements IApiService {
     if (!found) throw new Error(`Media '${mediaId}' not found`);
     return found;
   }
+
 }
 
 export const mockApi = new MockApiService();

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, Suspense } from "react";
 import { useAuth } from "@/services/auth-context";
+import { useSearchParams } from "next/navigation";
 import { api } from "@/services/api";
 import { ContentSubmission, AnalyticsSummary, MemberInfo } from "@/types";
 import { LandingView } from "@/components/auth/LandingView";
@@ -11,8 +12,10 @@ import { LegalDashboard } from "@/components/dashboards/LegalDashboard";
 import { MarketingDashboard } from "@/components/dashboards/MarketingDashboard";
 import { AlertCircle, RefreshCw, Send, BookOpen, Users, ArrowRight, ShieldCheck } from "lucide-react";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { isAuthenticated, activeRole, activeOrgId, activeOrgName } = useAuth();
+  const searchParams = useSearchParams();
+  const isPublicView = searchParams?.get("view") === "public";
   const [submissions, setSubmissions] = useState<ContentSubmission[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [members, setMembers] = useState<MemberInfo[]>([]);
@@ -20,7 +23,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || isPublicView) return;
     setLoading(true);
     setError(null);
     try {
@@ -41,7 +44,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, activeOrgId]);
+  }, [isAuthenticated, isPublicView, activeOrgId]);
 
   useEffect(() => {
     loadData();
@@ -85,8 +88,8 @@ export default function DashboardPage() {
     };
   }, [isAuthenticated]);
 
-  // Public Landing Page if user is not logged in
-  if (!isAuthenticated) {
+  // Public Landing Page if user is not logged in or requesting public view
+  if (!isAuthenticated || isPublicView) {
     return <LandingView />;
   }
 
@@ -167,4 +170,19 @@ export default function DashboardPage() {
   };
 
   return renderDashboard();
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-3">
+          <div className="w-8 h-8 rounded-full border-2 border-teal border-t-transparent animate-spin"></div>
+          <p className="text-xs text-ink-secondary font-medium">Loading workspace...</p>
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
+  );
 }

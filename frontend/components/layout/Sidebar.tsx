@@ -27,6 +27,7 @@ import {
   ChevronUp,
   Settings,
   Loader2,
+  MessageSquare,
 } from "lucide-react";
 
 export interface NavItem {
@@ -36,12 +37,11 @@ export interface NavItem {
   badge?: number;
 }
 
-// Role-specific navigation mapping
+// Role-specific navigation mapping (Review History removed across all roles; replaced with Claim Review for reviewers and New Feedback for Designer)
 export const ROLE_NAV_ITEMS: Record<"admin" | "designer" | "marketing" | "legal", NavItem[]> = {
   admin: [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Campaigns", href: "/campaigns", icon: Briefcase },
-    { name: "Review history", href: "/audits", icon: Folder },
     { name: "Guidelines", href: "/guidelines", icon: Sparkles },
     { name: "Insights", href: "/analytics", icon: BarChart3 },
     { name: "Claim Review", href: "/reviews", icon: ShieldCheck },
@@ -51,21 +51,20 @@ export const ROLE_NAV_ITEMS: Record<"admin" | "designer" | "marketing" | "legal"
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Media Audit ", href: "/media-audit", icon: ImageIcon },
     { name: "Designer Studio & Copilot", href: "/designer", icon: Palette },
+    { name: "New Feedback", href: "/feedback", icon: MessageSquare },
     { name: "Campaigns", href: "/campaigns", icon: Briefcase },
-    { name: "Review history", href: "/audits", icon: Folder },
   ],
   marketing: [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Marketing Copilot", href: "/marketing", icon: FileText },
+    { name: "Claim Review", href: "/reviews", icon: ShieldCheck },
     { name: "Campaigns", href: "/campaigns", icon: Briefcase },
     { name: "Guidelines", href: "/guidelines", icon: Sparkles },
-    { name: "Review history", href: "/audits", icon: Folder },
   ],
   legal: [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Legal & Regulatory Review", href: "/legal", icon: Scale },
     { name: "Claim Review", href: "/reviews", icon: ShieldCheck },
-    { name: "Review history", href: "/audits", icon: Folder },
     { name: "Guidelines", href: "/guidelines", icon: Sparkles },
     { name: "Insights & Audits", href: "/analytics", icon: BarChart3 },
   ],
@@ -128,10 +127,8 @@ export function Sidebar() {
     setIsSigningOut(true);
     try {
       await logout();
-      router.push("/?reason=logged_out");
     } catch (err) {
       console.error("Sign out error:", err);
-      router.push("/?reason=logged_out");
     } finally {
       setIsSigningOut(false);
       setIsAccountMenuOpen(false);
@@ -300,8 +297,7 @@ export function Sidebar() {
             const Icon = item.icon;
             const isActive =
               pathname === item.href ||
-              (item.href === "/guidelines" && pathname === "/settings") ||
-              (item.href === "/" && pathname === "/demo");
+              (item.href === "/guidelines" && pathname === "/settings");
 
             return (
               <Link
@@ -542,8 +538,7 @@ export function Sidebar() {
                   const Icon = item.icon;
                   const isActive =
                     pathname === item.href ||
-                    (item.href === "/guidelines" && pathname === "/settings") ||
-                    (item.href === "/" && pathname === "/demo");
+                    (item.href === "/guidelines" && pathname === "/settings");
 
                   return (
                     <Link

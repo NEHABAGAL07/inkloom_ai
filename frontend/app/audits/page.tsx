@@ -7,7 +7,6 @@ import { AuditResult, ContentSubmission, ContentComment } from "@/types";
 import { AuditSummaryCard } from "@/components/audits/AuditSummaryCard";
 import { FindingsFilter } from "@/components/audits/FindingsFilter";
 import { FindingCard } from "@/components/audits/FindingCard";
-import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
 import { ReviewHistoryList } from "@/components/reviews/ReviewHistoryList";
 import {
@@ -308,21 +307,7 @@ function AuditsContent() {
                   ))
                 )}
               </div>
-
-              {/* Single submission feedback & upload tool */}
-              {selectedContentId && (
-                <DesignerFeedbackComments
-                  submissionId={selectedContentId}
-                  submissionTitle={activeSub?.title}
-                  contentType={activeSub?.content_type}
-                  description={activeSub?.description}
-                  rawText={activeSub?.raw_text}
-                  fileName={activeSub?.file_name}
-                  mediaUrl={activeSub?.media_url}
-                  submission={activeSub}
-                />
-              )}
-            </>
+</>
           ) : (
             <div className="max-w-xl mx-auto py-12 text-center space-y-4">
               <div className="bg-surface border border-border rounded-2xl p-8 shadow-card text-center space-y-4">

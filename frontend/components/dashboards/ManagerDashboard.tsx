@@ -14,7 +14,6 @@ import {
   CheckCircle,
   Users,
   FileText,
-  Plus,
   RefreshCw,
   ExternalLink,
   Search,
@@ -30,7 +29,6 @@ import {
   Sparkles,
   BookOpen,
 } from "lucide-react";
-import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
 
 interface ManagerDashboardProps {
@@ -282,13 +280,6 @@ export function ManagerDashboard({
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Link
-              href="/content"
-              className="px-5 py-3 rounded-xl btn-gradient-warm text-xs font-bold transition flex items-center gap-2 shadow-warmGlow text-white dark:text-[#111111]"
-            >
-              <Plus className="w-4 h-4 text-white dark:text-[#111111] stroke-[2.5]" />
-              <span>Start a Content Review</span>
-            </Link>
 
             <button
               onClick={() => setIsInviteModalOpen(true)}
@@ -551,22 +542,7 @@ export function ManagerDashboard({
           )}
         </div>
       </div>
-
-      {/* Suggestion / Feedback Box under Selected Content */}
-      {selectedPipelineSub && (
-        <DesignerFeedbackComments
-          submissionId={selectedPipelineSub.id}
-          submissionTitle={selectedPipelineSub.title}
-          contentType={selectedPipelineSub.content_type}
-          description={selectedPipelineSub.description}
-          rawText={selectedPipelineSub.raw_text}
-          fileName={selectedPipelineSub.file_name}
-          mediaUrl={selectedPipelineSub.media_url}
-          submission={selectedPipelineSub}
-        />
-      )}
-
-      {/* Manager Audit Summary Modal */}
+{/* Manager Audit Summary Modal */}
       {isAuditModalOpen && selectedSubForAudit && (
         <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto text-[#18352F] dark:text-[#F7F3ED]">

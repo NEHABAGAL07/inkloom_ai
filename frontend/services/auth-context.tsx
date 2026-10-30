@@ -56,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") {
       localStorage.removeItem("inkloom_token");
       localStorage.removeItem("inkloom_tenant_id");
+      localStorage.removeItem("inkloom_mock_user");
       sessionStorage.clear();
     }
   }, []);
@@ -63,13 +64,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     try {
       await api.logout();
-    } catch (err) {
-      console.warn("Server session revocation:", err);
-    } finally {
-      clearSession();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login?reason=logged_out";
+    } catch (err: any) {
+      console.warn("Server session revocation notice:", err);
+      const isAlreadyInvalid = err instanceof ApiError && (err.status === 401 || err.status === 403);
+      if (!isAlreadyInvalid) {
+        // Safe error handling: do not falsely report successful sign-out on server/network failure
+        throw err;
       }
+    }
+    clearSession();
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
     }
   }, [clearSession]);
 
@@ -171,7 +176,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } catch (err: any) {
           if (!isMountedRef.current) return;
-          if (err instanceof ApiError && (err.isNetworkError || err.status >= 500)) {
+          const storedToken = typeof window !== "undefined" ? localStorage.getItem("inkloom_token") : null;
+          if (storedToken && err instanceof ApiError && (err.isNetworkError || err.status >= 500)) {
             console.warn("Backend governance service unavailable:", err.message);
             setBackendError(
               err.message || "Unable to reach Inkloom brand governance service at http://localhost:8000."
