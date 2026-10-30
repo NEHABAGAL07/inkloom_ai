@@ -113,6 +113,7 @@ export interface IApiService {
 
   // Designer Feedback & Change Request Comments
   getSubmissionComments(submissionId: string): Promise<CommentsListResponse>;
+  getAllComments(): Promise<ContentComment[]>;
   addSubmissionComment(submissionId: string, commentText: string, category?: string): Promise<ContentComment>;
   toggleCommentResolution(submissionId: string, commentId: string, isResolved: boolean, resolutionNote?: string): Promise<ContentComment>;
 
@@ -2012,7 +2013,7 @@ export class MockApiService implements IApiService {
   private commentsStore: ContentComment[] = [
     {
       id: "cm_1",
-      submission_id: "b5b271f5-507a-4346-9c2e-fb793f67e43d",
+      submission_id: "sub_designer_banner",
       organization_id: "org_acme_cloud",
       author_id: "user_acme_compliance",
       author_name: "Elena Rostova (Legal & Regulatory)",
@@ -2025,7 +2026,7 @@ export class MockApiService implements IApiService {
     },
     {
       id: "cm_2",
-      submission_id: "b5b271f5-507a-4346-9c2e-fb793f67e43d",
+      submission_id: "sub_designer_banner",
       organization_id: "org_acme_cloud",
       author_id: "user_acme_admin",
       author_name: "Alex Mercer (Manager)",
@@ -2034,14 +2035,14 @@ export class MockApiService implements IApiService {
       category: "visual_design",
       is_resolved: true,
       resolved_at: new Date(Date.now() - 3600000).toISOString(),
-      resolved_by: "Leo Vance (Designer)",
+      resolved_by: "Leo Vance (Senior Designer)",
       resolution_note: "Updated clear-space padding to 40px in vector master.",
       created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
       updated_at: new Date(Date.now() - 3600000).toISOString(),
     },
     {
       id: "cm_3",
-      submission_id: "b5b271f5-507a-4346-9c2e-fb793f67e43d",
+      submission_id: "sub_designer_banner",
       organization_id: "org_acme_cloud",
       author_id: "user_acme_marketing",
       author_name: "Maya Lin (Marketing Lead)",
@@ -2052,7 +2053,42 @@ export class MockApiService implements IApiService {
       created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
       updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
     },
+    {
+      id: "cm_4",
+      submission_id: "sub_5581923c",
+      organization_id: "org_acme_cloud",
+      author_id: "user_acme_admin",
+      author_name: "Alex Mercer (Manager)",
+      author_role: "admin",
+      comment_text: "Tone in opening sequence feels slightly aggressive. Soften competitive comparison to highlight enterprise uptime SLA guarantee.",
+      category: "copy_tone",
+      is_resolved: false,
+      created_at: new Date(Date.now() - 3600000 * 3).toISOString(),
+      updated_at: new Date(Date.now() - 3600000 * 3).toISOString(),
+    },
+    {
+      id: "cm_5",
+      submission_id: "sub_4102941b",
+      organization_id: "org_acme_cloud",
+      author_id: "user_acme_compliance",
+      author_name: "Elena Rostova (Legal & Regulatory)",
+      author_role: "compliance_officer",
+      comment_text: "Verified ISO 14001 certification badge and renewable energy footnote against annual audited filings.",
+      category: "legal_compliance",
+      is_resolved: true,
+      resolved_at: new Date(Date.now() - 7200000).toISOString(),
+      resolved_by: "Leo Vance (Senior Designer)",
+      resolution_note: "Footnote verified and cross-referenced with audited ESG appendix.",
+      created_at: new Date(Date.now() - 3600000 * 6).toISOString(),
+      updated_at: new Date(Date.now() - 7200000).toISOString(),
+    },
   ];
+
+  async getAllComments(): Promise<ContentComment[]> {
+    return [...this.commentsStore].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }
 
   async getSubmissionComments(submissionId: string): Promise<CommentsListResponse> {
     const matched = this.commentsStore.filter((c) => c.submission_id === submissionId);
@@ -2108,13 +2144,26 @@ export class MockApiService implements IApiService {
   }
 
   async addSubmissionComment(submissionId: string, commentText: string, category: string = "visual_design"): Promise<ContentComment> {
+    let authorName = "Team Reviewer";
+    let authorRole = "compliance_officer";
+    if (typeof window !== "undefined") {
+      try {
+        const storedRole = localStorage.getItem("inkloom_active_role") || "admin";
+        authorRole = storedRole;
+        if (storedRole === "admin") authorName = "Alex Mercer (Brand Admin)";
+        else if (storedRole === "marketing") authorName = "Maya Lin (Marketing Lead)";
+        else if (storedRole === "compliance_officer" || storedRole === "legal") authorName = "Elena Rostova (Legal & Regulatory)";
+        else if (storedRole === "designer") authorName = "Leo Vance (Brand Designer)";
+      } catch (e) {}
+    }
+
     const newComment: ContentComment = {
       id: `cm_${Date.now()}`,
       submission_id: submissionId,
       organization_id: "org_acme_cloud",
-      author_id: "user_reviewer",
-      author_name: "Team Reviewer",
-      author_role: "compliance_officer",
+      author_id: `user_${authorRole}`,
+      author_name: authorName,
+      author_role: authorRole,
       comment_text: commentText,
       category,
       is_resolved: false,
@@ -2998,6 +3047,68 @@ export class MockApiService implements IApiService {
     if (!draft) throw new Error(`Design brief '${briefId}' not found.`);
     draft.status = "submitted";
     draft.updated_at = new Date().toISOString();
+
+    // Synchronize to stored submissions so it appears in the human review queue and on audit pages
+    const subs = getStoredSubmissions();
+    const existingIndex = subs.findIndex((s) => s.id === briefId);
+    const rev = draft.revisions?.[0];
+    const fileName = rev?.file_name || draft.current_file_name || "creative-export.png";
+    const mediaUrl = rev?.file_path || draft.current_file_path || "";
+    const rawText = draft.brief?.required_copy || draft.brief?.design_objective || draft.description || "";
+
+    const subItem: ContentSubmission = {
+      id: draft.id,
+      organization_id: draft.organization_id || "org_default_inkloom",
+      creator_id: draft.creator_id || "user_designer_active",
+      creator_name: "Leo Vance (Brand Designer)",
+      title: (draft as any).project_name || draft.title || "Creative Design Asset",
+      description: draft.description || draft.brief?.design_objective || "Brand design asset submission",
+      content_type: "image",
+      status: "pending_approval",
+      file_name: fileName,
+      file_path: mediaUrl,
+      media_url: mediaUrl,
+      raw_text: rawText,
+      current_revision_id: draft.current_revision_id || rev?.id || "rev_001",
+      created_at: draft.created_at || new Date().toISOString(),
+      updated_at: draft.updated_at,
+    };
+
+    if (existingIndex >= 0) {
+      subs[existingIndex] = { ...subs[existingIndex], ...subItem, status: "pending_approval" };
+    } else {
+      subs.unshift(subItem);
+    }
+    saveStoredSubmissions(subs);
+
+    // Ensure audit is available for this design submission
+    if (draft.latest_audit) {
+      const fullAudit: AuditResult = {
+        ...MOCK_AUDIT_RESULT,
+        ...draft.latest_audit,
+        summary: {
+          ...MOCK_AUDIT_RESULT.summary,
+          ...(draft.latest_audit.summary || {}),
+        },
+        overall_status: ((draft.latest_audit.overall_status as any) || "needs_review"),
+        content_id: draft.id,
+        audit_id: draft.latest_audit.audit_id || `audit_${draft.id}`,
+      };
+      saveStoredAudit(fullAudit.audit_id, fullAudit);
+      saveStoredAudit(draft.id, fullAudit);
+    } else {
+      const generated = generateAuditForSubmission(subItem);
+      saveStoredAudit(generated.audit_id, generated);
+      saveStoredAudit(draft.id, generated);
+    }
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("inkloom_asset_updated", { detail: { submissionId: briefId, mediaUrl, fileName } })
+      );
+      window.dispatchEvent(new CustomEvent("inkloom_submission_created", { detail: subItem }));
+    }
+
     return { ...draft };
   }
 

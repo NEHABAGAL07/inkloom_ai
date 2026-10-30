@@ -301,7 +301,7 @@ export default function ContentReviewWorkspace() {
                 <label className="block text-xs font-semibold text-[#18352F] dark:text-[#F7F3ED]">
                   Target Page or Published Article URL
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <input
                     type="url"
                     value={urlInput}
@@ -312,7 +312,7 @@ export default function ContentReviewWorkspace() {
                   <button
                     type="button"
                     onClick={handleImportUrl}
-                    className="px-4 py-2.5 rounded-xl btn-dark-secondary text-xs font-bold shrink-0"
+                    className="px-4 py-2.5 rounded-xl btn-dark-secondary text-xs font-bold shrink-0 flex items-center justify-center"
                   >
                     Import Copy
                   </button>

@@ -271,7 +271,7 @@ def seed_initial_data():
                 db.commit()
             return
 
-        demo_pwd_hash = hash_password("password123")
+        demo_pwd_hash = hash_password("demo123456")
 
         # =========================================================
         # 0. Legacy / Default Tenant (Maintains backwards compat)

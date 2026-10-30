@@ -2,7 +2,7 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.models import AuditEvent, RevokedToken
+from app.models import AuditEvent, RevokedToken, Organization, User, Membership
 
 
 def test_auth_security_complete_lifecycle(db_session):
@@ -121,3 +121,102 @@ def test_auth_security_complete_lifecycle(db_session):
         # 11. Manager's token is still valid (independent sessions)
         manager_access = client.get("/api/v1/submissions", headers=admin_headers)
         assert manager_access.status_code == 200
+
+
+def test_registration_validation_and_duplicate_handling(db_session):
+    """
+    Regression test:
+    - Enforces required fields
+    - Enforces email format validation
+    - Enforces minimum password length
+    - Rejects duplicate email with 409 Conflict
+    - Atomically creates organization, admin user, and initial guidelines
+    """
+    uid = uuid.uuid4().hex[:8]
+    with TestClient(app) as client:
+        # 1. Missing organization name -> 400
+        res = client.post("/api/v1/auth/register", json={
+            "email": f"user_{uid}@corp.com",
+            "password": "ValidPassword123",
+            "full_name": "Test Admin",
+            "organization_name": "",
+        })
+        assert res.status_code == 400
+        assert "organization name is required" in res.json()["detail"].lower()
+
+        # 2. Invalid email format -> 400
+        res = client.post("/api/v1/auth/register", json={
+            "email": "not-an-email",
+            "password": "ValidPassword123",
+            "full_name": "Test Admin",
+            "organization_name": f"Valid Org {uid}",
+        })
+        assert res.status_code == 400
+        assert "valid corporate work email" in res.json()["detail"].lower()
+
+        # 3. Short password -> 400
+        res = client.post("/api/v1/auth/register", json={
+            "email": f"user_{uid}@corp.com",
+            "password": "123",
+            "full_name": "Test Admin",
+            "organization_name": f"Valid Org {uid}",
+        })
+        assert res.status_code == 400
+        assert "at least 6 characters" in res.json()["detail"].lower()
+
+        # 4. Valid registration -> 201
+        reg_payload = {
+            "email": f"admin_{uid}@newcorp.com",
+            "password": "StrongPassword2026!",
+            "full_name": "First Administrator",
+            "organization_name": f"New Corp {uid}",
+            "industry": "Technology & SaaS",
+        }
+        res_ok = client.post("/api/v1/auth/register", json=reg_payload)
+        assert res_ok.status_code == 201
+        data = res_ok.json()
+        assert data["active_role"] == "admin"
+        assert data["user"]["email"] == f"admin_{uid}@newcorp.com"
+        assert len(data["memberships"]) == 1
+        assert data["memberships"][0]["role"] == "admin"
+
+        # 5. Duplicate registration with same email -> 409 Conflict
+        res_dup = client.post("/api/v1/auth/register", json=reg_payload)
+        assert res_dup.status_code == 409
+        assert "already exists" in res_dup.json()["detail"].lower()
+
+
+def test_demo_personas_auth_and_compatibility(db_session):
+    """
+    Regression test for demo persona 1-click access:
+    - Verifies all 4 demo roles (admin, designer, marketing, compliance_officer)
+    - Verifies compatibility between demo123456 and password123
+    - Verifies tenant isolation (scoped to org_acme_cloud)
+    - Verifies negative authentication on invalid credentials
+    """
+    personas = [
+        ("admin@acmecloud.com", "admin"),
+        ("designer@acmecloud.com", "designer"),
+        ("marketing@acmecloud.com", "marketing"),
+        ("compliance@acmecloud.com", "compliance_officer"),
+    ]
+
+    with TestClient(app) as client:
+        for email, expected_role in personas:
+            # 1. Login with demo123456 (used in 1-click demo button)
+            res_demo = client.post("/api/v1/auth/login", json={"email": email, "password": "demo123456"})
+            assert res_demo.status_code == 200, f"Failed demo login for {email}: {res_demo.text}"
+            body_demo = res_demo.json()
+            assert body_demo["active_role"] == expected_role
+            assert body_demo["active_organization_id"] == "org_acme_cloud"
+
+            # 2. Login with password123 (seeded password)
+            res_p123 = client.post("/api/v1/auth/login", json={"email": email, "password": "password123"})
+            assert res_p123.status_code == 200
+            assert res_p123.json()["active_role"] == expected_role
+            assert res_p123.json()["active_organization_id"] == "org_acme_cloud"
+
+            # 3. Invalid password -> 401
+            res_bad = client.post("/api/v1/auth/login", json={"email": email, "password": "wrongpassword"})
+            assert res_bad.status_code == 401
+

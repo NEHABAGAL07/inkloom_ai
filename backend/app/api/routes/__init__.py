@@ -11,7 +11,7 @@ from app.api.routes.reviews import router as reviews_router
 from app.api.routes.analytics import router as analytics_router
 from app.api.routes.knowledge import router as knowledge_router
 from app.api.routes.intelligence import router as intelligence_router
-from app.api.routes.comments import router as comments_router
+from app.api.routes.comments import router as comments_router, org_comments_router
 from app.api.routes.documents import router as documents_router
 from app.api.routes.chat import router as chat_router
 from app.api.routes.marketing_copilot import router as marketing_copilot_router
@@ -33,6 +33,7 @@ api_router.include_router(submissions_router)
 api_router.include_router(audits_router)
 api_router.include_router(reviews_router)
 api_router.include_router(comments_router)
+api_router.include_router(org_comments_router)
 api_router.include_router(analytics_router)
 api_router.include_router(knowledge_router)
 api_router.include_router(intelligence_router)

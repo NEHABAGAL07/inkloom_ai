@@ -271,7 +271,7 @@ export default function TeamManagementPage() {
       {/* Invite Modal */}
       {isInviteModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#DDEBE5] dark:border-[#383838] pb-3">
               <h3 className="text-base font-bold text-[#18352F] dark:text-[#F7F3ED] font-heading flex items-center gap-2">
                 <Mail className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />

@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.campaign import Campaign
 from app.models.submission import ContentSubmission
@@ -135,6 +135,7 @@ class CampaignOrchestrator:
         """Retrieves a tenant-isolated campaign."""
         campaign = (
             db.query(Campaign)
+            .options(selectinload(Campaign.submissions).selectinload(ContentSubmission.revisions))
             .filter(
                 Campaign.id == campaign_id,
                 Campaign.organization_id == auth.organization_id,
@@ -156,7 +157,11 @@ class CampaignOrchestrator:
         offset: int = 0,
     ) -> List[Campaign]:
         """Lists tenant-isolated campaigns with optional filtering."""
-        query = db.query(Campaign).filter(Campaign.organization_id == auth.organization_id)
+        query = (
+            db.query(Campaign)
+            .options(selectinload(Campaign.submissions).selectinload(ContentSubmission.revisions))
+            .filter(Campaign.organization_id == auth.organization_id)
+        )
         if status_filter:
             query = query.filter(Campaign.status == status_filter)
         if priority_filter:

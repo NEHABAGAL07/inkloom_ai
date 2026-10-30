@@ -645,5 +645,32 @@
   .animate-orbital-spin {
     animation: none !important;
   }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Responsive mobile navbar utility: keep Sign In in header on >=375px, move to dropdown on <375px */
+.nav-signin-compact {
+  display: none !important;
+}
+@media (min-width: 375px) {
+  .nav-signin-compact {
+    display: inline-flex !important;
+  }
+}
+
+.nav-menu-signin {
+  display: block !important;
+}
+@media (min-width: 375px) {
+  .nav-menu-signin {
+    display: none !important;
+  }
 }
 

@@ -410,7 +410,7 @@ export function ManagerDashboard({
           <div>
             <h2 className="text-base font-heading font-bold text-[#18352F] dark:text-[#F7F3ED] flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
-              <span>Organization Content Pipeline</span>
+              <span>Designer Submissions</span>
             </h2>
             <p className="text-xs text-[#58716A] dark:text-[#85817D] mt-0.5">
               Real-time review and audit status across all active content assets
@@ -650,7 +650,7 @@ export function ManagerDashboard({
       {/* Invite Member Modal */}
       {isInviteModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-[#18352F] dark:text-[#F7F3ED]">
+          <div className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-[#18352F] dark:text-[#F7F3ED] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border dark:border-[#383838] pb-3">
               <h3 className="text-sm font-heading font-bold text-[#18352F] dark:text-[#F7F3ED]">
                 Invite New Team Member

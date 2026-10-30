@@ -1334,7 +1334,7 @@ export default function CampaignsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold mb-1 text-ink-primary">
                     Product / Solution
@@ -1365,7 +1365,7 @@ export default function CampaignsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-semibold mb-1 text-ink-primary">
                     Target Channel

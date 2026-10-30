@@ -54,6 +54,27 @@ def register_organization(
     Initializes starter brand guidelines for the new tenant.
     """
     clean_email = payload.email.strip().lower()
+    if not clean_email or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", clean_email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A valid corporate work email address is required.",
+        )
+    if not payload.organization_name or not payload.organization_name.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization name is required.",
+        )
+    if not payload.full_name or not payload.full_name.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Primary administrator full name is required.",
+        )
+    if not payload.password or len(payload.password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 6 characters in length.",
+        )
+
     existing_user = db.query(User).filter(User.email == clean_email).first()
     if existing_user:
         raise HTTPException(

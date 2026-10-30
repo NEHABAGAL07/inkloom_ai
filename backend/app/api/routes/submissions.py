@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.database.session import get_db
 from app.core.security import get_current_auth_context, AuthContext
@@ -26,6 +26,7 @@ def list_submissions(
     """List submissions for the tenant."""
     return (
         db.query(ContentSubmission)
+        .options(selectinload(ContentSubmission.revisions))
         .filter(ContentSubmission.organization_id == auth.organization_id)
         .order_by(ContentSubmission.created_at.desc())
         .all()
@@ -87,6 +88,7 @@ def get_submission(
 ):
     submission = (
         db.query(ContentSubmission)
+        .options(selectinload(ContentSubmission.revisions))
         .filter(
             ContentSubmission.id == submission_id,
             ContentSubmission.organization_id == auth.organization_id,

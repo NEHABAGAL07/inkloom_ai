@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
 import {
@@ -48,13 +49,32 @@ import {
   MessageSquare,
   ThumbsUp,
   ThumbsDown,
+  X,
 } from "lucide-react";
 
-export default function DesignerCopilotPage() {
+function DesignerCopilotContent() {
   const { activeRole, activeOrgName } = useAuth();
+  const searchParams = useSearchParams();
+  const queryTab = searchParams?.get("tab");
+  const queryAction = searchParams?.get("action");
 
   // Active workspace tab
   const [activeTab, setActiveTab] = useState<"brief_concepts" | "canvas_audit" | "asset_library" | "history" | "copilot_chat">("brief_concepts");
+
+  // Automatically activate canvas_audit tab when navigating via "New Design"
+  useEffect(() => {
+    if (queryTab === "canvas_audit" || queryAction === "upload" || queryAction === "new_design") {
+      setActiveTab("canvas_audit");
+    } else if (queryTab === "brief_concepts") {
+      setActiveTab("brief_concepts");
+    } else if (queryTab === "asset_library") {
+      setActiveTab("asset_library");
+    } else if (queryTab === "history") {
+      setActiveTab("history");
+    } else if (queryTab === "copilot_chat") {
+      setActiveTab("copilot_chat");
+    }
+  }, [queryTab, queryAction]);
 
   // ==========================================
   // Creative Brief Builder State
@@ -312,7 +332,7 @@ export default function DesignerCopilotPage() {
   };
 
   // Save Creative Brief as Draft
-  const handleSaveBriefDraft = async () => {
+  const handleSaveBriefDraft = async (): Promise<DesignDraftDetailResponse | null> => {
     setIsSavingDraft(true);
     setSaveSuccessMessage(null);
 
@@ -345,8 +365,10 @@ export default function DesignerCopilotPage() {
       setSelectedRevisionId(saved.current_revision_id || null);
       setSaveSuccessMessage("Creative brief successfully saved as project draft.");
       loadProjectHistory();
+      return saved;
     } catch (err: any) {
-      alert(`Save failed: ${err.message || "Unknown error"}`);
+      setUploadError(`Save failed: ${err.message || "Unknown error"}`);
+      return null;
     } finally {
       setIsSavingDraft(false);
     }
@@ -374,17 +396,23 @@ export default function DesignerCopilotPage() {
       setUploadError("Please select an image file to upload.");
       return;
     }
-    if (!activeDraft) {
-      // Auto-save brief first if not yet created
-      await handleSaveBriefDraft();
-    }
 
     setIsUploading(true);
     setUploadError(null);
 
     try {
-      const briefId = activeDraft?.id || `brief_${Date.now()}`;
-      const updated = await api.uploadDesignVersion(briefId, uploadedFile, revisionSummary);
+      let draft = activeDraft;
+      if (!draft) {
+        // Auto-save brief first if not yet created
+        draft = await handleSaveBriefDraft();
+        if (!draft) {
+          setUploadError("Could not initialize draft project for upload.");
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      const updated = await api.uploadDesignVersion(draft.id, uploadedFile, revisionSummary);
       setActiveDraft(updated);
       setSelectedRevisionId(updated.current_revision_id || null);
       setRevisionSummary("");
@@ -418,6 +446,7 @@ export default function DesignerCopilotPage() {
           created_at: result.created_at,
         };
       }
+      setSaveSuccessMessage("Brand visual audit completed successfully.");
     } catch (err: any) {
       setAuditError(err.message || "Failed to execute visual brand audit.");
     } finally {
@@ -425,17 +454,71 @@ export default function DesignerCopilotPage() {
     }
   };
 
+  // Load sample creative mockup for instant testing
+  const handleLoadSampleMockup = async () => {
+    try {
+      const response = await fetch("/inkloom-feather-cute@2x.png");
+      const blob = await response.blob();
+      const sampleFile = new File([blob], "summer-campaign-banner.png", { type: "image/png" });
+      setUploadedFile(sampleFile);
+      setPreviewUrl("/inkloom-feather-cute@2x.png");
+      setUploadError(null);
+      if (!projectName || projectName === "Enterprise Brand Governance") {
+        setProjectName("Summer Campaign Hero Banner");
+      }
+    } catch (e: any) {
+      console.warn("Could not load sample asset", e);
+    }
+  };
+
   // Submit for Human Review
   const handleSubmitForReview = async () => {
-    if (!activeDraft) return;
+    if (isSubmittingReview) return;
+
     setIsSubmittingReview(true);
+    setUploadError(null);
+
     try {
-      const updated = await api.submitDesignForReview(activeDraft.id);
+      let targetDraft = activeDraft;
+      if (!targetDraft) {
+        targetDraft = await handleSaveBriefDraft();
+      }
+      if (!targetDraft) {
+        setUploadError("Please provide design metadata and an image before submitting.");
+        setIsSubmittingReview(false);
+        return;
+      }
+
+      // If a file was selected but not yet committed as a version, commit it now
+      if (uploadedFile && (!targetDraft.current_file_path || targetDraft.current_file_name !== uploadedFile.name)) {
+        try {
+          targetDraft = await api.uploadDesignVersion(
+            targetDraft.id,
+            uploadedFile,
+            revisionSummary || "Initial design version"
+          );
+          setActiveDraft(targetDraft);
+        } catch (uploadErr: any) {
+          console.warn("Upload version sync warning:", uploadErr);
+        }
+      }
+
+      // If an audit hasn't been run yet, run visual audit automatically before submission
+      if (!auditResult) {
+        try {
+          const result = await api.auditDesignVersion(targetDraft.id, targetDraft.current_revision_id || undefined);
+          setAuditResult(result);
+        } catch (auditErr: any) {
+          console.warn("Auto-audit warning before review submission:", auditErr);
+        }
+      }
+
+      const updated = await api.submitDesignForReview(targetDraft.id);
       setActiveDraft(updated);
       setSaveSuccessMessage("Creative asset submitted to Brand Review & Compliance queue.");
       loadProjectHistory();
     } catch (err: any) {
-      alert(`Submission error: ${err.message}`);
+      setUploadError(`Submission error: ${err.message || "Failed to submit for review."}`);
     } finally {
       setIsSubmittingReview(false);
     }
@@ -1161,6 +1244,56 @@ export default function DesignerCopilotPage() {
                 )}
               </div>
 
+              {/* Design Metadata Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-workspace rounded-xl border border-border">
+                <div className="sm:col-span-1 space-y-1">
+                  <label className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
+                    Design Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    placeholder="e.g. Q4 Hero Campaign Graphic"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary font-medium focus:outline-none focus:border-teal"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
+                    Target Placement
+                  </label>
+                  <select
+                    value={channel}
+                    onChange={(e) => setChannel(e.target.value as any)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary focus:outline-none focus:border-teal capitalize"
+                  >
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="twitter">X / Twitter</option>
+                    <option value="print">Print & Outdoor</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-ink-muted uppercase tracking-wider block">
+                    Creative Format
+                  </label>
+                  <select
+                    value={creativeFormat}
+                    onChange={(e) => setCreativeFormat(e.target.value as any)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-surface border border-border text-ink-primary focus:outline-none focus:border-teal capitalize"
+                  >
+                    <option value="social_post">Social Post</option>
+                    <option value="banner">Display Banner</option>
+                    <option value="story">Story / Vertical</option>
+                    <option value="carousel">Carousel Card</option>
+                    <option value="email_header">Email Header</option>
+                  </select>
+                </div>
+              </div>
+
               {/* Upload Dropzone */}
               <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-teal/40 transition bg-workspace">
                 <input
@@ -1179,6 +1312,18 @@ export default function DesignerCopilotPage() {
                     Supports PNG, JPEG, WebP, SVG (Max 25MB)
                   </span>
                 </label>
+                <div className="mt-3 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleLoadSampleMockup();
+                    }}
+                    className="text-[11px] font-semibold text-teal hover:underline flex items-center space-x-1 px-2.5 py-1 rounded bg-teal/10 hover:bg-teal/20 transition cursor-pointer"
+                  >
+                    <span>Or load sample creative asset for testing</span>
+                  </button>
+                </div>
               </div>
 
               {/* Upload Controls & Revision Summary */}
@@ -1237,18 +1382,38 @@ export default function DesignerCopilotPage() {
 
               {/* Visual Preview Frame */}
               {previewUrl ? (
-                <div className="relative rounded-lg overflow-hidden border border-border bg-[#0B132B] flex items-center justify-center p-4 min-h-[300px]">
+                <div className="relative rounded-lg overflow-hidden border border-border bg-[#0B132B] flex items-center justify-center p-4 min-h-[360px] lg:min-h-[440px]">
                   <img
                     src={previewUrl}
                     alt="Design Preview"
-                    className="max-h-[420px] max-w-full object-contain rounded shadow-lg"
+                    className="max-h-[480px] max-w-full object-contain rounded shadow-lg"
                   />
-                  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-md px-2 py-1 rounded text-[10px] text-slate-300 font-mono">
-                    Target: {aspectRatio}
+                  <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+                    <span className="bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] text-slate-300 font-mono border border-white/10">
+                      Target: {aspectRatio}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewUrl(null);
+                        setUploadedFile(null);
+                        setUploadError(null);
+                        const fileInput = document.getElementById("design_file_input") as HTMLInputElement | null;
+                        if (fileInput) fileInput.value = "";
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/85 hover:bg-rose-600 active:bg-rose-700 text-white border border-white/25 shadow-lg backdrop-blur-md text-xs font-bold font-mono transition-all cursor-pointer group/cut focus:outline-none focus:ring-2 focus:ring-rose-400"
+                      title="Cut existing image to upload a new one"
+                      aria-label="Cut existing image to upload a new one"
+                    >
+                      <X className="w-4 h-4 text-white stroke-[2.5] group-hover/cut:rotate-90 transition-transform duration-200" />
+                      <span className="text-xs font-bold font-mono tracking-tight text-white select-none">
+                        Cut
+                      </span>
+                    </button>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-lg border border-border bg-[#0B132B] p-8 text-center text-ink-muted flex flex-col items-center justify-center min-h-[240px]">
+                <div className="rounded-lg border border-border bg-[#0B132B] p-8 text-center text-ink-muted flex flex-col items-center justify-center min-h-[280px]">
                   <FileImage className="w-8 h-8 text-slate-600 mb-2" />
                   <span className="text-xs">No artwork preview loaded. Upload an image to view canvas layout.</span>
                 </div>
@@ -1484,22 +1649,33 @@ export default function DesignerCopilotPage() {
               )}
 
               {/* Submit for Review Button */}
-              {activeDraft && (
+              {(activeDraft || uploadedFile || previewUrl) && (
                 <div className="pt-3 border-t border-border flex items-center justify-between">
                   <div className="text-[11px] text-ink-muted">
-                    Ready for human review?
+                    {activeDraft?.status === "submitted"
+                      ? "Submitted to Review Queue"
+                      : "Ready for human brand & compliance sign-off?"}
                   </div>
 
                   <button
                     type="button"
                     onClick={handleSubmitForReview}
-                    disabled={isSubmittingReview || activeDraft.status === "submitted"}
+                    disabled={isSubmittingReview || activeDraft?.status === "submitted"}
                     className="flex items-center space-x-1.5 py-2 px-3.5 rounded-lg bg-teal text-white text-xs font-semibold hover:bg-teal/90 transition shadow-sm disabled:opacity-50"
                   >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>
-                      {activeDraft.status === "submitted" ? "Submitted for Review" : "Submit for Human Review"}
-                    </span>
+                    {isSubmittingReview ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Submitting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>
+                          {activeDraft?.status === "submitted" ? "Submitted for Review" : "Submit for Human Review"}
+                        </span>
+                      </>
+                    )}
                   </button>
                 </div>
               )}
@@ -2190,5 +2366,20 @@ export default function DesignerCopilotPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DesignerCopilotPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[40vh] text-ink-muted text-xs space-y-3 p-8">
+          <div className="w-8 h-8 rounded-full border-2 border-teal border-t-transparent animate-spin"></div>
+          <p className="font-semibold text-navy">Loading Designer Copilot...</p>
+        </div>
+      }
+    >
+      <DesignerCopilotContent />
+    </Suspense>
   );
 }

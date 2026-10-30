@@ -3,12 +3,40 @@
  * Implements IApiService with dynamic JWT authentication & tenant scoping.
  * Automatically falls back to MockApiService if NEXT_PUBLIC_USE_MOCK=true or backend is unavailable.
  */
-import {
+import type {
   IApiService,
   CreateSubmissionInput,
   ReviewDecisionInput,
-  mockApi,
 } from "./mock-api";
+
+// Lazy-loaded Mock API proxy: Prevents bundling 3,750+ lines of mock fixtures in production client bundles
+let _mockApiPromise: Promise<any> | null = null;
+let _mockApiInstance: any = null;
+
+async function getMockApiInstance(): Promise<any> {
+  if (_mockApiInstance) return _mockApiInstance;
+  if (!_mockApiPromise) {
+    _mockApiPromise = import("./mock-api").then((mod) => {
+      _mockApiInstance = mod.mockApi;
+      return _mockApiInstance;
+    });
+  }
+  return _mockApiPromise;
+}
+
+const mockApi: any = new Proxy({}, {
+  get(_target, prop: string) {
+    if (prop === "then") return undefined;
+    return async (...args: any[]) => {
+      const realMock = await getMockApiInstance();
+      const fn = realMock[prop];
+      if (typeof fn === "function") {
+        return fn.apply(realMock, args);
+      }
+      return fn;
+    };
+  },
+});
 import {
   AuditResult,
   ContentSubmission,
@@ -272,6 +300,32 @@ export class ApiService implements IApiService {
       return await this.fetchJson<CommentsListResponse>(`/submissions/${submissionId}/comments`);
     } catch {
       return mockApi.getSubmissionComments(submissionId);
+    }
+  }
+
+  async getAllComments(): Promise<ContentComment[]> {
+    if (USE_MOCK) return mockApi.getAllComments();
+    try {
+      const res = await this.fetchJson<CommentsListResponse>("/comments");
+      if (res && Array.isArray(res.comments)) {
+        return res.comments;
+      }
+      return mockApi.getAllComments();
+    } catch {
+      // Graceful fallback: load submissions and their comments
+      try {
+        const subs = await this.getSubmissions();
+        const results = await Promise.all(
+          subs.map((s) => this.getSubmissionComments(s.id).catch(() => ({ comments: [] })))
+        );
+        const combined = results.flatMap((r) => r.comments || []);
+        if (combined.length > 0) {
+          return combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+        return mockApi.getAllComments();
+      } catch {
+        return mockApi.getAllComments();
+      }
     }
   }
 
@@ -1455,5 +1509,6 @@ export class ApiService implements IApiService {
 }
 
 export const api = new ApiService();
+export { mockApi };
 export type { IApiService, CreateSubmissionInput, ReviewDecisionInput };
 

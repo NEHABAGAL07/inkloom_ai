@@ -9,6 +9,34 @@ from app.models import ContentSubmission, ContentComment, AuditEvent
 from app.schemas.comment import CommentCreate, CommentResolveToggle, CommentResponse, CommentsListResponse
 
 router = APIRouter(prefix="/submissions/{submission_id}/comments", tags=["Designer Feedback & Comments"])
+org_comments_router = APIRouter(prefix="/comments", tags=["Designer Feedback & Comments"])
+
+
+@org_comments_router.get("", response_model=CommentsListResponse)
+def list_all_organization_comments(
+    db: Session = Depends(get_db),
+    auth: AuthContext = Depends(get_current_auth_context),
+):
+    """
+    List all reviewer comments, feedback, and designer change requests across all submissions for the organization.
+    """
+    comments = (
+        db.query(ContentComment)
+        .filter(ContentComment.organization_id == auth.organization_id)
+        .order_by(ContentComment.created_at.desc())
+        .all()
+    )
+
+    total_count = len(comments)
+    resolved_count = sum(1 for c in comments if c.is_resolved)
+    open_count = total_count - resolved_count
+
+    return CommentsListResponse(
+        comments=comments,
+        total_count=total_count,
+        open_count=open_count,
+        resolved_count=resolved_count,
+    )
 
 
 def get_role_display_name(roles: List[UserRole]) -> str:
