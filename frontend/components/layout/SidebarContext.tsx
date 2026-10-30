@@ -11,7 +11,7 @@ interface SidebarContextType {
   isDesktopCollapsed: boolean;
   setIsDesktopCollapsed: (collapsed: boolean) => void;
   toggleDesktopCollapsed: () => void;
-  menuTriggerRef: React.RefObject<HTMLButtonElement>;
+  menuTriggerRef: React.RefObject<HTMLButtonElement | null>;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);

@@ -1,19 +1,50 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 
+const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+if (process.platform === "win32") {
+  try {
+    const fixScript = path.resolve(__dirname, "compat/windows-fs-fix.cjs").replace(/\\/g, "/");
+    if (!process.env.NODE_OPTIONS?.includes("windows-fs-fix.cjs")) {
+      process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS || ""} --require "${fixScript}"`.trim();
+    }
+  } catch {}
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: process.env.BUILD_STANDALONE === "1" ? "standalone" : undefined,
+  experimental: {
+    workerThreads: false,
+    cpus: 1,
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        react: path.resolve(__dirname, "node_modules/react"),
-        "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
-      };
+      try {
+        const reactPath = path.dirname(require.resolve("react/package.json"));
+        const reactDomPkg = require.resolve("react-dom/package.json");
+        const reactDomPath = path.dirname(reactDomPkg);
+        const reactDomEntry = require.resolve("react-dom");
+        config.resolve.alias = {
+          ...config.resolve.alias,
+          react: reactPath,
+          "react-dom-original$": reactDomEntry,
+          "react-dom$": path.resolve(__dirname, "compat/react-dom.cjs"),
+          "react-dom": reactDomPath,
+        };
+      } catch {
+        config.resolve.alias = {
+          ...config.resolve.alias,
+          react: path.resolve(__dirname, "node_modules/react"),
+          "react-dom-original$": path.resolve(__dirname, "node_modules/react-dom/index.js"),
+          "react-dom$": path.resolve(__dirname, "compat/react-dom.cjs"),
+          "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+        };
+      }
     }
     return config;
   },
