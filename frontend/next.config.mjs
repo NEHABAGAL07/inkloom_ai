@@ -11,7 +11,7 @@ if (process.platform === "win32") {
     if (!process.env.NODE_OPTIONS?.includes("windows-fs-fix.cjs")) {
       process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS || ""} --require "${fixScript}"`.trim();
     }
-  } catch {}
+  } catch { }
 }
 
 /** @type {import('next').NextConfig} */
