@@ -49,8 +49,25 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./inkloom_dev.db"
 
+    @field_validator("DATABASE_URL", mode="after")
+    def resolve_sqlite_path(cls, v: str) -> str:
+        if v.startswith("sqlite:///./") or v == "sqlite:///inkloom_dev.db":
+            backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            rel_file = v.replace("sqlite:///./", "").replace("sqlite:///", "")
+            abs_path = os.path.abspath(os.path.join(backend_dir, rel_file))
+            return f"sqlite:///{abs_path.replace(os.sep, '/')}"
+        return v
+
     # Uploads & Media
     UPLOAD_STORAGE_DIR: str = "./uploads"
+
+    @field_validator("UPLOAD_STORAGE_DIR", mode="after")
+    def resolve_upload_dir(cls, v: str) -> str:
+        if not os.path.isabs(v):
+            backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            return os.path.abspath(os.path.join(backend_dir, v))
+        return v
+
     MAX_UPLOAD_SIZE_MB: int = 25
     ALLOWED_MEDIA_TYPES: List[str] = [
         "text/plain",
@@ -59,13 +76,17 @@ class Settings(BaseSettings):
         "image/png",
         "image/jpeg",
         "image/webp",
+        "image/svg+xml",
+        "image/gif",
         "video/mp4",
+        "video/webm",
+        "video/quicktime",
     ]
 
     # AI Engine & Assistant LLM Settings (Online Gemini Real-Time AI)
     AI_ENGINE_MODE: str = "online"
     LLM_PROVIDER: str = "gemini"
-    LLM_API_KEY: str = "AQ.Ab8RN6KruE828jo2vpDRGZfu3eB246FGcrNpywoUFFXXaVxqAw"
+    LLM_API_KEY: str = ""
     LLM_MODEL_NAME: str = "gemini-3.5-flash-lite"
     LLM_TIMEOUT_SECONDS: float = 30.0
     LLM_MAX_OUTPUT_TOKENS: int = 1500

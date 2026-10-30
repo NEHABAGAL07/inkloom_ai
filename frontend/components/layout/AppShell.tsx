@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/services/auth-context";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Lock, ArrowRight, Home, AlertTriangle, RefreshCw, ServerOff } from "lucide-react";
 
 import { InkloomLoadingScreen } from "./InkloomLoadingScreen";
@@ -13,6 +13,7 @@ import { SidebarProvider } from "./SidebarContext";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, backendError, retryAuth } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [isRetrying, setIsRetrying] = useState(false);
   const [showSlowWarning, setShowSlowWarning] = useState(false);
 
@@ -31,14 +32,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [isLoading]);
 
+  const [isPublicViewParam, setIsPublicViewParam] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsPublicViewParam(window.location.search.includes("view=public"));
+    }
+  }, [pathname]);
+
   // Public routes that don't require the dashboard shell or auth
   const isPublicRoute =
     (!isAuthenticated && pathname === "/") ||
+    (isPublicViewParam && pathname === "/") ||
     pathname?.startsWith("/invite") ||
     pathname === "/login" ||
     pathname === "/signin" ||
     pathname === "/register" ||
     pathname === "/demo";
+
+  // Redirect unauthenticated requests accessing protected workspace routes to login
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && !isPublicRoute) {
+      const safeRedirect =
+        pathname && pathname.startsWith("/") && !pathname.startsWith("//") && !pathname.includes("://")
+          ? pathname
+          : "/";
+      router.replace(`/login?redirect=${encodeURIComponent(safeRedirect)}`);
+    }
+  }, [isLoading, isAuthenticated, isPublicRoute, pathname, router]);
 
   // Public routes render immediately without being blocked by background auth verification
   if (isPublicRoute) {
@@ -122,7 +142,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div>
             <h2 className="text-xl font-bold text-ink-primary tracking-tight">Authentication Required</h2>
             <p className="text-xs text-ink-secondary mt-2 leading-relaxed">
-              Please sign in with your enterprise credentials to access this brand governance workspace.
+              Redirecting you to sign in to access this brand governance workspace...
             </p>
           </div>
           <div className="pt-2 flex flex-col gap-2.5">

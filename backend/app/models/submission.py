@@ -22,7 +22,9 @@ class ContentSubmission(TimestampedModel):
     revisions = relationship("ContentRevision", back_populates="submission", cascade="all, delete-orphan", foreign_keys="ContentRevision.submission_id", order_by="desc(ContentRevision.version_number)")
     audits = relationship("AuditRun", back_populates="submission", cascade="all, delete-orphan")
     reviews = relationship("ReviewDecision", back_populates="submission", cascade="all, delete-orphan")
+    review_cycles = relationship("ReviewCycle", back_populates="submission", cascade="all, delete-orphan", order_by="desc(ReviewCycle.cycle_number)")
     comments = relationship("ContentComment", back_populates="submission", cascade="all, delete-orphan", order_by="ContentComment.created_at.desc()")
+    media_items = relationship("MediaItem", back_populates="submission", cascade="all, delete-orphan", foreign_keys="MediaItem.submission_id")
 
     @property
     def raw_text(self):
@@ -35,6 +37,8 @@ class ContentSubmission(TimestampedModel):
 
     @property
     def file_name(self):
+        if self.media_items:
+            return self.media_items[0].original_filename
         if self.revisions:
             for r in self.revisions:
                 if self.current_revision_id and r.id == self.current_revision_id and r.file_name:
@@ -48,6 +52,8 @@ class ContentSubmission(TimestampedModel):
 
     @property
     def file_path(self):
+        if self.media_items:
+            return self.media_items[0].file_path
         if self.revisions:
             for r in self.revisions:
                 if self.current_revision_id and r.id == self.current_revision_id:
@@ -57,6 +63,8 @@ class ContentSubmission(TimestampedModel):
 
     @property
     def media_url(self):
+        if self.media_items:
+            return self.media_items[0].media_url
         if self.revisions:
             for r in self.revisions:
                 if self.current_revision_id and r.id == self.current_revision_id:

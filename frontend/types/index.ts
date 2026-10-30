@@ -1300,3 +1300,144 @@ export interface CopilotFeedbackRequest {
   rating_category?: "solved_task" | "generic_or_irrelevant" | "missed_context" | "unsupported_claim" | "suggestion_needs_improvement" | "tool_failed";
   comment?: string;
 }
+
+// =========================================================================
+// Centralized Review Cycles, Departmental Reviews, & Feedback Types
+// =========================================================================
+
+export interface DepartmentFeedbackItem {
+  id: string;
+  organization_id?: string;
+  cycle_id: string;
+  department_review_id?: string;
+  submission_id: string;
+  revision_id?: string;
+  reviewer_id?: string;
+  reviewer_name: string;
+  reviewer_department: "manager" | "marketing" | "legal";
+  feedback_category: string;
+  feedback_description: string;
+  requested_correction?: string;
+  review_outcome: "no_changes_required" | "changes_requested";
+  status: "open" | "resolved" | "acknowledged" | "action_required" | "approved";
+  relevant_audit_evidence?: Record<string, any>;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface DepartmentReviewRecord {
+  id: string;
+  organization_id?: string;
+  cycle_id: string;
+  submission_id: string;
+  revision_id?: string;
+  department: "manager" | "marketing" | "legal";
+  reviewer_id?: string;
+  reviewer_name?: string;
+  review_status: "pending" | "completed";
+  outcome?: "no_changes_required" | "changes_requested";
+  comments?: string;
+  submitted_at?: string;
+  feedback_items?: DepartmentFeedbackItem[];
+}
+
+export interface ReviewCycleRecord {
+  id: string;
+  organization_id: string;
+  submission_id: string;
+  revision_id?: string;
+  cycle_number: number;
+  status: "in_progress" | "changes_requested" | "review_complete" | "approved";
+  final_approval_status: "pending_approval" | "approved" | "rejected";
+  final_approved_by?: string;
+  final_approved_at?: string;
+  started_at: string;
+  completed_at?: string;
+  departmental_reviews: DepartmentReviewRecord[];
+  feedback_records: DepartmentFeedbackItem[];
+}
+
+export interface DesignVersionSummaryItem {
+  version_id: string;
+  version_number: number;
+  file_name?: string;
+  file_path?: string;
+  media_url?: string;
+  created_at: string;
+  change_summary?: string;
+}
+
+export interface DesignerFeedbackGroupItem {
+  submission_id: string;
+  title: string;
+  description?: string;
+  content_type: string;
+  current_version: number;
+  thumbnail_url?: string;
+  file_name?: string;
+  created_at: string;
+  workflow_status: string;
+  active_cycle?: ReviewCycleRecord;
+  cycles: ReviewCycleRecord[];
+  versions: DesignVersionSummaryItem[];
+  has_changes_requested: boolean;
+  all_reviews_completed: boolean;
+}
+
+export interface DesignerFeedbackSummaryData {
+  total_feedback_items: number;
+  changes_requested_count: number;
+  reviews_completed_count: number;
+  designs_awaiting_review_count: number;
+  design_groups: DesignerFeedbackGroupItem[];
+}
+
+export interface SubmitDepartmentReviewInput {
+  department: "manager" | "marketing" | "legal";
+  outcome: "no_changes_required" | "changes_requested";
+  comments?: string;
+  feedback_items?: Array<{
+    category: string;
+    description: string;
+    requested_correction?: string;
+    evidence?: Record<string, any>;
+  }>;
+}
+
+// =========================================================================
+// Media Items & Uploads
+// =========================================================================
+
+export interface MediaItem {
+  id: string;
+  organization_id: string;
+  campaign_id?: string | null;
+  submission_id?: string | null;
+  original_filename: string;
+  stored_filename: string;
+  file_path: string;
+  file_type: "image" | "video" | "document" | "other";
+  mime_type: string;
+  file_size: number;
+  uploaded_by?: string | null;
+  description?: string | null;
+  status: string;
+  extra_metadata?: Record<string, any> | null;
+  media_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MediaItemListResponse {
+  items: MediaItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface UploadMediaInput {
+  file: File;
+  description?: string;
+  campaign_id?: string;
+  title?: string;
+}

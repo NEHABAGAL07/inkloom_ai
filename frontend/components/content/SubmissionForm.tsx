@@ -26,21 +26,30 @@ export function SubmissionForm({ onAuditStarted }: SubmissionFormProps) {
     setIsSubmitting(true);
 
     try {
-      // 1. Create Submission
-      const sub = await api.createSubmission({
-        title,
-        description,
-        content_type: mode === "text" ? "text" : "document",
-        initial_text: mode === "text" ? text : `[File uploaded: ${selectedFile?.name}]`,
-      });
+      let subId: string;
+      if (mode === "file" && selectedFile) {
+        const media = await api.uploadMedia(selectedFile, {
+          title,
+          description,
+        });
+        subId = media.submission_id || media.id;
+      } else {
+        const sub = await api.createSubmission({
+          title,
+          description,
+          content_type: "text",
+          initial_text: text,
+        });
+        subId = sub.id;
+      }
 
-      // 2. Trigger Audit
-      await api.triggerAudit(sub.id);
+      // Trigger Audit
+      await api.triggerAudit(subId);
 
       if (onAuditStarted) {
-        onAuditStarted(sub.id);
+        onAuditStarted(subId);
       } else {
-        window.location.href = `/audits?id=${sub.id}`;
+        window.location.href = `/audits?id=${subId}`;
       }
     } catch (err: any) {
       setError(err.message || "Failed to submit content for audit.");

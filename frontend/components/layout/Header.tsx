@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   Bell,
   Menu,
+  Home,
 } from "lucide-react";
 
 export function Header() {
@@ -113,10 +114,8 @@ export function Header() {
     setIsSigningOut(true);
     try {
       await logout();
-      router.push("/?reason=logged_out");
     } catch (err) {
       console.error("Sign out error:", err);
-      router.push("/?reason=logged_out");
     } finally {
       setIsSigningOut(false);
       setIsProfileOpen(false);
@@ -371,6 +370,20 @@ export function Header() {
                   <div className="flex-1 text-left">
                     <div className="font-semibold text-ink-primary">Team & Permissions</div>
                     <div className="text-[10px] text-ink-muted">View team members and role access</div>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/?view=public"
+                  role="menuitem"
+                  tabIndex={0}
+                  onClick={() => setIsProfileOpen(false)}
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-ink-secondary hover:text-ink-primary hover:bg-workspace rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-teal"
+                >
+                  <Home className="w-4 h-4 text-teal shrink-0" />
+                  <div className="flex-1 text-left">
+                    <div className="font-semibold text-ink-primary">Public Landing Page</div>
+                    <div className="text-[10px] text-ink-muted">View external showcase and overview</div>
                   </div>
                 </Link>
               </div>

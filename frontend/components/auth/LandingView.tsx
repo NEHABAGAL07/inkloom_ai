@@ -894,7 +894,7 @@ export function LandingView() {
             <Link href="/register" className="hover:text-slate-900 dark:hover:text-white transition py-1">
               Create Workspace
             </Link>
-            <Link href="/login" className="hover:text-slate-900 dark:hover:text-white transition py-1">
+            <Link href="/demo" className="hover:text-slate-900 dark:hover:text-white transition py-1">
               Explore Demo
             </Link>
           </div>
