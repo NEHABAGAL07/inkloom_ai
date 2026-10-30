@@ -165,13 +165,13 @@ export function ManagerDashboard({
 
   const isAuthorOfSub = Boolean(
     selectedSubForAudit &&
-    user &&
-    ((selectedSubForAudit.creator_id && selectedSubForAudit.creator_id === user.id) ||
-      (selectedSubForAudit.author_id && selectedSubForAudit.author_id === user.id) ||
-      (selectedSubForAudit.author_email &&
-        user.email &&
-        selectedSubForAudit.author_email.toLowerCase() === user.email.toLowerCase()) ||
-      (selectedSubForAudit.created_by && selectedSubForAudit.created_by === user.id))
+      user &&
+      ((selectedSubForAudit.creator_id && selectedSubForAudit.creator_id === user.id) ||
+        (selectedSubForAudit.author_id && selectedSubForAudit.author_id === user.id) ||
+        (selectedSubForAudit.author_email &&
+          user.email &&
+          selectedSubForAudit.author_email.toLowerCase() === user.email.toLowerCase()) ||
+        (selectedSubForAudit.created_by && selectedSubForAudit.created_by === user.id))
   );
 
   const handleManagerDecision = async (action: "approve" | "request_changes") => {
@@ -406,7 +406,7 @@ export function ManagerDashboard({
           <div>
             <h2 className="text-base font-heading font-bold text-[#18352F] dark:text-[#F7F3ED] flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
-              <span>Designer Submissions</span>
+              <span>Organization Content Pipeline</span>
             </h2>
             <p className="text-xs text-[#58716A] dark:text-[#85817D] mt-0.5">
               Real-time review and audit status across all active content assets
@@ -425,28 +425,31 @@ export function ManagerDashboard({
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           <button
             onClick={() => setPipelineFilter("all")}
-            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${pipelineFilter === "all"
+            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+              pipelineFilter === "all"
                 ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
                 : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
-              }`}
+            }`}
           >
             All ({submissions.length})
           </button>
           <button
             onClick={() => setPipelineFilter("pending")}
-            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${pipelineFilter === "pending"
+            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+              pipelineFilter === "pending"
                 ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
                 : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
-              }`}
+            }`}
           >
             Pending Review ({pendingCount})
           </button>
           <button
             onClick={() => setPipelineFilter("visual")}
-            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${pipelineFilter === "visual"
+            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+              pipelineFilter === "visual"
                 ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
                 : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
-              }`}
+            }`}
           >
             Media &amp; Visuals (
             {submissions.filter((s) => s.content_type === "image" || s.content_type === "video").length}
@@ -454,10 +457,11 @@ export function ManagerDashboard({
           </button>
           <button
             onClick={() => setPipelineFilter("approved")}
-            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${pipelineFilter === "approved"
+            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
+              pipelineFilter === "approved"
                 ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
                 : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
-              }`}
+            }`}
           >
             Approved ({approvedCount})
           </button>
@@ -474,10 +478,11 @@ export function ManagerDashboard({
                 <div
                   key={sub.id}
                   onClick={() => setSelectedPipelineSub(sub)}
-                  className={`py-3.5 flex items-center justify-between px-3 rounded-xl transition-all gap-3 cursor-pointer ${isSelected
+                  className={`py-3.5 flex items-center justify-between px-3 rounded-xl transition-all gap-3 cursor-pointer ${
+                    isSelected
                       ? "bg-[#E8F7F1] border border-[#C8E2D8] shadow-sm dark:bg-[#272727] dark:border-[#FFAA35]/40"
                       : "hover:bg-[#EFF8F4] border border-transparent dark:hover:bg-[#202020]"
-                    }`}
+                  }`}
                 >
                   <div className="space-y-1 max-w-[55%] min-w-0">
                     <div className="text-xs font-bold text-[#18352F] dark:text-[#F7F3ED] flex items-center gap-2 truncate">

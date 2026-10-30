@@ -49,7 +49,7 @@ export const ROLE_NAV_ITEMS: Record<"admin" | "designer" | "marketing" | "legal"
   ],
   designer: [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Media Audit ", href: "/media-audit", icon: ImageIcon },
+    { name: "Media Audit & Guidelines", href: "/media-audit", icon: ImageIcon },
     { name: "Designer Studio & Copilot", href: "/designer", icon: Palette },
     { name: "Campaigns", href: "/campaigns", icon: Briefcase },
     { name: "Review history", href: "/audits", icon: Folder },
@@ -199,10 +199,10 @@ export function Sidebar() {
   const primaryActionTitle = isDesigner
     ? "Create and upload new design"
     : roleKey === "marketing"
-      ? "Review submissions from marketing perspective"
-      : roleKey === "legal"
-        ? "Review submissions for legal and compliance"
-        : "Review submitted designs";
+    ? "Review submissions from marketing perspective"
+    : roleKey === "legal"
+    ? "Review submissions for legal and compliance"
+    : "Review submitted designs";
 
   // Consistent high-contrast styling for navigation items
   const getItemClasses = useCallback(
@@ -242,14 +242,16 @@ export function Sidebar() {
           1. Desktop / Tablet Responsive Sidebar (Sticky in layout)
           ======================================================== */}
       <aside
-        className={`hidden lg:flex flex-col h-screen sticky top-0 shrink-0 bg-[#E6F7F2] dark:bg-[#1C1C1C] border-r border-[#D3EEE5] dark:border-[#383838] text-ink-primary select-none z-30 transition-all duration-200 ease-in-out ${isDesktopCollapsed ? "w-20" : "w-64"
-          }`}
+        className={`hidden lg:flex flex-col h-screen sticky top-0 shrink-0 bg-[#E6F7F2] dark:bg-[#1C1C1C] border-r border-[#D3EEE5] dark:border-[#383838] text-ink-primary select-none z-30 transition-all duration-200 ease-in-out ${
+          isDesktopCollapsed ? "w-20" : "w-64"
+        }`}
         aria-label="Workspace navigation"
       >
         {/* Brand Header: consistent h-16 height in both expanded and collapsed */}
         <div
-          className={`h-16 border-b border-[#D3EEE5] dark:border-[#383838] flex items-center shrink-0 ${isDesktopCollapsed ? "justify-center px-2" : "px-4 justify-between"
-            }`}
+          className={`h-16 border-b border-[#D3EEE5] dark:border-[#383838] flex items-center shrink-0 ${
+            isDesktopCollapsed ? "justify-center px-2" : "px-4 justify-between"
+          }`}
         >
           <Link
             href="/"
@@ -282,8 +284,9 @@ export function Sidebar() {
             href={primaryActionHref}
             title={primaryActionTitle}
             aria-label={primaryActionLabel}
-            className={`flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white dark:btn-gradient-warm text-xs font-bold shadow-md hover:opacity-95 tracking-tight group transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal ${isDesktopCollapsed ? "w-11 h-11 p-0" : "w-full px-4 py-2.5"
-              }`}
+            className={`flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white dark:btn-gradient-warm text-xs font-bold shadow-md hover:opacity-95 tracking-tight group transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
+              isDesktopCollapsed ? "w-11 h-11 p-0" : "w-full px-4 py-2.5"
+            }`}
           >
             <Plus className="w-4 h-4 text-white dark:text-[#111111] stroke-[2.5] transition-transform duration-200 group-hover:rotate-90 shrink-0" />
             {!isDesktopCollapsed && <span>+ {primaryActionLabel}</span>}
@@ -323,8 +326,9 @@ export function Sidebar() {
         {/* Unified User Account Footer with Integrated Menu (Theme Toggle removed) */}
         <div
           ref={accountMenuRef}
-          className={`border-t border-[#D3EEE5] dark:border-[#383838] bg-[#E6F7F2] dark:bg-[#1C1C1C] relative shrink-0 ${isDesktopCollapsed ? "p-2.5 flex justify-center" : "p-3"
-            }`}
+          className={`border-t border-[#D3EEE5] dark:border-[#383838] bg-[#E6F7F2] dark:bg-[#1C1C1C] relative shrink-0 ${
+            isDesktopCollapsed ? "p-2.5 flex justify-center" : "p-3"
+          }`}
         >
           {/* Expanded Profile Trigger Button */}
           {!isDesktopCollapsed ? (
@@ -336,10 +340,11 @@ export function Sidebar() {
               aria-haspopup="true"
               aria-label="User account menu"
               title={`Account: ${user?.full_name || user?.email || "User"} (${getRoleLabel(activeRole)})`}
-              className={`w-full flex items-center justify-between p-2 rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal ${isAccountMenuOpen
-                ? "bg-[#D6F2E8] dark:bg-[#282828] border border-[#BDE7D9] dark:border-[#3E3E3E]"
-                : "hover:bg-[#D6F2E8] dark:hover:bg-[#252525] border border-transparent"
-                }`}
+              className={`w-full flex items-center justify-between p-2 rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
+                isAccountMenuOpen
+                  ? "bg-[#D6F2E8] dark:bg-[#282828] border border-[#BDE7D9] dark:border-[#3E3E3E]"
+                  : "hover:bg-[#D6F2E8] dark:hover:bg-[#252525] border border-transparent"
+              }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#087F70] via-[#10A995] to-[#43D6B3] text-white dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-[#111111] flex items-center justify-center font-bold text-xs shadow-xs shrink-0 select-none">
@@ -356,8 +361,9 @@ export function Sidebar() {
               </div>
 
               <ChevronUp
-                className={`w-4 h-4 text-slate-400 dark:text-[#85817D] transition-transform duration-200 shrink-0 ${isAccountMenuOpen ? "rotate-180 text-[#0F766E] dark:text-[#FFAA35]" : ""
-                  }`}
+                className={`w-4 h-4 text-slate-400 dark:text-[#85817D] transition-transform duration-200 shrink-0 ${
+                  isAccountMenuOpen ? "rotate-180 text-[#0F766E] dark:text-[#FFAA35]" : ""
+                }`}
               />
             </button>
           ) : (
@@ -370,10 +376,11 @@ export function Sidebar() {
               aria-haspopup="true"
               aria-label={`Account menu for ${user?.full_name || "User"}`}
               title={`Account: ${user?.full_name || user?.email || "User"} (${getRoleLabel(activeRole)})`}
-              className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal ${isAccountMenuOpen
-                ? "bg-[#D6F2E8] dark:bg-[#282828] border border-[#BDE7D9] dark:border-[#3E3E3E]"
-                : "hover:bg-[#D6F2E8] dark:hover:bg-[#252525] border border-transparent"
-                }`}
+              className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
+                isAccountMenuOpen
+                  ? "bg-[#D6F2E8] dark:bg-[#282828] border border-[#BDE7D9] dark:border-[#3E3E3E]"
+                  : "hover:bg-[#D6F2E8] dark:hover:bg-[#252525] border border-transparent"
+              }`}
             >
               <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#087F70] via-[#10A995] to-[#43D6B3] text-white dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-[#111111] flex items-center justify-center font-bold text-xs shadow-xs select-none">
                 {userInitials}
@@ -386,10 +393,11 @@ export function Sidebar() {
             <div
               role="menu"
               aria-label="User account actions"
-              className={`absolute z-50 bg-white dark:bg-[#202020] border border-[#D3EEE5] dark:border-[#383838] rounded-2xl p-3 shadow-dropdown animate-in fade-in zoom-in-95 duration-100 ${isDesktopCollapsed
-                ? "left-full bottom-0 ml-3 w-72"
-                : "bottom-full left-3 right-3 mb-2"
-                }`}
+              className={`absolute z-50 bg-white dark:bg-[#202020] border border-[#D3EEE5] dark:border-[#383838] rounded-2xl p-3 shadow-dropdown animate-in fade-in zoom-in-95 duration-100 ${
+                isDesktopCollapsed
+                  ? "left-full bottom-0 ml-3 w-72"
+                  : "bottom-full left-3 right-3 mb-2"
+              }`}
             >
               {/* User Identity & Role Context */}
               <div className="p-3 rounded-xl bg-[#F0FAF6] dark:bg-[#171717] border border-[#DDEBE5] dark:border-[#2C2C2C] mb-2">
@@ -567,10 +575,11 @@ export function Sidebar() {
                   aria-expanded={isMobileAccountMenuOpen}
                   aria-haspopup="true"
                   aria-label="User account menu"
-                  className={`w-full flex items-center justify-between p-2 rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal ${isMobileAccountMenuOpen
-                    ? "bg-[#D6F2E8] dark:bg-[#282828] border border-[#BDE7D9] dark:border-[#3E3E3E]"
-                    : "hover:bg-[#D6F2E8] dark:hover:bg-[#252525] border border-transparent"
-                    }`}
+                  className={`w-full flex items-center justify-between p-2 rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
+                    isMobileAccountMenuOpen
+                      ? "bg-[#D6F2E8] dark:bg-[#282828] border border-[#BDE7D9] dark:border-[#3E3E3E]"
+                      : "hover:bg-[#D6F2E8] dark:hover:bg-[#252525] border border-transparent"
+                  }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#087F70] via-[#10A995] to-[#43D6B3] text-white dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-[#111111] flex items-center justify-center font-bold text-xs shadow-xs shrink-0 select-none">
@@ -587,8 +596,9 @@ export function Sidebar() {
                   </div>
 
                   <ChevronUp
-                    className={`w-4 h-4 text-slate-400 dark:text-[#85817D] transition-transform duration-200 shrink-0 ${isMobileAccountMenuOpen ? "rotate-180 text-[#0F766E] dark:text-[#FFAA35]" : ""
-                      }`}
+                    className={`w-4 h-4 text-slate-400 dark:text-[#85817D] transition-transform duration-200 shrink-0 ${
+                      isMobileAccountMenuOpen ? "rotate-180 text-[#0F766E] dark:text-[#FFAA35]" : ""
+                    }`}
                   />
                 </button>
 
