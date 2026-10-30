@@ -1,8 +1,6 @@
 import path from "path";
 import { fileURLToPath } from "url";
-import { createRequire } from "module";
 
-const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 if (process.platform === "win32") {
@@ -11,7 +9,7 @@ if (process.platform === "win32") {
     if (!process.env.NODE_OPTIONS?.includes("windows-fs-fix.cjs")) {
       process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS || ""} --require "${fixScript}"`.trim();
     }
-  } catch { }
+  } catch {}
 }
 
 /** @type {import('next').NextConfig} */
@@ -24,27 +22,11 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      try {
-        const reactPath = path.dirname(require.resolve("react/package.json"));
-        const reactDomPkg = require.resolve("react-dom/package.json");
-        const reactDomPath = path.dirname(reactDomPkg);
-        const reactDomEntry = require.resolve("react-dom");
-        config.resolve.alias = {
-          ...config.resolve.alias,
-          react: reactPath,
-          "react-dom-original$": reactDomEntry,
-          "react-dom$": path.resolve(__dirname, "compat/react-dom.cjs"),
-          "react-dom": reactDomPath,
-        };
-      } catch {
-        config.resolve.alias = {
-          ...config.resolve.alias,
-          react: path.resolve(__dirname, "node_modules/react"),
-          "react-dom-original$": path.resolve(__dirname, "node_modules/react-dom/index.js"),
-          "react-dom$": path.resolve(__dirname, "compat/react-dom.cjs"),
-          "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
-        };
-      }
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        react: path.resolve(__dirname, "node_modules/react"),
+        "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      };
     }
     return config;
   },
