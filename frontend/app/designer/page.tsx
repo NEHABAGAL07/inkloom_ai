@@ -15,7 +15,10 @@ import {
   DesignDraftDetailResponse,
   AuditResult,
   Finding,
+  BrandGuidelineProfile,
+  ContentSubmission,
 } from "@/types";
+import { BrandStandardsAndVisualAnalysis } from "@/components/designer/BrandStandardsAndVisualAnalysis";
 import {
   Palette,
   Sparkles,
@@ -58,8 +61,8 @@ function DesignerCopilotContent() {
   const queryTab = searchParams?.get("tab");
   const queryAction = searchParams?.get("action");
 
-  // Active workspace tab
-  const [activeTab, setActiveTab] = useState<"brief_concepts" | "canvas_audit" | "asset_library" | "history" | "copilot_chat">("brief_concepts");
+  // Active workspace tab (defaults to canvas_audit so Design Studio, Canvas & Audit tools are immediately visible)
+  const [activeTab, setActiveTab] = useState<"brief_concepts" | "canvas_audit" | "asset_library" | "history" | "copilot_chat">("canvas_audit");
 
   // Automatically activate canvas_audit tab when navigating via "New Design"
   useEffect(() => {
@@ -137,6 +140,13 @@ function DesignerCopilotContent() {
   // ==========================================
   const [savedBriefs, setSavedBriefs] = useState<DesignDraftDetailResponse[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // ==========================================
+  // Brand Design Standards & Assets State
+  // ==========================================
+  const [guidelineProfile, setGuidelineProfile] = useState<BrandGuidelineProfile | null>(null);
+  const [designerSubmissions, setDesignerSubmissions] = useState<ContentSubmission[]>([]);
+  const [selectedAssetSub, setSelectedAssetSub] = useState<ContentSubmission | null>(null);
 
   // ==========================================
   // Intelligent Creative Partner (Copilot) State & Handlers
@@ -244,11 +254,48 @@ function DesignerCopilotContent() {
     }
   };
 
-  // Load Brand Assets & Projects on mount
+  // Load Brand Assets, Guidelines, Submissions & Projects on mount
   useEffect(() => {
     loadBrandAssets();
     loadProjectHistory();
+    loadGuidelineProfile();
+    loadDesignerSubmissions();
   }, []);
+
+  const loadGuidelineProfile = async () => {
+    try {
+      const profile = await api.getGuidelineProfile();
+      setGuidelineProfile(profile);
+    } catch (err) {
+      console.warn("Failed to load guideline profile:", err);
+    }
+  };
+
+  const loadDesignerSubmissions = async () => {
+    try {
+      const subs = await api.getSubmissions();
+      const visualSubs = (subs || []).filter(
+        (s) => s.content_type === "image" || s.content_type === "video" || s.content_type === "document"
+      );
+      setDesignerSubmissions(visualSubs);
+    } catch (err) {
+      console.warn("Failed to load designer submissions:", err);
+    }
+  };
+
+  const handleSelectExistingAsset = async (sub: ContentSubmission) => {
+    setSelectedAssetSub(sub);
+    setProjectName(sub.title);
+    if (sub.media_url || sub.file_path) {
+      setPreviewUrl(sub.media_url || sub.file_path || null);
+    }
+    try {
+      const audit = await api.getAudit(sub.id);
+      setAuditResult(audit);
+    } catch (e) {
+      setAuditResult(null);
+    }
+  };
 
   const loadBrandAssets = async () => {
     try {
@@ -387,6 +434,8 @@ function DesignerCopilotContent() {
       setUploadedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setUploadError(null);
+      setSelectedAssetSub(null);
+      setAuditResult(null); // Clear stale analysis so it doesn't display for newly uploaded design
     }
   };
 
@@ -577,6 +626,20 @@ function DesignerCopilotContent() {
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
             <span>LLM: <strong>gemini-1.5-pro (Gov)</strong></span>
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("canvas_audit");
+              setTimeout(() => {
+                document.getElementById("brand-standards-ai-analysis")?.scrollIntoView({ behavior: "smooth" });
+              }, 100);
+            }}
+            className="hidden sm:flex items-center space-x-1.5 text-xs font-semibold text-teal bg-teal/10 hover:bg-teal/20 px-3 py-1.5 rounded-lg border border-teal/25 transition cursor-pointer"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Brand Standards &amp; AI Analysis</span>
+          </button>
         </div>
       </div>
 
@@ -1203,7 +1266,8 @@ function DesignerCopilotContent() {
           TAB 2: DESIGN CANVAS & AUDIT WORKFLOW
           ========================================== */}
       {activeTab === "canvas_audit" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Canvas Preview, Upload, & Version History (7 Cols) */}
           <div className="lg:col-span-7 space-y-4">
             {/* Active Concept Summary Banner */}
@@ -1682,7 +1746,8 @@ function DesignerCopilotContent() {
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* ==========================================
           TAB 3: BRAND ASSET LIBRARY
@@ -2365,6 +2430,29 @@ function DesignerCopilotContent() {
           </div>
         </div>
       )}
+
+      {/* =========================================================================
+          PERMANENT BRAND DESIGN STANDARDS & AI VISUAL ANALYSIS
+          Always mounted in Designer Studio & Copilot below active workspace tools
+          ========================================================================= */}
+      <BrandStandardsAndVisualAnalysis
+        guidelineProfile={guidelineProfile}
+        auditResult={auditResult}
+        isAuditing={isAuditing}
+        activeAssetTitle={
+          uploadedFile?.name ||
+          selectedAssetSub?.title ||
+          activeDraft?.title ||
+          projectName ||
+          "Enterprise Creative Artwork"
+        }
+        activeAssetPreviewUrl={previewUrl || selectedAssetSub?.media_url || activeDraft?.current_file_path || null}
+        activeAssetSub={selectedAssetSub}
+        activeDraft={activeDraft}
+        availableAssets={designerSubmissions}
+        onSelectAsset={handleSelectExistingAsset}
+        onRunVisualAudit={handleRunVisualAudit}
+      />
     </div>
   );
 }

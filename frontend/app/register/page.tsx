@@ -156,9 +156,18 @@ export default function RegisterCompanyPage() {
 
         {/* Header */}
         <header className="px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex items-center justify-between border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-40 transition-colors duration-150">
-          <Link href="/" className="group shrink-0">
-            <InkloomLogo size="md" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1F1F1F] border border-slate-200/80 dark:border-[#383838] transition shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0284C7]"
+            >
+              <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
+              <span>Back to home</span>
+            </Link>
+            <Link href="/" className="group shrink-0">
+              <InkloomLogo size="md" />
+            </Link>
+          </div>
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <ThemeToggle className="!w-8 !h-8 !rounded-full shrink-0" />
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -166,7 +175,6 @@ export default function RegisterCompanyPage() {
                 href="/login"
                 className="text-xs text-ink-secondary hover:text-ink-primary flex items-center gap-1 font-medium transition py-1"
               >
-                <ChevronLeft className="w-4 h-4 shrink-0" />
                 <span className="hidden sm:inline">Already have an account? Sign In</span>
                 <span className="sm:hidden">Sign In</span>
               </Link>
@@ -396,6 +404,20 @@ export default function RegisterCompanyPage() {
                           </>
                         )}
                       </motion.button>
+
+                      <div className="pt-3 text-center text-xs space-y-1">
+                        <div>
+                          <span className="text-slate-500 dark:text-slate-400">Already registered? </span>
+                          <Link href="/login" className="font-bold text-[#2563EB] dark:text-[#FFAA35] hover:underline">
+                            Sign in to your account →
+                          </Link>
+                        </div>
+                        <div>
+                          <Link href="/" className="text-[11px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition">
+                            ← Return to home page
+                          </Link>
+                        </div>
+                      </div>
                     </div>
                   </form>
                 )}

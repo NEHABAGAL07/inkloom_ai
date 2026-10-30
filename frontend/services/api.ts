@@ -99,6 +99,10 @@ import {
   CopilotOrchestrateRequest,
   CopilotOrchestrateResponse,
   CopilotFeedbackRequest,
+  ReviewCycleRecord,
+  DepartmentReviewRecord,
+  DesignerFeedbackSummaryData,
+  SubmitDepartmentReviewInput,
 } from "../types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -1406,6 +1410,80 @@ export class ApiService implements IApiService {
         throw err;
       }
       return mockApi.markAllNotificationsRead();
+    }
+  }
+
+  // Phase 4 & 7: Centralized Review Cycles & Department Reviews
+  async getReviewCycles(submissionId?: string): Promise<ReviewCycleRecord[]> {
+    if (USE_MOCK) return mockApi.getReviewCycles(submissionId);
+    try {
+      const query = submissionId ? `?submission_id=${encodeURIComponent(submissionId)}` : "";
+      return await this.fetchJson<ReviewCycleRecord[]>(`/review-cycles${query}`, {
+        method: "GET",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getReviewCycles(submissionId);
+    }
+  }
+
+  async getReviewCycle(cycleId: string): Promise<ReviewCycleRecord> {
+    if (USE_MOCK) return mockApi.getReviewCycle(cycleId);
+    try {
+      return await this.fetchJson<ReviewCycleRecord>(`/review-cycles/${cycleId}`, {
+        method: "GET",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getReviewCycle(cycleId);
+    }
+  }
+
+  async submitDepartmentReview(cycleId: string, data: SubmitDepartmentReviewInput): Promise<DepartmentReviewRecord> {
+    if (USE_MOCK) return mockApi.submitDepartmentReview(cycleId, data);
+    try {
+      return await this.fetchJson<DepartmentReviewRecord>(`/review-cycles/${cycleId}/department-review`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.submitDepartmentReview(cycleId, data);
+    }
+  }
+
+  async grantFinalApproval(cycleId: string, rationale?: string): Promise<ReviewCycleRecord> {
+    if (USE_MOCK) return mockApi.grantFinalApproval(cycleId, rationale);
+    try {
+      return await this.fetchJson<ReviewCycleRecord>(`/review-cycles/${cycleId}/final-approval`, {
+        method: "POST",
+        body: JSON.stringify({ rationale }),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.grantFinalApproval(cycleId, rationale);
+    }
+  }
+
+  async getDesignerFeedbackSummary(): Promise<DesignerFeedbackSummaryData> {
+    if (USE_MOCK) return mockApi.getDesignerFeedbackSummary();
+    try {
+      return await this.fetchJson<DesignerFeedbackSummaryData>("/feedback/designer-summary", {
+        method: "GET",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getDesignerFeedbackSummary();
     }
   }
 }

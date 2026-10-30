@@ -19,7 +19,6 @@ import {
   Eye,
   Lock,
 } from "lucide-react";
-import { DesignerFeedbackComments } from "@/components/reviews/DesignerFeedbackComments";
 import { DesignAssetViewerModal } from "@/components/reviews/DesignAssetViewerModal";
 
 interface LegalDashboardProps {
@@ -423,17 +422,6 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
                     No critical violations detected by automated rule checks. Reviewer judgment required for release.
                   </div>
                 )}
-                {/* Department Suggestions & Improvement Box under Designer's Content */}
-                <DesignerFeedbackComments
-                  submissionId={selectedSubmission.id}
-                  submissionTitle={selectedSubmission.title}
-                  contentType={selectedSubmission.content_type}
-                  description={selectedSubmission.description}
-                  rawText={selectedSubmission.raw_text}
-                  fileName={selectedSubmission.file_name}
-                  mediaUrl={selectedSubmission.media_url}
-                  submission={selectedSubmission}
-                />
               </div>
             </div>
           ) : (
