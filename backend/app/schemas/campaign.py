@@ -64,6 +64,25 @@ class CampaignPolicyConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+class CampaignSummaryResponse(BaseModel):
+    total_campaigns: int
+    draft_campaigns: int
+    in_progress_campaigns: int
+    published_campaigns: int
+
+
+class CampaignSchedulePostRequest(BaseModel):
+    submission_id: str
+    platform: str
+    scheduled_at: str
+    notes: Optional[str] = None
+
+
+class CampaignPublishPostRequest(BaseModel):
+    schedule_id: str
+    notes: Optional[str] = None
+
+
 class CampaignCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     description: Optional[str] = None
@@ -83,6 +102,13 @@ class CampaignCreate(BaseModel):
         default_factory=list,
         description="Existing submissions/drafts/assets to attach immediately",
     )
+    # Marketing workspace extended fields
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    campaign_type: Optional[str] = None
+    platforms: Optional[List[str]] = None
+    content_formats: Optional[List[str]] = None
+    brand_info: Optional[str] = None
 
     model_config = ConfigDict(extra="ignore")
 
@@ -103,6 +129,14 @@ class CampaignUpdate(BaseModel):
     policy_config: Optional[Dict[str, Any]] = None
     campaign_metadata: Optional[Dict[str, Any]] = None
     status: Optional[str] = None
+    
+    # Marketing workspace extended fields
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    campaign_type: Optional[str] = None
+    platforms: Optional[List[str]] = None
+    content_formats: Optional[List[str]] = None
+    brand_info: Optional[str] = None
     
     # Optimistic concurrency lock: must match current campaign version
     version: Optional[int] = Field(None, description="Current campaign version for optimistic concurrency control")
@@ -162,6 +196,17 @@ class CampaignResponse(BaseModel):
     version: int
     created_at: datetime
     updated_at: datetime
+
+    # Extended Marketing Workspace properties
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    campaign_type: Optional[str] = "Product Launch"
+    platforms: List[str] = Field(default_factory=list)
+    content_formats: List[str] = Field(default_factory=list)
+    brand_info: Optional[str] = None
+    publishing_schedule: List[Dict[str, Any]] = Field(default_factory=list)
+    performance_metrics: Dict[str, Any] = Field(default_factory=dict)
+    ai_insights: Dict[str, Any] = Field(default_factory=dict)
 
     submissions: List[ContentSubmissionResponse] = Field(default_factory=list)
     review_tracks: Dict[str, ReviewTrackResult] = Field(default_factory=dict)

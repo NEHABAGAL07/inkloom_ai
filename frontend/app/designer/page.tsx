@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
@@ -57,6 +58,8 @@ function DesignerCopilotContent() {
   const searchParams = useSearchParams();
   const queryTab = searchParams?.get("tab");
   const queryAction = searchParams?.get("action");
+  const campaignIdParam = searchParams?.get("campaign_id");
+  const campaignNameParam = searchParams?.get("campaign_name");
 
   // Active workspace tab
   const [activeTab, setActiveTab] = useState<"brief_concepts" | "canvas_audit" | "asset_library" | "history" | "copilot_chat">("brief_concepts");
@@ -361,9 +364,22 @@ function DesignerCopilotContent() {
         selected_concept_data: selectedConcept as any,
         initial_image_url: previewUrl || undefined,
       });
+
+      if (campaignIdParam && saved?.id) {
+        try {
+          await api.associateSubmissionsToCampaign(campaignIdParam, [saved.id]);
+        } catch (assocErr) {
+          console.warn("Could not auto-link draft to campaign:", assocErr);
+        }
+      }
+
       setActiveDraft(saved);
       setSelectedRevisionId(saved.current_revision_id || null);
-      setSaveSuccessMessage("Creative brief successfully saved as project draft.");
+      setSaveSuccessMessage(
+        campaignIdParam
+          ? `Creative brief successfully saved and linked to campaign '${campaignNameParam || campaignIdParam}'.`
+          : "Creative brief successfully saved as project draft."
+      );
       loadProjectHistory();
       return saved;
     } catch (err: any) {
@@ -548,6 +564,32 @@ function DesignerCopilotContent() {
 
   return (
     <div className="space-y-6 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+      {/* Active Campaign Context Banner */}
+      {campaignIdParam && (
+        <div className="bg-teal/10 border border-teal/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-subtle animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-teal" />
+            </span>
+            <div>
+              <div className="text-xs font-bold text-teal font-mono uppercase tracking-wider">
+                Active Campaign Context
+              </div>
+              <div className="text-sm font-semibold text-ink-primary">
+                {campaignNameParam || campaignIdParam}
+              </div>
+            </div>
+          </div>
+          <Link
+            href={`/campaigns?id=${campaignIdParam}`}
+            className="text-xs font-bold text-teal hover:text-teal/80 underline decoration-teal/40 flex items-center gap-1 shrink-0"
+          >
+            <span>Return to Campaign Workspace ↗</span>
+          </Link>
+        </div>
+      )}
+
       {/* ==========================================
           Header Banner & Navigation Bar
           ========================================== */}

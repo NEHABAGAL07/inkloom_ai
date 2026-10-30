@@ -25,6 +25,8 @@ export interface ContentSubmission {
   file_name?: string;
   file_path?: string;
   media_url?: string;
+  campaign_id?: string;
+  audits?: any[];
   revisions?: ContentRevision[];
   created_at: string;
   updated_at: string;
@@ -1092,6 +1094,76 @@ export interface CampaignPolicyConfig {
   [key: string]: any;
 }
 
+export interface CampaignScheduledPost {
+  id: string;
+  submission_id: string;
+  title: string;
+  platform: string;
+  scheduled_at: string;
+  published_at?: string | null;
+  status: "draft" | "scheduled" | "published" | "cancelled";
+  notes?: string | null;
+  created_by?: string;
+  created_at?: string;
+}
+
+export interface CampaignPlatformBreakdown {
+  impressions: number;
+  clicks: number;
+  engagement_rate: number;
+}
+
+export interface CampaignPerformanceMetrics {
+  impressions: number;
+  reach: number;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  clicks: number;
+  engagement_rate: number;
+  content_count: number;
+  published_count: number;
+  platform_breakdown?: Record<string, CampaignPlatformBreakdown>;
+  performance_trends?: Array<{ day: string; impressions: number; engagement: number }>;
+}
+
+export interface CampaignAIInsights {
+  summary: string;
+  best_performing_content: Array<{
+    id: string;
+    title: string;
+    content_type: string;
+    status: string;
+    compliance_score: number;
+    critical_findings: number;
+  }>;
+  underperforming_content: Array<{
+    id: string;
+    title: string;
+    content_type: string;
+    status: string;
+    compliance_score: number;
+    critical_findings: number;
+  }>;
+  platform_comparisons: Array<{
+    platform: string;
+    strength: string;
+    engagement_rate: string;
+  }>;
+  audience_engagement_observations: string[];
+  suggested_content_improvements: string[];
+  recommendations_for_future_campaigns: string[];
+  evidence_basis: string;
+}
+
+export interface CampaignSummary {
+  total_campaigns: number;
+  draft_campaigns: number;
+  in_progress_campaigns: number;
+  published_campaigns: number;
+}
+
 export interface Campaign {
   id: string;
   organization_id: string;
@@ -1112,7 +1184,20 @@ export interface Campaign {
   creative_brief?: string | null;
   policy_config?: CampaignPolicyConfig;
   campaign_metadata?: Record<string, any>;
+  
+  // Extended Marketing Workspace fields
+  start_date?: string | null;
+  end_date?: string | null;
+  campaign_type?: string;
+  platforms?: string[];
+  content_formats?: string[];
+  brand_info?: string | null;
+  publishing_schedule?: CampaignScheduledPost[];
+  performance_metrics?: CampaignPerformanceMetrics;
+  ai_insights?: CampaignAIInsights;
+
   submissions?: ContentSubmission[];
+  media_items?: MediaItem[];
   review_tracks?: Record<string, ReviewTrackResult>;
   readiness?: CampaignReadinessEvaluation;
   created_at: string;
@@ -1134,6 +1219,14 @@ export interface CampaignCreate {
   creative_brief?: string;
   policy_config?: CampaignPolicyConfig;
   submission_ids?: string[];
+
+  // Extended Marketing Workspace fields
+  start_date?: string;
+  end_date?: string;
+  campaign_type?: string;
+  platforms?: string[];
+  content_formats?: string[];
+  brand_info?: string;
 }
 
 export interface CampaignUpdate {
@@ -1151,6 +1244,14 @@ export interface CampaignUpdate {
   creative_brief?: string;
   policy_config?: CampaignPolicyConfig;
   version?: number;
+
+  // Extended Marketing Workspace fields
+  start_date?: string;
+  end_date?: string;
+  campaign_type?: string;
+  platforms?: string[];
+  content_formats?: string[];
+  brand_info?: string;
 }
 
 export interface CampaignDecisionRequest {

@@ -80,3 +80,57 @@ class Campaign(TimestampedModel):
         foreign_keys="MediaItem.campaign_id",
         order_by="desc(MediaItem.created_at)",
     )
+
+    @property
+    def start_date(self):
+        meta = self.campaign_metadata or {}
+        return meta.get("start_date") or (self.created_at.isoformat() if self.created_at else None)
+
+    @property
+    def end_date(self):
+        meta = self.campaign_metadata or {}
+        if meta.get("end_date"):
+            return meta.get("end_date")
+        return self.deadline.isoformat() if self.deadline else None
+
+    @property
+    def campaign_type(self):
+        meta = self.campaign_metadata or {}
+        return meta.get("campaign_type") or "Product Launch"
+
+    @property
+    def platforms(self):
+        meta = self.campaign_metadata or {}
+        if "platforms" in meta and isinstance(meta["platforms"], list) and meta["platforms"]:
+            return meta["platforms"]
+        ch = (self.target_channel or "omnichannel").lower()
+        if ch == "omnichannel":
+            return ["LinkedIn", "Instagram", "Facebook", "Blog", "Email"]
+        return [ch.capitalize()]
+
+    @property
+    def content_formats(self):
+        meta = self.campaign_metadata or {}
+        if "content_formats" in meta and isinstance(meta["content_formats"], list) and meta["content_formats"]:
+            return meta["content_formats"]
+        return ["Social Post", "Image / Asset", "Article"]
+
+    @property
+    def brand_info(self):
+        meta = self.campaign_metadata or {}
+        return meta.get("brand_info") or self.product_name
+
+    @property
+    def publishing_schedule(self):
+        meta = self.campaign_metadata or {}
+        return meta.get("publishing_schedule") or []
+
+    @property
+    def performance_metrics(self):
+        meta = self.campaign_metadata or {}
+        return meta.get("performance_metrics") or {}
+
+    @property
+    def ai_insights(self):
+        meta = self.campaign_metadata or {}
+        return meta.get("ai_insights") or {}
