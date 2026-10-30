@@ -42,6 +42,13 @@ export default function RootLayout({
                   document.documentElement.classList.add('dark');
                 }
               })();
+              if (typeof window !== 'undefined') {
+                window.addEventListener('unhandledrejection', function(event) {
+                  if (event && event.reason && (String(event.reason).includes("'d'") || String(event.reason?.message).includes("'d'"))) {
+                    event.preventDefault();
+                  }
+                });
+              }
             `,
           }}
         />

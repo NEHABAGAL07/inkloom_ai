@@ -308,14 +308,12 @@ export function LandingView() {
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <motion.path
+                      <path
                         d="M2 8C20 2 30 13 50 7C70 2 80 13 100 7C120 2 130 13 150 7C154 5.5 158 6 158 6"
                         stroke="currentColor"
                         strokeWidth="3.5"
                         strokeLinecap="round"
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{ pathLength: 1, opacity: 1 }}
-                        transition={{ duration: 0.85, delay: 0.45, ease: "easeOut" }}
+                        className="transition-all duration-700 ease-out"
                       />
                     </svg>
                   </span>{" "}
