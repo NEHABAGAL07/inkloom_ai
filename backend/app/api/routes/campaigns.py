@@ -21,6 +21,9 @@ from app.schemas.campaign import (
     CampaignDecisionRequest,
     CampaignResponse,
     CampaignReadinessEvaluation,
+    CampaignSummaryResponse,
+    CampaignSchedulePostRequest,
+    CampaignPublishPostRequest,
 )
 from app.models.campaign import Campaign
 from app.models.audit_event import AuditEvent
@@ -75,6 +78,15 @@ def list_campaigns(
         readiness = CampaignPolicyService.evaluate_readiness(c, db)
         results.append(CampaignOrchestrator.build_response(c, readiness))
     return results
+
+
+@router.get("/summary", response_model=CampaignSummaryResponse)
+def get_campaigns_summary(
+    db: Session = Depends(get_db),
+    auth: AuthContext = Depends(get_current_auth_context),
+):
+    """Provides high-level campaign counts: total, draft, in-progress, published."""
+    return CampaignOrchestrator.get_campaign_summary(db=db, auth=auth)
 
 
 @router.get("/{campaign_id}", response_model=CampaignResponse)
@@ -232,3 +244,93 @@ def get_campaign_activity_timeline(
         }
         for e in events
     ]
+
+
+@router.post("/{campaign_id}/schedule", response_model=CampaignResponse)
+def schedule_campaign_post(
+    campaign_id: str,
+    payload: CampaignSchedulePostRequest,
+    db: Session = Depends(get_db),
+    auth: AuthContext = Depends(
+        require_roles(
+            UserRole.MARKETING,
+            UserRole.CREATOR,
+            UserRole.ADMIN,
+            UserRole.DESIGNER,
+            UserRole.REVIEWER,
+        )
+    ),
+):
+    """Schedules an approved or drafted submission on a designated marketing platform."""
+    campaign = CampaignOrchestrator.schedule_post(
+        db=db,
+        auth=auth,
+        campaign_id=campaign_id,
+        submission_id=payload.submission_id,
+        platform=payload.platform,
+        scheduled_at=payload.scheduled_at,
+        notes=payload.notes,
+    )
+    readiness = CampaignPolicyService.evaluate_readiness(campaign, db)
+    return CampaignOrchestrator.build_response(campaign, readiness)
+
+
+@router.post("/{campaign_id}/publish-post", response_model=CampaignResponse)
+def publish_campaign_post(
+    campaign_id: str,
+    payload: CampaignPublishPostRequest,
+    db: Session = Depends(get_db),
+    auth: AuthContext = Depends(
+        require_roles(
+            UserRole.MARKETING,
+            UserRole.CREATOR,
+            UserRole.ADMIN,
+            UserRole.REVIEWER,
+        )
+    ),
+):
+    """Confirms live social publication of a scheduled post item with timestamp."""
+    campaign = CampaignOrchestrator.publish_post(
+        db=db,
+        auth=auth,
+        campaign_id=campaign_id,
+        schedule_id=payload.schedule_id,
+        notes=payload.notes,
+    )
+    readiness = CampaignPolicyService.evaluate_readiness(campaign, db)
+    return CampaignOrchestrator.build_response(campaign, readiness)
+
+
+@router.get("/{campaign_id}/performance")
+def get_campaign_performance(
+    campaign_id: str,
+    db: Session = Depends(get_db),
+    auth: AuthContext = Depends(get_current_auth_context),
+):
+    """Retrieves live engagement, impressions, and platform performance breakdowns."""
+    return CampaignOrchestrator.get_or_calculate_performance(
+        db=db,
+        auth=auth,
+        campaign_id=campaign_id,
+    )
+
+
+@router.post("/{campaign_id}/insights")
+def generate_campaign_insights(
+    campaign_id: str,
+    db: Session = Depends(get_db),
+    auth: AuthContext = Depends(
+        require_roles(
+            UserRole.MARKETING,
+            UserRole.CREATOR,
+            UserRole.ADMIN,
+            UserRole.REVIEWER,
+        )
+    ),
+):
+    """Generates evidence-backed AI insights derived from campaign content and audits."""
+    return CampaignOrchestrator.generate_ai_insights(
+        db=db,
+        auth=auth,
+        campaign_id=campaign_id,
+    )
