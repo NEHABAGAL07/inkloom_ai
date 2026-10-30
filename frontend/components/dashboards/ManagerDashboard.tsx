@@ -526,7 +526,7 @@ export function ManagerDashboard({
 
                     <Link
                       href={`/audits?id=${sub.id}`}
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}
                       className="text-xs font-medium px-2 py-1 rounded-lg bg-[#EFF8F4] hover:bg-[#DDF3EB] text-[#58716A] hover:text-[#18352F] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#85817D] dark:hover:text-[#F7F3ED] dark:border-[#383838] transition"
                     >
                       Details
