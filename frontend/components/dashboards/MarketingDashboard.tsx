@@ -1592,61 +1592,83 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
       {/* Selected Draft Inspection & Reviewer Feedback Panel */}
 
       {selectedMarketingSub && (
-
-        <div className="bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-6 shadow-sm dark:shadow-card space-y-4">
-
+        <div className="bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-6 shadow-sm dark:shadow-card space-y-4 overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-[#383838] pb-3">
-
             <div>
-
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#10B981] dark:text-[#FFAA35]">
-
-                Submission Detail & Compliance State
-
+                Submission Detail &amp; Compliance State
               </span>
-
-              <h3 className="text-base font-heading font-bold text-[#0F172A] dark:text-[#F7F3ED] mt-0.5">
-
+              <h3 className="text-base font-heading font-bold text-[#0F172A] dark:text-[#F7F3ED] mt-0.5 break-words">
                 {selectedMarketingSub.title}
-
               </h3>
-
             </div>
-
             <div className="flex items-center gap-2">
-
               <span
-
                 className={`text-xs px-3 py-1 rounded-full font-bold border capitalize ${getStatusBadge(
-
                   selectedMarketingSub.status
-
                 )}`}
-
               >
-
                 Status: {selectedMarketingSub.status.replace("_", " ")}
-
               </span>
-
             </div>
-
           </div>
 
-
-
           <div className="space-y-4">
-            <div className="bg-slate-50 dark:bg-[#141414] rounded-xl p-4 border border-slate-200 dark:border-[#383838] space-y-2">
+            <div className="bg-slate-50 dark:bg-[#141414] rounded-xl p-4 border border-slate-200 dark:border-[#383838] space-y-2 overflow-hidden">
               <span className="text-[11px] font-bold uppercase text-[#64748B] dark:text-[#85817D]">
                 Current Draft Payload
               </span>
-              <p className="text-xs text-[#0F172A] dark:text-[#F7F3ED] font-sans leading-relaxed whitespace-pre-wrap">
-                {selectedMarketingSub.raw_text || "[No raw text payload]"}
-              </p>
+              {(() => {
+                const isImagePayload =
+                  selectedMarketingSub.content_type === "image" ||
+                  selectedMarketingSub.raw_text?.startsWith("data:image/") ||
+                  selectedMarketingSub.raw_text?.startsWith("data:") ||
+                  Boolean(selectedMarketingSub.media_url);
+
+                const imagePreviewUrl =
+                  selectedMarketingSub.media_url ||
+                  selectedMarketingSub.file_path ||
+                  (selectedMarketingSub.raw_text?.startsWith("data:") ? selectedMarketingSub.raw_text : null);
+
+                if (isImagePayload && imagePreviewUrl) {
+                  return (
+                    <div className="space-y-3 pt-1">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-[#1C1C1C] p-3 rounded-lg border border-slate-200 dark:border-[#2C2C2C]">
+                        <div className="relative w-36 h-24 rounded-md overflow-hidden bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-[#383838] shrink-0 flex items-center justify-center">
+                          <img
+                            src={imagePreviewUrl}
+                            alt={selectedMarketingSub.title}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="space-y-1.5 min-w-0 flex-1">
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[10px] font-mono font-bold">
+                            <span>Image Asset Preview</span>
+                          </div>
+                          <p className="text-xs font-semibold text-[#0F172A] dark:text-[#F7F3ED] truncate">
+                            {selectedMarketingSub.file_name || selectedMarketingSub.title}
+                          </p>
+                          <p className="text-[11px] text-[#64748B] dark:text-[#85817D] line-clamp-2">
+                            {selectedMarketingSub.description || "Visual brand artwork and graphics submitted for marketing governance check."}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="max-h-60 overflow-y-auto pr-1">
+                    <p className="text-xs text-[#0F172A] dark:text-[#F7F3ED] font-sans leading-relaxed whitespace-pre-wrap break-words break-all [overflow-wrap:anywhere]">
+                      {selectedMarketingSub.raw_text || "[No raw text payload]"}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
 
             {selectedSubAudit && (
-              <div className="bg-slate-50 dark:bg-[#141414] rounded-xl p-4 border border-slate-200 dark:border-[#383838] space-y-3">
+              <div className="bg-slate-50 dark:bg-[#141414] rounded-xl p-4 border border-slate-200 dark:border-[#383838] space-y-3 overflow-hidden">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-[#0F172A] dark:text-[#F7F3ED]">Audit Telemetry</span>
                   <span className="text-xs font-bold text-[#2563EB] dark:text-gradient-warm">
@@ -1659,9 +1681,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
               </div>
             )}
           </div>
-
         </div>
-
       )}
 
 

@@ -519,8 +519,8 @@ export function DesignAssetViewerModal({
                       ▶
                     </div>
                     <div className="text-sm font-bold text-white">{submission.title}</div>
-                    <p className="text-xs text-slate-400 max-w-sm">
-                      {submission.raw_text ||
+                    <p className="text-xs text-slate-400 max-w-sm break-words break-all">
+                      {(!submission.raw_text?.startsWith("data:") && submission.raw_text) ||
                         "Empowering organizations with verified brand compliance safeguards and human-in-the-loop audit controls."}
                     </p>
                   </div>
@@ -549,8 +549,8 @@ export function DesignAssetViewerModal({
                       {submission.description ||
                         "Annual ESG and governance disclosures brochure with verified typography standards."}
                     </p>
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 font-serif text-sm italic">
-                      &quot;{submission.raw_text ||
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 font-serif text-sm italic break-words break-all">
+                      &quot;{(!submission.raw_text?.startsWith("data:") && submission.raw_text) ||
                         "Acme Cloud Systems datacenters run with 100% certified renewable energy matching ISO 14001 specifications."}&quot;
                     </div>
                     <p className="text-slate-600">
