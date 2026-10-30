@@ -4403,7 +4403,6 @@ export class MockApiService implements IApiService {
       design_groups: designGroups,
     };
   }
-
   // Persistent Media Management (Mock Fallback)
   async uploadMedia(file: File, options?: { description?: string; campaign_id?: string; title?: string }): Promise<MediaItem> {
     const mediaId = `med_${Date.now()}`;

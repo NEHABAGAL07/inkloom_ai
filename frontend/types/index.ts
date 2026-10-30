@@ -12,14 +12,14 @@ export interface ContentSubmission {
   description?: string;
   content_type: "text" | "document" | "image" | "video";
   status:
-    | "draft"
-    | "submitted"
-    | "auditing"
-    | "changes_requested"
-    | "resubmitted"
-    | "pending_approval"
-    | "approved"
-    | "rejected";
+  | "draft"
+  | "submitted"
+  | "auditing"
+  | "changes_requested"
+  | "resubmitted"
+  | "pending_approval"
+  | "approved"
+  | "rejected";
   current_revision_id?: string;
   raw_text?: string;
   file_name?: string;
@@ -1300,6 +1300,7 @@ export interface CopilotFeedbackRequest {
   rating_category?: "solved_task" | "generic_or_irrelevant" | "missed_context" | "unsupported_claim" | "suggestion_needs_improvement" | "tool_failed";
   comment?: string;
 }
+
 
 // =========================================================================
 // Centralized Review Cycles, Departmental Reviews, & Feedback Types

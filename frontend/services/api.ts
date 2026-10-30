@@ -1469,19 +1469,19 @@ export class ApiService implements IApiService {
   // Persistent Real-Time Media Storage & Administration
   // =========================================================
   async uploadMedia(
-      file: File,
-      options ?: { description?: string; campaign_id?: string; title?: string }
-    ): Promise < MediaItem > {
-      if(USE_MOCK) return mockApi.uploadMedia(file, options);
+    file: File,
+    options?: { description?: string; campaign_id?: string; title?: string }
+  ): Promise<MediaItem> {
+    if (USE_MOCK) return mockApi.uploadMedia(file, options);
 
-      const formData = new FormData();
-      formData.append("file", file);
-      if(options?.description) formData.append("description", options.description);
-      if(options?.campaign_id) formData.append("campaign_id", options.campaign_id);
-      if(options?.title) formData.append("title", options.title);
+    const formData = new FormData();
+    formData.append("file", file);
+    if (options?.description) formData.append("description", options.description);
+    if (options?.campaign_id) formData.append("campaign_id", options.campaign_id);
+    if (options?.title) formData.append("title", options.title);
 
-      const url = `${API_BASE}/media/upload`;
-      const headers: Record<string, string> = {
+    const url = `${API_BASE}/media/upload`;
+    const headers: Record<string, string> = {
       "X-Tenant-Id": activeTenantId,
     };
     if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
@@ -1497,7 +1497,7 @@ export class ApiService implements IApiService {
       try {
         const errBody = await res.json();
         errDetail = errBody.detail || errBody.message || res.statusText;
-      } catch { }
+      } catch {}
       throw new ApiError(errDetail || "Media upload failed", res.status, false, errDetail);
     }
 
@@ -1509,7 +1509,7 @@ export class ApiService implements IApiService {
       window.dispatchEvent(new CustomEvent("inkloom_asset_updated", { detail: savedMedia }));
       try {
         localStorage.setItem("inkloom_last_media_upload", JSON.stringify({ id: savedMedia.id, ts: Date.now() }));
-      } catch { }
+      } catch {}
     }
 
     return savedMedia;
