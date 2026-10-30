@@ -3,7 +3,7 @@ from app.services.ai_audit.guideline_retrieval import GuidelineRetriever
 from app.services.ai_audit.tone_analysis import ToneAnalyzer
 from app.services.ai_audit.terminology import TerminologyChecker
 from app.services.ai_audit.claim_checking import ClaimVerifier
-from app.services.ai_audit.llm_adapter import BaseLLMAdapter, OfflineRuleAdapter, get_llm_adapter
+from app.ai.compat import BaseLLMAdapter, OfflineRuleAdapter, get_llm_adapter
 
 __all__ = [
     "AIAuditEngine",

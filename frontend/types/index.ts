@@ -12,14 +12,14 @@ export interface ContentSubmission {
   description?: string;
   content_type: "text" | "document" | "image" | "video";
   status:
-    | "draft"
-    | "submitted"
-    | "auditing"
-    | "changes_requested"
-    | "resubmitted"
-    | "pending_approval"
-    | "approved"
-    | "rejected";
+  | "draft"
+  | "submitted"
+  | "auditing"
+  | "changes_requested"
+  | "resubmitted"
+  | "pending_approval"
+  | "approved"
+  | "rejected";
   current_revision_id?: string;
   raw_text?: string;
   file_name?: string;
@@ -1283,6 +1283,7 @@ export interface ReferenceImageAnalysisRequest {
   submission_id?: string;
   revision_id?: string;
   user_query?: string;
+  image_base64?: string;
 }
 
 export interface ReferenceImageAnalysisResponse {
@@ -1300,6 +1301,8 @@ export interface ReferenceImageAnalysisResponse {
   visual_hierarchy_critique: string;
   observable_facts: string[];
   actionable_recommendations: string[];
+  color_recommendations?: string[];
+  typography_recommendations?: string[];
   uncertainty_limitations: string[];
   analysis_timestamp: string;
 }
@@ -1400,8 +1403,7 @@ export interface CopilotFeedbackRequest {
 }
 
 
-// ==================================================================
-
+// =========================================================================
 // Centralized Review Cycles, Departmental Reviews, & Feedback Types
 // =========================================================================
 
@@ -1503,6 +1505,11 @@ export interface SubmitDepartmentReviewInput {
     evidence?: Record<string, any>;
   }>;
 }
+
+// =========================================================================
+// Media Items & Uploads
+// =========================================================================
+
 export interface MediaItem {
   id: string;
   organization_id: string;
@@ -1536,5 +1543,3 @@ export interface UploadMediaInput {
   campaign_id?: string;
   title?: string;
 }
-
-

@@ -71,10 +71,9 @@ import {
   DesignerFeedbackGroupItem,
   DesignVersionSummaryItem,
   SubmitDepartmentReviewInput,
-MediaItem,
+  MediaItem,
   MediaItemListResponse,
   UploadMediaInput,
-
 } from "../types";
 
 export interface CreateSubmissionInput {
@@ -210,12 +209,11 @@ export interface IApiService {
   submitDepartmentReview(cycleId: string, data: SubmitDepartmentReviewInput): Promise<DepartmentReviewRecord>;
   grantFinalApproval(cycleId: string, rationale?: string): Promise<ReviewCycleRecord>;
   getDesignerFeedbackSummary(): Promise<DesignerFeedbackSummaryData>;
-// Persistent Media Management
+  // Persistent Media Management
   uploadMedia(file: File, options?: { description?: string; campaign_id?: string; title?: string }): Promise<MediaItem>;
   getAdminMedia(filters?: { status?: string; uploaded_by?: string; file_type?: string; limit?: number; offset?: number }): Promise<MediaItemListResponse>;
   getMedia(filters?: { status?: string; file_type?: string; limit?: number; offset?: number }): Promise<MediaItemListResponse>;
   getMediaItem(mediaId: string): Promise<MediaItem>;
-
 }
 
 // In-memory deterministic mock state
@@ -4547,7 +4545,7 @@ export class MockApiService implements IApiService {
       design_groups: designGroups,
     };
   }
-// Persistent Media Management (Mock Fallback)
+  // Persistent Media Management (Mock Fallback)
   async uploadMedia(file: File, options?: { description?: string; campaign_id?: string; title?: string }): Promise<MediaItem> {
     const mediaId = `med_${Date.now()}`;
     const cleanFn = file.name.replace(/[^\w\.\-\_]/g, "_");
@@ -4629,7 +4627,6 @@ export class MockApiService implements IApiService {
     if (!found) throw new Error(`Media '${mediaId}' not found`);
     return found;
   }
-
 }
 
 export const mockApi = new MockApiService();

@@ -583,7 +583,7 @@ export default function CampaignsPage() {
             Campaigns
           </h1>
           <p className="text-xs sm:text-sm text-ink-secondary leading-relaxed">
-            Plan, create, review, and track your marketing campaigns in one place.
+            Plan, create, review, and track your marketing campaigns with Gemini AI governance, multi-track orchestration, and separation-of-duties sign-off gates.
           </p>
         </div>
 

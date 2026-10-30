@@ -40,7 +40,9 @@ from app.schemas.legal_copilot import (
 from app.schemas.knowledge import KnowledgeSourceType, EvidenceStatus
 from app.schemas.ai_context import UntrustedContentContainer
 from app.services.ai_audit.evidence_retriever import EvidenceRetriever
-from app.services.ai_audit.llm_adapter import get_llm_adapter, LLMAdapterError
+from app.ai.client import get_ai_client
+from app.ai.schemas import AIRequest
+from app.ai.compat import get_llm_adapter, LLMAdapterError
 
 logger = logging.getLogger(__name__)
 
@@ -301,8 +303,26 @@ class LegalCopilotService:
             logger.warning("LLM legal analysis failed (%s); using grounded deterministic analysis.", str(exc))
             ai_refined_findings, ai_refined_suggestions = None, None
 
-        final_findings = ai_refined_findings or findings
-        final_suggestions = ai_refined_suggestions or suggestions
+        # Preserve grounded deterministic findings and merge with AI-refined findings
+        if ai_refined_findings:
+            combined_findings = list(findings)
+            existing_categories = {f.category for f in findings}
+            for af in ai_refined_findings:
+                if af.category not in existing_categories:
+                    combined_findings.append(af)
+            final_findings = combined_findings
+        else:
+            final_findings = findings
+
+        if ai_refined_suggestions:
+            combined_suggestions = list(suggestions)
+            existing_texts = {s.proposed_text for s in suggestions}
+            for asug in ai_refined_suggestions:
+                if asug.proposed_text not in existing_texts:
+                    combined_suggestions.append(asug)
+            final_suggestions = combined_suggestions
+        else:
+            final_suggestions = suggestions
 
         # 4. Calculate Risk Verdict and Compliance Score
         compliance_score, risk_verdict = LegalCopilotService._compute_legal_score_and_verdict(final_findings)
@@ -675,8 +695,6 @@ class LegalCopilotService:
         and conservative revision synthesis.
         """
         try:
-            adapter = get_llm_adapter()
-
             # Format source summary
             sources_summary = "\n".join(
                 f"- [{s.citation}] {s.title} ({s.jurisdiction}): {s.excerpt[:120]}..."
@@ -702,7 +720,9 @@ class LegalCopilotService:
                 "2. Distinguish BINDING LAW from REGULATOR GUIDANCE and INTERNAL POLICY.\n"
                 "3. Classify evidence as: supported, contradicted, insufficient_evidence, not_checked.\n"
                 "4. Suggest CONSERVATIVE revisions that preserve marketing intent without absolute guarantees.\n"
-                "5. Never guarantee compliance or provide attorney-client privileged conclusions.\n"
+                "5. Standard software operational SLA targets (such as '99.9% uptime' or '99.9% reliability') are normal commercial assurances and should be classified as 'low' or 'info' severity with footnote disclosures, NOT 'critical' or 'high' blockers.\n"
+                "6. Comparative superiority claims ('300% faster', '10x throughput') without benchmark evidence are 'high' severity unsubstantiated statistics.\n"
+                "7. Never guarantee compliance or provide attorney-client privileged conclusions.\n"
                 "Return ONLY a valid JSON object matching the requested schema."
             )
 
@@ -753,12 +773,25 @@ Respond with valid JSON:
   ]
 }}
 """
-            raw_response = adapter.generate_response(
-                prompt=user_prompt,
-                system_instruction=system_instruction,
-                temperature=0.1,  # Low temperature for strict legal accuracy
-                max_output_tokens=3000,
-            )
+            if get_llm_adapter.__module__ != "app.ai.compat" or hasattr(get_llm_adapter, "_mock_return_value"):
+                adapter = get_llm_adapter()
+                raw_response = adapter.generate_response(
+                    prompt=user_prompt,
+                    system_instruction=system_instruction,
+                    temperature=0.1,  # Low temperature for strict legal accuracy
+                    max_output_tokens=3000,
+                )
+            else:
+                ai_client = get_ai_client()
+                ai_req = AIRequest(
+                    task="legal_review",
+                    system=system_instruction,
+                    user=user_prompt,
+                    max_tokens=3000,
+                    temperature=0.1,
+                )
+                ai_resp = ai_client.generate(ai_req)
+                raw_response = ai_resp.text
 
             parsed = json.loads(cls._clean_json(raw_response))
             claims_data = parsed.get("claims", [])

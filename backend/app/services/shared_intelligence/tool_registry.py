@@ -699,7 +699,7 @@ class ToolRegistry:
                     "title": f.title,
                     "severity": f.severity.value if hasattr(f.severity, "value") else str(f.severity),
                     "category": f.category.value if hasattr(f.category, "value") else str(f.category),
-                    "description": f.description,
+                    "description": getattr(f, "description", None) or f.message,
                     "suggested_fix": f.suggested_correction.replacement_text if f.suggested_correction else None,
                 }
                 for f in audit_result.findings[:5]

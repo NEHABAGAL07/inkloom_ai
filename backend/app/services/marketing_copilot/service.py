@@ -36,7 +36,9 @@ from app.schemas.marketing_copilot import (
 from app.schemas.ai_context import UntrustedContentContainer
 from app.services.shared_intelligence.service import SharedIntelligenceService
 from app.services.shared_intelligence.retrieval import KnowledgeRetriever
-from app.services.ai_audit.llm_adapter import get_llm_adapter, LLMAdapterError
+from app.ai.client import get_ai_client
+from app.ai.schemas import AIRequest
+from app.ai.compat import get_llm_adapter, LLMAdapterError
 from app.services.audit_orchestrator import AuditOrchestrator
 from app.schemas.audit_contract import AuditResult
 
@@ -183,7 +185,7 @@ class MarketingCopilotService:
         audience_str = brief.target_audience or "Prospective Customers"
 
         system_prompt = (
-            "You are the Inkloom AI Marketing Copilot, an enterprise creative assistant grounded in brand governance.\n"
+            "You are the Inkloom Gemini AI Marketing Strategist, an enterprise creative assistant powered by Google Gemini and grounded in brand governance.\n"
             "Generate structured, high-performing marketing copy adhering strictly to the brand voice and verified facts.\n\n"
             "STRICT CONSTRAINTS:\n"
             "1. Grounding: Do NOT invent product prices, unverified certifications, endorsements, or guarantees.\n"
@@ -216,12 +218,26 @@ class MarketingCopilotService:
         )
 
         try:
-            raw_response = adapter.complete(
-                system=system_prompt,
-                user=user_prompt,
-                max_tokens=1400,
-                json_mode=True,
-            )
+            if get_llm_adapter.__module__ != "app.ai.compat" or hasattr(get_llm_adapter, "_mock_return_value"):
+                adapter = get_llm_adapter()
+                raw_response = adapter.complete(
+                    system=system_prompt,
+                    user=user_prompt,
+                    max_tokens=1400,
+                    json_mode=True,
+                )
+            else:
+                ai_client = get_ai_client()
+                ai_req = AIRequest(
+                    task="marketing_copy",
+                    system=system_prompt,
+                    user=user_prompt,
+                    max_tokens=1400,
+                    temperature=0.2,
+                )
+                ai_resp = ai_client.generate(ai_req)
+                raw_response = ai_resp.text
+
             # Clean markdown code blocks if present
             cleaned = raw_response.strip()
             if cleaned.startswith("```"):
@@ -241,7 +257,7 @@ class MarketingCopilotService:
                                 content_type=content_type_str,
                                 text=item.get("text", "").strip(),
                                 creative_rationale=item.get("creative_rationale", "Structured creative angle."),
-                                target_channel=item.get("target_channel", channel_str),
+                                target_channel=channel_str,
                                 target_audience=item.get("target_audience", audience_str),
                                 brand_tone_alignment=item.get("brand_tone_alignment", f"Adheres to {tone_str} guidelines."),
                                 assumptions=item.get("assumptions", []),

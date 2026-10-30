@@ -28,7 +28,7 @@ from app.schemas.marketing_copilot import (
     DesiredLength,
 )
 from app.services.marketing_copilot.service import MarketingCopilotService
-from app.services.ai_audit.llm_adapter import LLMAdapterError
+from app.ai.compat import LLMAdapterError
 
 
 @pytest.fixture

@@ -19,8 +19,9 @@ from app.api.routes.designer_copilot import router as designer_copilot_router
 from app.api.routes.legal_copilot import router as legal_copilot_router
 from app.api.routes.campaigns import router as campaigns_router
 from app.api.routes.notifications import router as notifications_router
-from app.api.routes.media import router as media_router
 from app.api.routes.review_cycles import router as review_cycles_router, feedback_router, realtime_router
+from app.api.routes.ai_status import router as ai_status_router
+from app.api.routes.media import router as media_router
 
 api_router = APIRouter()
 
@@ -49,5 +50,6 @@ api_router.include_router(media_router)
 api_router.include_router(review_cycles_router)
 api_router.include_router(feedback_router)
 api_router.include_router(realtime_router)
+api_router.include_router(ai_status_router)
 
 __all__ = ["api_router"]

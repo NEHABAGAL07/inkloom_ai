@@ -287,7 +287,7 @@ export function LandingView() {
               >
                 <div className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-emerald-50 dark:bg-[#1E2724] border border-emerald-200/80 dark:border-[#2B3B36] text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-[#72D6A1] shadow-2xs">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-[#FFAA35]" />
-                  <span>Content Governance & AI Brand Copilot</span>
+                  <span>Content Governance & Real-Time Gemini AI</span>
                 </div>
               </motion.div>
 

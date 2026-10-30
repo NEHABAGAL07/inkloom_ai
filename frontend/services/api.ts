@@ -107,10 +107,9 @@ import {
   DepartmentReviewRecord,
   DesignerFeedbackSummaryData,
   SubmitDepartmentReviewInput,
-MediaItem,
+  MediaItem,
   MediaItemListResponse,
   UploadMediaInput,
-
 } from "../types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -187,7 +186,7 @@ export class ApiService implements IApiService {
         try {
           const errBody = await res.json();
           errDetail = errBody.detail || errBody.message || res.statusText;
-        } catch {}
+        } catch { }
         throw new ApiError(errDetail || `Request failed with status ${res.status}`, res.status, false, errDetail);
       }
       return await res.json();
@@ -771,14 +770,10 @@ export class ApiService implements IApiService {
   // --- Brand Assistant & Document Intelligence Methods ---
   async askAssistant(payload: AskQuestionRequest): Promise<AskQuestionResponse> {
     if (USE_MOCK) return mockApi.askAssistant(payload);
-    try {
-      return await this.fetchJson<AskQuestionResponse>("/chat/ask", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-    } catch {
-      return mockApi.askAssistant(payload);
-    }
+    return await this.fetchJson<AskQuestionResponse>("/chat/ask", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
   }
 
   async getAssistantSessions(): Promise<ChatSession[]> {
@@ -889,17 +884,10 @@ export class ApiService implements IApiService {
   // ==========================================
   async generateMarketingCopy(brief: CampaignBriefRequest): Promise<MarketingGenerationResponse> {
     if (USE_MOCK) return mockApi.generateMarketingCopy(brief);
-    try {
-      return await this.fetchJson<MarketingGenerationResponse>("/marketing-copilot/generate", {
-        method: "POST",
-        body: JSON.stringify(brief),
-      }, 30000); // 30s timeout for LLM generation
-    } catch (err) {
-      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-        throw err;
-      }
-      return mockApi.generateMarketingCopy(brief);
-    }
+    return await this.fetchJson<MarketingGenerationResponse>("/marketing-copilot/generate", {
+      method: "POST",
+      body: JSON.stringify(brief),
+    }, 45000); // 45s timeout for online Gemini LLM generation
   }
 
   async saveMarketingDraft(payload: SaveDraftRequest): Promise<DraftDetailResponse> {
@@ -1010,17 +998,10 @@ export class ApiService implements IApiService {
 
   async generateDesignConcepts(brief: CreativeBriefRequest): Promise<DesignConceptGenerationResponse> {
     if (USE_MOCK) return mockApi.generateDesignConcepts(brief);
-    try {
-      return await this.fetchJson<DesignConceptGenerationResponse>("/designer-copilot/concepts/generate", {
-        method: "POST",
-        body: JSON.stringify(brief),
-      }, 35000); // 35s timeout for AI concept generation
-    } catch (err) {
-      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-        throw err;
-      }
-      return mockApi.generateDesignConcepts(brief);
-    }
+    return await this.fetchJson<DesignConceptGenerationResponse>("/designer-copilot/concepts/generate", {
+      method: "POST",
+      body: JSON.stringify(brief),
+    }, 45000); // 45s timeout for online Gemini AI concept generation
   }
 
   async saveDesignBriefDraft(payload: SaveCreativeBriefDraftRequest): Promise<DesignDraftDetailResponse> {
@@ -1103,19 +1084,12 @@ export class ApiService implements IApiService {
 
   async auditDesignVersion(briefId: string, revisionId?: string): Promise<AuditResult> {
     if (USE_MOCK) return mockApi.auditDesignVersion(briefId, revisionId);
-    try {
-      const url = revisionId
-        ? `/designer-copilot/briefs/${briefId}/audit?revision_id=${revisionId}`
-        : `/designer-copilot/briefs/${briefId}/audit`;
-      return await this.fetchJson<AuditResult>(url, {
-        method: "POST",
-      }, 45000);
-    } catch (err) {
-      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-        throw err;
-      }
-      return mockApi.auditDesignVersion(briefId, revisionId);
-    }
+    const url = revisionId
+      ? `/designer-copilot/briefs/${briefId}/audit?revision_id=${revisionId}`
+      : `/designer-copilot/briefs/${briefId}/audit`;
+    return await this.fetchJson<AuditResult>(url, {
+      method: "POST",
+    }, 45000);
   }
 
   async submitDesignForReview(briefId: string): Promise<DesignDraftDetailResponse> {
@@ -1665,7 +1639,6 @@ export class ApiService implements IApiService {
   async getMediaItem(mediaId: string): Promise<MediaItem> {
     if (USE_MOCK) return mockApi.getMediaItem(mediaId);
     return await this.fetchJson<MediaItem>(`/media/${mediaId}`);
-
   }
 }
 

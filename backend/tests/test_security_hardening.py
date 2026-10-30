@@ -22,7 +22,7 @@ from app.models import (
     ContentSubmission,
     ContentRevision,
 )
-from app.services.ai_audit.llm_adapter import OfflineRuleAdapter, GeminiAdapter, LLMAdapterError
+from app.ai.compat import OfflineRuleAdapter, GeminiAdapter, LLMAdapterError
 
 
 @pytest.fixture

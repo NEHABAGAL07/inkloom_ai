@@ -32,7 +32,7 @@ from app.schemas.audit_contract import (
 )
 from app.schemas.knowledge import EvidenceStatus
 from app.services.ai_audit.engine import AIAuditEngine
-from app.services.ai_audit.llm_adapter import BaseLLMAdapter, OfflineRuleAdapter
+from app.ai.compat import BaseLLMAdapter, OfflineRuleAdapter
 from app.services.ai_audit.context_resolver import AuditContextResolver
 from app.services.ai_audit.evidence_retriever import EvidenceRetriever
 from app.services.ai_audit.deterministic_checker import DeterministicChecker
@@ -503,6 +503,7 @@ def test_repeatable_evaluation_dataset_precision_recall_latency():
         result = AIAuditEngine.run_audit(
             content_text=sample["text"],
             content_id=f"eval_sample_{idx}",
+            llm_adapter=OfflineRuleAdapter(),
         )
         elapsed_ms = (time.perf_counter() - start) * 1000.0
         total_time_ms += elapsed_ms

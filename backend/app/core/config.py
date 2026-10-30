@@ -4,6 +4,10 @@ from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BACKEND_ENV_PATH = os.path.join(BACKEND_DIR, ".env")
+
+
 class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
@@ -79,17 +83,17 @@ class Settings(BaseSettings):
         "video/quicktime",
     ]
 
-    # AI Engine & Assistant LLM Settings
-    AI_ENGINE_MODE: str = "deterministic"
-    LLM_PROVIDER: str = "offline_rule_engine"
+    # AI Engine & Assistant LLM Settings (Online Gemini Real-Time AI)
+    AI_ENGINE_MODE: str = "online"
+    LLM_PROVIDER: str = "gemini"
     LLM_API_KEY: str = ""
-    LLM_MODEL_NAME: str = ""
-    LLM_TIMEOUT_SECONDS: float = 20.0
-    LLM_MAX_OUTPUT_TOKENS: int = 800
-    CHAT_RATE_LIMIT_PER_MINUTE: int = 10
+    LLM_MODEL_NAME: str = "gemini-3.5-flash-lite"
+    LLM_TIMEOUT_SECONDS: float = 30.0
+    LLM_MAX_OUTPUT_TOKENS: int = 1500
+    CHAT_RATE_LIMIT_PER_MINUTE: int = 60
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=BACKEND_ENV_PATH,
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore"

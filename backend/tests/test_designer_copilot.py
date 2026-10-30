@@ -39,7 +39,7 @@ from app.schemas.designer_copilot import (
     SaveCreativeBriefDraftRequest,
 )
 from app.services.designer_copilot.service import DesignerCopilotService
-from app.services.ai_audit.llm_adapter import LLMAdapterError
+from app.ai.compat import LLMAdapterError
 
 
 @pytest.fixture
@@ -277,7 +277,7 @@ def test_concept_generation_fallback_on_llm_error(designer_client, seed_designer
         "product": "Inkloom Core",
         "channel": "website",
     }
-    with patch("app.services.ai_audit.llm_adapter.get_llm_adapter") as mock_get_adapter:
+    with patch("app.ai.compat.get_llm_adapter") as mock_get_adapter:
         mock_adapter = MagicMock()
         mock_adapter.generate_response.side_effect = LLMAdapterError("Simulated LLM API rate limit or outage")
         mock_get_adapter.return_value = mock_adapter
