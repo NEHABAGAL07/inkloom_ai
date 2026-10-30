@@ -67,56 +67,72 @@ export function DesignAssetViewerModal({
   const [isUpdatingImage, setIsUpdatingImage] = useState(false);
   const [updateFeedback, setUpdateFeedback] = useState<string | null>(null);
 
-  // Initialize and resolve actual uploaded image or media URL
+  // Initialize and resolve actual uploaded image or media URL from persistent backend database
   useEffect(() => {
     if (!submission) return;
     let url: string | null = null;
+    const backendOrigin =
+      process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, "") ||
+      "http://localhost:8000";
 
-    // 1. Check client localStorage cache first (most up-to-date locally)
-    if (typeof window !== "undefined") {
-      const cached =
-        localStorage.getItem(`inkloom_media_${submission.id}`) ||
-        (submission.file_name ? localStorage.getItem(`inkloom_media_${submission.file_name}`) : null);
-      if (cached && (cached.startsWith("data:") || cached.startsWith("http") || cached.startsWith("/"))) {
-        url = cached;
+    const formatUrl = (raw: string) => {
+      if (raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("data:")) {
+        return raw;
       }
+      if (raw.startsWith("/")) {
+        return `${backendOrigin}${raw}`;
+      }
+      return raw;
+    };
+
+    // 1. Direct media_url property from backend database
+    if (submission.media_url && typeof submission.media_url === "string") {
+      url = formatUrl(submission.media_url);
     }
 
-    // 2. Direct media_url property
-    if (!url && submission.media_url && typeof submission.media_url === "string") {
-      url = submission.media_url;
-    }
-    // 3. Direct file_path property
+    // 2. Direct file_path property if URL or web path
     if (!url && submission.file_path && typeof submission.file_path === "string") {
       if (
         submission.file_path.startsWith("data:") ||
         submission.file_path.startsWith("http") ||
         submission.file_path.startsWith("/")
       ) {
-        url = submission.file_path;
+        url = formatUrl(submission.file_path);
       }
     }
-    // 4. raw_text if containing data URL
+
+    // 3. Check revisions list if present
+    if (!url && (submission as any).revisions && Array.isArray((submission as any).revisions)) {
+      for (const rev of (submission as any).revisions) {
+        if (rev.file_path && (rev.file_path.startsWith("data:") || rev.file_path.startsWith("http") || rev.file_path.startsWith("/"))) {
+          url = formatUrl(rev.file_path);
+          break;
+        }
+        if (rev.raw_text && (rev.raw_text.startsWith("data:") || rev.raw_text.startsWith("http") || rev.raw_text.startsWith("/"))) {
+          url = formatUrl(rev.raw_text);
+          break;
+        }
+      }
+    }
+
+    // 4. raw_text if containing data URL or web path
     if (!url && submission.raw_text && typeof submission.raw_text === "string") {
       if (
         submission.raw_text.startsWith("data:") ||
         submission.raw_text.startsWith("http") ||
         submission.raw_text.startsWith("/")
       ) {
-        url = submission.raw_text;
+        url = formatUrl(submission.raw_text);
       }
     }
-    // 5. Check revisions list if present
-    if (!url && (submission as any).revisions && Array.isArray((submission as any).revisions)) {
-      for (const rev of (submission as any).revisions) {
-        if (rev.file_path && (rev.file_path.startsWith("data:") || rev.file_path.startsWith("http") || rev.file_path.startsWith("/"))) {
-          url = rev.file_path;
-          break;
-        }
-        if (rev.raw_text && (rev.raw_text.startsWith("data:") || rev.raw_text.startsWith("http") || rev.raw_text.startsWith("/"))) {
-          url = rev.raw_text;
-          break;
-        }
+
+    // 5. Check if local client cached as last resort fallback
+    if (!url && typeof window !== "undefined") {
+      const cached =
+        localStorage.getItem(`inkloom_media_${submission.id}`) ||
+        (submission.file_name ? localStorage.getItem(`inkloom_media_${submission.file_name}`) : null);
+      if (cached && (cached.startsWith("data:") || cached.startsWith("http") || cached.startsWith("/"))) {
+        url = formatUrl(cached);
       }
     }
 

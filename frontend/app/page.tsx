@@ -47,6 +47,44 @@ export default function DashboardPage() {
     loadData();
   }, [loadData, activeRole]);
 
+  // Real-time synchronization: Auto-refresh when new media is uploaded across tabs or periodically
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const handleSync = () => {
+      Promise.all([api.getSubmissions(), api.getAnalyticsSummary()])
+        .then(([subs, stats]) => {
+          if (subs) setSubmissions(subs);
+          if (stats) setAnalytics(stats);
+        })
+        .catch(() => {});
+    };
+
+    window.addEventListener("inkloom_media_uploaded", handleSync);
+    window.addEventListener("inkloom_asset_updated", handleSync);
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "inkloom_last_media_upload" || e.key === "inkloom_token") {
+        handleSync();
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+
+    // 8-second background poll when tab is active
+    const pollInterval = setInterval(() => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        handleSync();
+      }
+    }, 8000);
+
+    return () => {
+      window.removeEventListener("inkloom_media_uploaded", handleSync);
+      window.removeEventListener("inkloom_asset_updated", handleSync);
+      window.removeEventListener("storage", handleStorage);
+      clearInterval(pollInterval);
+    };
+  }, [isAuthenticated]);
+
   // Public Landing Page if user is not logged in
   if (!isAuthenticated) {
     return <LandingView />;

@@ -127,7 +127,11 @@ export function ManagerDashboard({
     };
     if (typeof window !== "undefined") {
       window.addEventListener("inkloom_asset_updated", handleAssetUpdate);
-      return () => window.removeEventListener("inkloom_asset_updated", handleAssetUpdate);
+      window.addEventListener("inkloom_media_uploaded", handleAssetUpdate);
+      return () => {
+        window.removeEventListener("inkloom_asset_updated", handleAssetUpdate);
+        window.removeEventListener("inkloom_media_uploaded", handleAssetUpdate);
+      };
     }
   }, [onRefresh]);
 

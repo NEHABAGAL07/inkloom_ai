@@ -17,6 +17,7 @@ from app.models.document import KnowledgeDocument, DocumentChunk
 from app.models.chat import ChatSession, ChatMessage
 from app.models.campaign import Campaign
 from app.models.notification import Notification
+from app.models.media import MediaItem
 
 __all__ = [
     "TimestampedModel",
@@ -44,5 +45,6 @@ __all__ = [
     "ChatMessage",
     "Campaign",
     "Notification",
+    "MediaItem",
 ]
 

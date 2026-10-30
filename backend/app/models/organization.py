@@ -20,6 +20,7 @@ class Organization(TimestampedModel):
     submissions = relationship("ContentSubmission", back_populates="organization", cascade="all, delete-orphan")
     knowledge_items = relationship("KnowledgeItem", back_populates="organization", cascade="all, delete-orphan")
     knowledge_documents = relationship("KnowledgeDocument", back_populates="organization", cascade="all, delete-orphan")
+    media_items = relationship("MediaItem", back_populates="organization", cascade="all, delete-orphan")
 
 
 class Membership(TimestampedModel):

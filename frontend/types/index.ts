@@ -1297,3 +1297,38 @@ export interface CopilotFeedbackRequest {
   rating_category?: "solved_task" | "generic_or_irrelevant" | "missed_context" | "unsupported_claim" | "suggestion_needs_improvement" | "tool_failed";
   comment?: string;
 }
+
+export interface MediaItem {
+  id: string;
+  organization_id: string;
+  campaign_id?: string | null;
+  submission_id?: string | null;
+  original_filename: string;
+  stored_filename: string;
+  file_path: string;
+  file_type: "image" | "video" | "document" | "other";
+  mime_type: string;
+  file_size: number;
+  uploaded_by?: string | null;
+  description?: string | null;
+  status: string;
+  extra_metadata?: Record<string, any> | null;
+  media_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MediaItemListResponse {
+  items: MediaItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface UploadMediaInput {
+  file: File;
+  description?: string;
+  campaign_id?: string;
+  title?: string;
+}
+

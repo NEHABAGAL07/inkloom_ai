@@ -60,6 +60,9 @@ import {
   CampaignDecisionRequest,
   CampaignReadinessEvaluation,
   NotificationItem,
+  MediaItem,
+  MediaItemListResponse,
+  UploadMediaInput,
 } from "../types";
 
 export interface CreateSubmissionInput {
@@ -182,6 +185,12 @@ export interface IApiService {
   getNotifications(unreadOnly?: boolean): Promise<NotificationItem[]>;
   markNotificationRead(notificationId: string): Promise<any>;
   markAllNotificationsRead(): Promise<any>;
+
+  // Persistent Media Management
+  uploadMedia(file: File, options?: { description?: string; campaign_id?: string; title?: string }): Promise<MediaItem>;
+  getAdminMedia(filters?: { status?: string; uploaded_by?: string; file_type?: string; limit?: number; offset?: number }): Promise<MediaItemListResponse>;
+  getMedia(filters?: { status?: string; file_type?: string; limit?: number; offset?: number }): Promise<MediaItemListResponse>;
+  getMediaItem(mediaId: string): Promise<MediaItem>;
 }
 
 // In-memory deterministic mock state
@@ -3752,6 +3761,89 @@ export class MockApiService implements IApiService {
     });
     this.saveStoredNotifications(notifs);
     return { success: true };
+  }
+
+  // Persistent Media Management (Mock Fallback)
+  async uploadMedia(file: File, options?: { description?: string; campaign_id?: string; title?: string }): Promise<MediaItem> {
+    const mediaId = `med_${Date.now()}`;
+    const cleanFn = file.name.replace(/[^\w\.\-\_]/g, "_");
+    const isVid = file.type.startsWith("video/") || /\.(mp4|webm|mov)$/i.test(cleanFn);
+    const isDoc = file.type.startsWith("application/") || /\.(pdf|docx|txt)$/i.test(cleanFn);
+    const fileType = isVid ? "video" : isDoc ? "document" : "image";
+
+    const item: MediaItem = {
+      id: mediaId,
+      organization_id: "org_acme_cloud",
+      campaign_id: options?.campaign_id || null,
+      submission_id: `sub_${mediaId}`,
+      original_filename: cleanFn,
+      stored_filename: `med_${mediaId}_${cleanFn}`,
+      file_path: `/uploads/org_acme_cloud/media/med_${mediaId}_${cleanFn}`,
+      file_type: fileType,
+      mime_type: file.type || "application/octet-stream",
+      file_size: file.size,
+      uploaded_by: "designer@acmecloud.com",
+      description: options?.description || `Uploaded ${fileType} asset: ${cleanFn}`,
+      status: "active",
+      media_url: `/api/v1/media/file/${mediaId}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Also register mock submission so mock dashboard shows it
+    const sub = await this.createSubmission({
+      title: options?.title || `Design Asset: ${cleanFn}`,
+      description: options?.description || `Visual asset submission (${cleanFn})`,
+      content_type: fileType === "video" ? "video" : fileType === "document" ? "document" : "image",
+      file_name: cleanFn,
+      file_path: item.media_url || undefined,
+      media_url: item.media_url || undefined,
+      initial_text: `Visual asset ${cleanFn}`,
+    });
+    item.submission_id = sub.id;
+
+    return item;
+  }
+
+  async getAdminMedia(filters?: { status?: string; uploaded_by?: string; file_type?: string; limit?: number; offset?: number }): Promise<MediaItemListResponse> {
+    const subs = await this.getSubmissions();
+    const mediaSubs = subs.filter((s) => s.content_type === "image" || s.content_type === "video");
+    const items: MediaItem[] = mediaSubs.map((s) => ({
+      id: s.id,
+      organization_id: s.organization_id || "org_acme_cloud",
+      campaign_id: null,
+      submission_id: s.id,
+      original_filename: s.file_name || s.title,
+      stored_filename: `med_${s.id}_${s.file_name || "asset.png"}`,
+      file_path: s.file_path || `/uploads/org_acme_cloud/media/${s.id}.png`,
+      file_type: s.content_type as any,
+      mime_type: s.content_type === "video" ? "video/mp4" : "image/png",
+      file_size: 1024 * 1024,
+      uploaded_by: s.created_by || s.creator_id || "designer@acmecloud.com",
+      description: s.description || null,
+      status: s.status || "active",
+      media_url: s.media_url || `/api/v1/media/file/${s.id}`,
+      created_at: s.created_at,
+      updated_at: s.updated_at,
+    }));
+
+    return {
+      items,
+      total: items.length,
+      page: 1,
+      page_size: filters?.limit || 50,
+    };
+  }
+
+  async getMedia(filters?: { status?: string; file_type?: string; limit?: number; offset?: number }): Promise<MediaItemListResponse> {
+    return this.getAdminMedia(filters);
+  }
+
+  async getMediaItem(mediaId: string): Promise<MediaItem> {
+    const list = await this.getAdminMedia();
+    const found = list.items.find((m) => m.id === mediaId);
+    if (!found) throw new Error(`Media '${mediaId}' not found`);
+    return found;
   }
 }
 
