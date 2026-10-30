@@ -7,12 +7,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
   output: process.env.BUILD_STANDALONE === "1" ? "standalone" : undefined,
-  turbopack: {
-    resolveAlias: {
-      react: "./node_modules/react",
-      "react-dom": "./node_modules/react-dom",
-    },
-  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.alias = {
