@@ -1298,9 +1298,9 @@ export interface CopilotFeedbackRequest {
   comment?: string;
 }
 
-<<<<<<< HEAD
 
-// =========================================================================
+// ==================================================================
+
 // Centralized Review Cycles, Departmental Reviews, & Feedback Types
 // =========================================================================
 
@@ -1402,7 +1402,6 @@ export interface SubmitDepartmentReviewInput {
     evidence?: Record<string, any>;
   }>;
 }
-=======
 export interface MediaItem {
   id: string;
   organization_id: string;
@@ -1437,4 +1436,4 @@ export interface UploadMediaInput {
   title?: string;
 }
 
->>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626
+

@@ -99,16 +99,14 @@ import {
   CopilotOrchestrateRequest,
   CopilotOrchestrateResponse,
   CopilotFeedbackRequest,
-<<<<<<< HEAD
   ReviewCycleRecord,
   DepartmentReviewRecord,
   DesignerFeedbackSummaryData,
   SubmitDepartmentReviewInput,
-=======
-  MediaItem,
+MediaItem,
   MediaItemListResponse,
   UploadMediaInput,
->>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626
+
 } from "../types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -1419,7 +1417,6 @@ export class ApiService implements IApiService {
     }
   }
 
-<<<<<<< HEAD
   // Phase 4 & 7: Centralized Review Cycles & Department Reviews
   async getReviewCycles(submissionId?: string): Promise<ReviewCycleRecord[]> {
     if (USE_MOCK) return mockApi.getReviewCycles(submissionId);
@@ -1492,7 +1489,8 @@ export class ApiService implements IApiService {
       }
       return mockApi.getDesignerFeedbackSummary();
     }
-=======
+  }
+
   // =========================================================
   // Persistent Real-Time Media Storage & Administration
   // =========================================================
@@ -1586,7 +1584,7 @@ export class ApiService implements IApiService {
   async getMediaItem(mediaId: string): Promise<MediaItem> {
     if (USE_MOCK) return mockApi.getMediaItem(mediaId);
     return await this.fetchJson<MediaItem>(`/media/${mediaId}`);
->>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626
+
   }
 }
 

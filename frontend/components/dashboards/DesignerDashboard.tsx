@@ -41,7 +41,6 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
     designerSubmissions[0] ||
     null;
 
-<<<<<<< HEAD
   const [guidelineProfile, setGuidelineProfile] = useState<BrandGuidelineProfile | null>(null);
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
@@ -76,8 +75,7 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
       setIsAuditing(false);
     }
   };
-=======
->>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626
+
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">

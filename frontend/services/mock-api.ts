@@ -60,7 +60,6 @@ import {
   CampaignDecisionRequest,
   CampaignReadinessEvaluation,
   NotificationItem,
-<<<<<<< HEAD
   ReviewCycleRecord,
   DepartmentReviewRecord,
   DepartmentFeedbackItem,
@@ -68,11 +67,10 @@ import {
   DesignerFeedbackGroupItem,
   DesignVersionSummaryItem,
   SubmitDepartmentReviewInput,
-=======
-  MediaItem,
+MediaItem,
   MediaItemListResponse,
   UploadMediaInput,
->>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626
+
 } from "../types";
 
 export interface CreateSubmissionInput {
@@ -197,20 +195,18 @@ export interface IApiService {
   markNotificationRead(notificationId: string): Promise<any>;
   markAllNotificationsRead(): Promise<any>;
 
-<<<<<<< HEAD
   // Centralized Review Cycles & Department Reviews
   getReviewCycles(submissionId?: string): Promise<ReviewCycleRecord[]>;
   getReviewCycle(cycleId: string): Promise<ReviewCycleRecord>;
   submitDepartmentReview(cycleId: string, data: SubmitDepartmentReviewInput): Promise<DepartmentReviewRecord>;
   grantFinalApproval(cycleId: string, rationale?: string): Promise<ReviewCycleRecord>;
   getDesignerFeedbackSummary(): Promise<DesignerFeedbackSummaryData>;
-=======
-  // Persistent Media Management
+// Persistent Media Management
   uploadMedia(file: File, options?: { description?: string; campaign_id?: string; title?: string }): Promise<MediaItem>;
   getAdminMedia(filters?: { status?: string; uploaded_by?: string; file_type?: string; limit?: number; offset?: number }): Promise<MediaItemListResponse>;
   getMedia(filters?: { status?: string; file_type?: string; limit?: number; offset?: number }): Promise<MediaItemListResponse>;
   getMediaItem(mediaId: string): Promise<MediaItem>;
->>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626
+
 }
 
 // In-memory deterministic mock state
@@ -3943,7 +3939,6 @@ export class MockApiService implements IApiService {
     return { success: true };
   }
 
-<<<<<<< HEAD
   // --- Centralized Review Cycles & Department Reviews (Mock Implementation) ---
   private getStoredReviewCycles(): ReviewCycleRecord[] {
     if (typeof window !== "undefined") {
@@ -4410,8 +4405,7 @@ export class MockApiService implements IApiService {
       design_groups: designGroups,
     };
   }
-=======
-  // Persistent Media Management (Mock Fallback)
+// Persistent Media Management (Mock Fallback)
   async uploadMedia(file: File, options?: { description?: string; campaign_id?: string; title?: string }): Promise<MediaItem> {
     const mediaId = `med_${Date.now()}`;
     const cleanFn = file.name.replace(/[^\w\.\-\_]/g, "_");
@@ -4493,7 +4487,7 @@ export class MockApiService implements IApiService {
     if (!found) throw new Error(`Media '${mediaId}' not found`);
     return found;
   }
->>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626
+
 }
 
 export const mockApi = new MockApiService();

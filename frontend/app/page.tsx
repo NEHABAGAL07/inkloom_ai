@@ -50,10 +50,6 @@ function DashboardContent() {
     loadData();
   }, [loadData, activeRole]);
 
-<<<<<<< HEAD
-  // Public Landing Page if user is not logged in or requesting public view
-  if (!isAuthenticated || isPublicView) {
-=======
   // Real-time synchronization: Auto-refresh when new media is uploaded across tabs or periodically
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -92,9 +88,8 @@ function DashboardContent() {
     };
   }, [isAuthenticated]);
 
-  // Public Landing Page if user is not logged in
-  if (!isAuthenticated) {
->>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626
+  // Public Landing Page if user is not logged in or requesting public view
+  if (!isAuthenticated || isPublicView) {
     return <LandingView />;
   }
 
