@@ -59,6 +59,10 @@ import {
   CampaignUpdate,
   CampaignDecisionRequest,
   CampaignReadinessEvaluation,
+  CampaignSummary,
+  CampaignScheduledPost,
+  CampaignPerformanceMetrics,
+  CampaignAIInsights,
   NotificationItem,
   ReviewCycleRecord,
   DepartmentReviewRecord,
@@ -191,6 +195,11 @@ export interface IApiService {
   submitCampaignDecision(campaignId: string, payload: CampaignDecisionRequest): Promise<Campaign>;
   getCampaignReadiness(campaignId: string): Promise<CampaignReadinessEvaluation>;
   getCampaignActivity(campaignId: string): Promise<any[]>;
+  getCampaignSummary(): Promise<CampaignSummary>;
+  scheduleCampaignPost(campaignId: string, payload: { submission_id: string; platform: string; scheduled_at: string; notes?: string }): Promise<Campaign>;
+  publishCampaignPost(campaignId: string, scheduleId: string, notes?: string): Promise<Campaign>;
+  getCampaignPerformance(campaignId: string): Promise<CampaignPerformanceMetrics>;
+  generateCampaignInsights(campaignId: string): Promise<CampaignAIInsights>;
   getNotifications(unreadOnly?: boolean): Promise<NotificationItem[]>;
   markNotificationRead(notificationId: string): Promise<any>;
   markAllNotificationsRead(): Promise<any>;
@@ -3871,6 +3880,139 @@ export class MockApiService implements IApiService {
       this.saveStoredCampaigns(campaigns);
     }
     return campaign;
+  }
+
+  async getCampaignSummary(): Promise<CampaignSummary> {
+    const camps = this.getStoredCampaigns();
+    const total = camps.length;
+    const drafts = camps.filter((c) => c.status === "draft").length;
+    const published = camps.filter((c) => c.status === "approved").length;
+    const in_progress = Math.max(0, total - drafts - published);
+    return {
+      total_campaigns: total,
+      draft_campaigns: drafts,
+      in_progress_campaigns: in_progress,
+      published_campaigns: published,
+    };
+  }
+
+  async scheduleCampaignPost(
+    campaignId: string,
+    payload: { submission_id: string; platform: string; scheduled_at: string; notes?: string }
+  ): Promise<Campaign> {
+    const campaign = await this.getCampaign(campaignId);
+    const schedule = campaign.publishing_schedule || [];
+    const newEntry: CampaignScheduledPost = {
+      id: `sched_${Date.now()}`,
+      submission_id: payload.submission_id,
+      title: payload.notes || `Post on ${payload.platform}`,
+      platform: payload.platform,
+      scheduled_at: payload.scheduled_at,
+      published_at: null,
+      status: "scheduled",
+      notes: payload.notes,
+      created_at: new Date().toISOString(),
+    };
+    campaign.publishing_schedule = [...schedule, newEntry];
+    campaign.version += 1;
+    const camps = this.getStoredCampaigns();
+    const idx = camps.findIndex((c) => c.id === campaignId);
+    if (idx !== -1) {
+      camps[idx] = campaign;
+      this.saveStoredCampaigns(camps);
+    }
+    return campaign;
+  }
+
+  async publishCampaignPost(
+    campaignId: string,
+    scheduleId: string,
+    notes?: string
+  ): Promise<Campaign> {
+    const campaign = await this.getCampaign(campaignId);
+    const schedule = campaign.publishing_schedule || [];
+    const item = schedule.find((s) => s.id === scheduleId);
+    if (item) {
+      item.status = "published";
+      item.published_at = new Date().toISOString();
+      if (notes) item.notes = `${item.notes || ""} | ${notes}`.trim();
+    }
+    campaign.version += 1;
+    const camps = this.getStoredCampaigns();
+    const idx = camps.findIndex((c) => c.id === campaignId);
+    if (idx !== -1) {
+      camps[idx] = campaign;
+      this.saveStoredCampaigns(camps);
+    }
+    return campaign;
+  }
+
+  async getCampaignPerformance(campaignId: string): Promise<CampaignPerformanceMetrics> {
+    const campaign = await this.getCampaign(campaignId);
+    if (campaign.performance_metrics && campaign.performance_metrics.impressions > 0) {
+      return campaign.performance_metrics;
+    }
+    const numSubs = campaign.submissions?.length || 0;
+    const impressions = Math.max(1, numSubs) * 14200;
+    const reach = Math.floor(impressions * 0.72);
+    const clicks = Math.floor(impressions * 0.045);
+    const likes = Math.floor(impressions * 0.032);
+    const comments = Math.floor(likes * 0.12);
+    const shares = Math.floor(likes * 0.08);
+    const metrics: CampaignPerformanceMetrics = {
+      impressions,
+      reach,
+      views: Math.floor(impressions * 0.38),
+      likes,
+      comments,
+      shares,
+      clicks,
+      engagement_rate: 4.1,
+      content_count: numSubs,
+      published_count: campaign.publishing_schedule?.filter((p) => p.status === "published").length || 0,
+      platform_breakdown: {
+        linkedin: { impressions: Math.floor(impressions * 0.5), clicks: Math.floor(clicks * 0.55), engagement_rate: 4.8 },
+        instagram: { impressions: Math.floor(impressions * 0.3), clicks: Math.floor(clicks * 0.28), engagement_rate: 3.9 },
+        facebook: { impressions: Math.floor(impressions * 0.2), clicks: Math.floor(clicks * 0.17), engagement_rate: 2.8 },
+      },
+    };
+    campaign.performance_metrics = metrics;
+    return metrics;
+  }
+
+  async generateCampaignInsights(campaignId: string): Promise<CampaignAIInsights> {
+    const campaign = await this.getCampaign(campaignId);
+    const subs = campaign.submissions || [];
+    return {
+      summary: `Campaign '${campaign.name}' has ${subs.length} content item(s) across target platforms with 4.1% average engagement.`,
+      best_performing_content: subs.slice(0, 2).map((s) => ({
+        id: s.id,
+        title: s.title,
+        content_type: s.content_type,
+        status: s.status,
+        compliance_score: 92.0,
+        critical_findings: 0,
+      })),
+      underperforming_content: [],
+      platform_comparisons: [
+        { platform: "LinkedIn", strength: "Highest B2B conversion rate", engagement_rate: "4.8%" },
+        { platform: "Instagram", strength: "Best visual brand recall", engagement_rate: "3.9%" },
+        { platform: "Facebook", strength: "Broad retargeting reach", engagement_rate: "2.8%" },
+      ],
+      audience_engagement_observations: [
+        "Visual design assets paired with concise copy drive 3x higher engagement.",
+        "Zero-critical-finding assets achieve fast-track departmental sign-offs.",
+      ],
+      suggested_content_improvements: [
+        "Include verifiable product benchmarks for regulatory clearance.",
+        "Add platform-native calls to action.",
+      ],
+      recommendations_for_future_campaigns: [
+        "Prioritize LinkedIn for executive decision-maker distribution.",
+        "Create platform adaptations in the initial draft stage.",
+      ],
+      evidence_basis: `Derived from ${subs.length} content item(s) and multi-track audits.`,
+    };
   }
 
   async getCampaignReadiness(campaignId: string): Promise<CampaignReadinessEvaluation> {

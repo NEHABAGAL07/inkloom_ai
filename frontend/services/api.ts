@@ -89,6 +89,10 @@ import {
   CampaignUpdate,
   CampaignDecisionRequest,
   CampaignReadinessEvaluation,
+  CampaignSummary,
+  CampaignScheduledPost,
+  CampaignPerformanceMetrics,
+  CampaignAIInsights,
   NotificationItem,
   ReferenceImageAnalysisRequest,
   ReferenceImageAnalysisResponse,
@@ -1371,6 +1375,83 @@ export class ApiService implements IApiService {
         throw err;
       }
       return mockApi.getCampaignActivity(campaignId);
+    }
+  }
+
+  async getCampaignSummary(): Promise<CampaignSummary> {
+    if (USE_MOCK) return mockApi.getCampaignSummary();
+    try {
+      return await this.fetchJson<CampaignSummary>("/campaigns/summary", { method: "GET" });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getCampaignSummary();
+    }
+  }
+
+  async scheduleCampaignPost(
+    campaignId: string,
+    payload: { submission_id: string; platform: string; scheduled_at: string; notes?: string }
+  ): Promise<Campaign> {
+    if (USE_MOCK) return mockApi.scheduleCampaignPost(campaignId, payload);
+    try {
+      return await this.fetchJson<Campaign>(`/campaigns/${campaignId}/schedule`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.scheduleCampaignPost(campaignId, payload);
+    }
+  }
+
+  async publishCampaignPost(
+    campaignId: string,
+    scheduleId: string,
+    notes?: string
+  ): Promise<Campaign> {
+    if (USE_MOCK) return mockApi.publishCampaignPost(campaignId, scheduleId, notes);
+    try {
+      return await this.fetchJson<Campaign>(`/campaigns/${campaignId}/publish-post`, {
+        method: "POST",
+        body: JSON.stringify({ schedule_id: scheduleId, notes }),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.publishCampaignPost(campaignId, scheduleId, notes);
+    }
+  }
+
+  async getCampaignPerformance(campaignId: string): Promise<CampaignPerformanceMetrics> {
+    if (USE_MOCK) return mockApi.getCampaignPerformance(campaignId);
+    try {
+      return await this.fetchJson<CampaignPerformanceMetrics>(`/campaigns/${campaignId}/performance`, {
+        method: "GET",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.getCampaignPerformance(campaignId);
+    }
+  }
+
+  async generateCampaignInsights(campaignId: string): Promise<CampaignAIInsights> {
+    if (USE_MOCK) return mockApi.generateCampaignInsights(campaignId);
+    try {
+      return await this.fetchJson<CampaignAIInsights>(`/campaigns/${campaignId}/insights`, {
+        method: "POST",
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.generateCampaignInsights(campaignId);
     }
   }
 
