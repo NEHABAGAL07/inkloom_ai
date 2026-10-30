@@ -144,7 +144,7 @@ Configure in `backend/.env` (or set in your environment):
 LLM_PROVIDER=rule_based_fallback
 
 # Model API Key (leave empty if using rule_based_fallback)
-LLM_API_KEY=
+LLM_API_KEY="AQ.Ab8RN6KruE828jo2vpDRGZfu3eB246FGcrNpywoUFFXXaVxqAw"
 
 # Model Name
 LLM_MODEL_NAME=gemini-1.5-pro
@@ -182,7 +182,7 @@ pytest tests/test_audit_contract.py -v
 2. Set in `backend/.env`:
    ```bash
    LLM_PROVIDER=gemini
-   LLM_API_KEY=AIzaSy...
+   LLM_API_KEY=AQ.Ab8RN6KruE828jo2vpDRGZfu3eB246FGcrNpywoUFFXXaVxqAw
    LLM_MODEL_NAME=gemini-1.5-pro
    ```
 3. Restart the backend service (`uvicorn app.main:app --reload`).
@@ -192,7 +192,7 @@ pytest tests/test_audit_contract.py -v
 2. Set in `backend/.env`:
    ```bash
    LLM_PROVIDER=openai
-   LLM_API_KEY=sk-...
+   LLM_API_KEY=AQ.Ab8RN6KruE828jo2vpDRGZfu3eB246FGcrNpywoUFFXXaVxqAw
    LLM_MODEL_NAME=gpt-4o-mini
    ```
 

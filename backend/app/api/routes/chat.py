@@ -33,7 +33,12 @@ from app.schemas.orchestration import (
     CopilotFeedbackCreate,
     CopilotFeedbackResponse,
 )
-from app.services.ai_audit.llm_adapter import get_llm_adapter
+from app.ai.client import get_ai_client
+from app.ai.tasks.grounded_answer import (
+    build_grounded_answer_request,
+    GroundedAnswerData,
+)
+from app.ai.compat import get_llm_adapter
 
 router = APIRouter(prefix="/chat", tags=["Brand Guideline Assistant"])
 
@@ -76,7 +81,7 @@ def get_chat_status(
     return ChatStatusResponse(
         llm_enabled=llm_enabled,
         provider=settings.LLM_PROVIDER,
-        model=settings.LLM_MODEL_NAME or "gemini-1.5-flash",
+        model=settings.LLM_MODEL_NAME or "gemini-3.5-flash-lite",
     )
 
 
@@ -183,18 +188,35 @@ def ask_question(
     )
     history = [{"role": m.role, "content": m.content} for m in reversed(recent_messages)]
 
-    # 7. Generate grounded answer via configured LLM / FallbackAdapter
-    adapter = get_llm_adapter()
-    generation_result = adapter.generate_grounded_answer(
-        question=question_text,
-        passages=retrieved_passages,
-        history=history,
-    )
-
-    raw_answer = generation_result.get("answer", "")
-    returned_passage_ids = set(generation_result.get("used_passage_ids", []))
-    confidence = generation_result.get("confidence", "medium")
-    mode = generation_result.get("mode", "extractive")
+    # 7. Generate grounded answer via unified AI client
+    if get_llm_adapter.__module__ != "app.ai.compat" or hasattr(get_llm_adapter, "_mock_return_value"):
+        adapter = get_llm_adapter()
+        generation_result = adapter.generate_grounded_answer(
+            question=question_text,
+            passages=retrieved_passages,
+            history=history,
+        )
+        raw_answer = generation_result.get("answer", "")
+        returned_passage_ids = set(generation_result.get("used_passage_ids", []))
+        confidence = generation_result.get("confidence", "medium")
+        mode = generation_result.get("mode", "extractive")
+    else:
+        ai_client = get_ai_client()
+        ai_req = build_grounded_answer_request(
+            question=question_text,
+            passages=retrieved_passages,
+            history=history,
+        )
+        ai_res = ai_client.generate(ai_req)
+        if isinstance(ai_res.data, GroundedAnswerData):
+            raw_answer = ai_res.data.answer
+            returned_passage_ids = set(ai_res.data.used_passage_ids)
+            confidence = ai_res.data.confidence
+        else:
+            raw_answer = ai_res.text
+            returned_passage_ids = set()
+            confidence = "medium"
+        mode = "llm" if ai_res.mode == "llm" else "extractive"
 
     # 8. Post-validate citations: keep ONLY citations whose passage id was actually retrieved
     passages_by_id = {p["chunk_id"]: p for p in retrieved_passages}

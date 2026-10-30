@@ -52,6 +52,12 @@ inkloom_ai/
 │   │   ├── models/               # Multi-tenant DB models (Organizations, Guidelines, Submissions, Audits)
 │   │   ├── schemas/              # Pydantic contract & request/response schemas
 │   │   ├── workflow/             # Centrally validated state machine
+│   │   ├── ai/                   # Unified AI Layer (Gemini, schemas, safety, tasks)
+│   │   │   ├── client.py         # AIClient dispatcher with fallback resilience
+│   │   │   ├── schemas.py        # Task-agnostic AIRequest and AIResponse schemas
+│   │   │   ├── safety.py         # Prompt injection defense & key redaction
+│   │   │   ├── providers/        # Google Gemini & offline deterministic providers
+│   │   │   └── tasks/            # Grounded Q&A, explain, rewrite, vision review
 │   │   └── services/
 │   │       ├── audit_orchestrator.py # Pipeline coordinator
 │   │       ├── ai_audit/         # Independent AI audit modules
@@ -59,8 +65,7 @@ inkloom_ai/
 │   │       │   ├── guideline_retrieval.py # Context rule selector
 │   │       │   ├── tone_analysis.py       # Anti-FUD & tone checker
 │   │       │   ├── terminology.py         # Deprecated names & trademark checker
-│   │       │   ├── claim_checking.py      # Claim verification & benchmark matcher
-│   │       │   └── llm_adapter.py         # Optional model adapter interface
+│   │       │   └── claim_checking.py      # Claim verification & benchmark matcher
 │   │       └── media_audit/      # Safe document & media extraction
 │   │           ├── interfaces.py          # Typed MediaSegment & ExtractedContent
 │   │           ├── extractor.py           # Dispatcher, file limits & path defense
@@ -168,25 +173,27 @@ npm run dev
 - Application is live at: [http://localhost:3000](http://localhost:3000)
 - By default, `NEXT_PUBLIC_USE_MOCK=true` allows the frontend to run fully offline with deterministic brand governance mock data. Set to `false` when connecting to the live FastAPI backend.
 
-### 5.3 Enabling Real Google Gemini LLM Integration
+### 5.3 Enabling Real Google Gemini AI Integration
 
-The `/assistant` brand guideline chatbot supports natural language answer synthesis powered by Google Gemini, grounded strictly in tenant-uploaded guideline documents:
+Inkloom AI features a unified, provider-agnostic AI layer (`backend/app/ai/`) that powers all copilots and governance intelligence:
 
 1. **Obtain API Key**:
    - Generate a Gemini API key at [Google AI Studio](https://aistudio.google.com/).
 2. **Configure `backend/.env`**:
    ```env
    LLM_PROVIDER=gemini
-   LLM_API_KEY=AIzaSyYourGeminiApiKeyHere
-   LLM_MODEL_NAME=gemini-1.5-flash
-   LLM_TIMEOUT_SECONDS=20.0
-   LLM_MAX_OUTPUT_TOKENS=800
+   LLM_API_KEY=AQ.Ab8RN6KruE828jo2vpDRGZfu3eB246FGcrNpywoUFFXXaVxqAw
+   LLM_MODEL_NAME=gemini-3.1-flash-lite
+   LLM_TIMEOUT_SECONDS=30.0
+   LLM_MAX_RETRIES=2
+   LLM_MAX_OUTPUT_TOKENS=1000
    CHAT_RATE_LIMIT_PER_MINUTE=10
    ```
 3. **Resilience & Safe Extractive Fallback**:
-   - **Zero-Key Extractive Mode**: When `LLM_API_KEY` is empty, Inkloom operates in deterministic **Extractive Mode** (`mode="extractive"`). It extracts top verbatim sections with page citations without making any outbound network calls.
-   - **Automatic Fallback on Failure**: If Gemini calls fail (e.g., HTTP 500, network timeouts, 429 quota limits, `MAX_TOKENS` truncation, or safety blocks), `FallbackAdapter` catches the error, logs a clean warning without secrets, and yields a complete extractive answer with HTTP 200. Zero 500s.
+   - **Zero-Key Extractive Mode**: When `LLM_API_KEY` is empty, Inkloom operates in deterministic **Offline Mode** (`mode="offline"`). It extracts top verbatim sections with page citations without making any outbound network calls.
+   - **Automatic Fallback on Failure**: If Gemini calls fail (e.g., HTTP 500, network timeouts, 429 quota limits, `MAX_TOKENS` truncation, or safety blocks), `AIClient` catches the error, logs a clean warning without secrets, and yields a complete deterministic answer with HTTP 200. Zero unhandled 500s.
    - **Strict Grounding Guarantee**: If BM25 retrieval finds no passages or scores fall below relevance thresholds, the system immediately returns `"I couldn't find this in your uploaded documents."` (`confidence="not_found"`) without spending LLM tokens.
+   - **Prompt Injection Containment**: All untrusted inputs are encapsulated within strict XML-delimited blocks (`<<<UNTRUSTED_CONTENT>>>`) with hard directives instructing the model to treat content purely as passive subject data.
 
 ### 5.4 Run with Docker Compose (Production Multi-Container)
 ```bash

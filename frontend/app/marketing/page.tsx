@@ -140,7 +140,7 @@ export default function MarketingCopilotPage() {
       setContextConstraints("Include required agency disclosure hashtags.");
       setSupportingReferences("Official 2026 digital visual guidelines approved.");
     } else if (templateName === "headline_punchline") {
-      setProduct("Inkloom Copilot Suite");
+      setProduct("Inkloom Enterprise AI Suite");
       setObjective("Reflect brand integrity and elimination of legal review delays");
       setAudience("Enterprise Content Strategy Teams");
       setChannel("ad");
@@ -250,7 +250,7 @@ export default function MarketingCopilotPage() {
       if (activeDraft) {
         const updated = await api.updateMarketingDraftRevision(activeDraft.id, {
           text: editorText,
-          change_summary: changeSummary || "Revised copy in Marketing Copilot workspace",
+          change_summary: changeSummary || "Revised copy in Marketing Gemini AI workspace",
         });
         setActiveDraft(updated);
         setSaveSuccessMessage(`Saved Revision v${updated.version_number} successfully.`);
@@ -364,7 +364,7 @@ export default function MarketingCopilotPage() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-ink-primary tracking-tight">Marketing Copilot</h1>
+              <h1 className="text-lg font-bold text-ink-primary tracking-tight">Marketing Gemini AI</h1>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal border border-teal-500/20">
                 Phase 3 Enterprise
               </span>

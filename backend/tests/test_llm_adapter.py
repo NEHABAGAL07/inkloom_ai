@@ -17,7 +17,7 @@ import logging
 import httpx
 import pytest
 
-from app.services.ai_audit.llm_adapter import (
+from app.ai.compat import (
     GeminiAdapter,
     OfflineRuleAdapter,
     FallbackAdapter,

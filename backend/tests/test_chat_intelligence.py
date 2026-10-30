@@ -14,7 +14,7 @@ from app.models.document import KnowledgeDocument, DocumentChunk
 from app.models.chat import ChatSession, ChatMessage
 from app.core.security import AuthContext, UserRole, get_current_auth_context
 from app.main import app
-from app.services.ai_audit.llm_adapter import OfflineRuleAdapter, GeminiAdapter
+from app.ai.compat import OfflineRuleAdapter, GeminiAdapter
 
 
 def test_grounded_answer_with_citations(db_session, client):
@@ -477,7 +477,7 @@ def test_malformed_json_or_http_failure_yields_extractive_answer_with_status_200
         def generate_grounded_answer(self, question, passages, history=None):
             raise RuntimeError("Upstream Gemini 500 error / malformed response")
 
-    from app.services.ai_audit.llm_adapter import FallbackAdapter, OfflineRuleAdapter
+    from app.ai.compat import FallbackAdapter, OfflineRuleAdapter
     fallback_adapter = FallbackAdapter(primary=BrokenPrimaryAdapter(), fallback=OfflineRuleAdapter())
 
     from app.api.routes import chat as chat_module

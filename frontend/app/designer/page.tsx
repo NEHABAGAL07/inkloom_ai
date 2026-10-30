@@ -15,6 +15,7 @@ import {
   DesignDraftDetailResponse,
   AuditResult,
   Finding,
+  ReferenceImageAnalysisResponse,
 } from "@/types";
 import {
   Palette,
@@ -133,6 +134,13 @@ function DesignerCopilotContent() {
   const [findingCategoryFilter, setFindingCategoryFilter] = useState<string>("all");
 
   // ==========================================
+  // Gemini AI Visual Analysis State
+  // ==========================================
+  const [imageAnalysis, setImageAnalysis] = useState<ReferenceImageAnalysisResponse | null>(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  // ==========================================
   // Project History State
   // ==========================================
   const [savedBriefs, setSavedBriefs] = useState<DesignDraftDetailResponse[]>([]);
@@ -155,8 +163,8 @@ function DesignerCopilotContent() {
       id: "welcome_init",
       role: "assistant",
       content:
-        "Welcome! I am your Inkloom Designer Copilot, an enterprise creative partner grounded in your brand guidelines and live design canvas. " +
-        "You can ask me to inspect reference images with real WCAG 2.1 AA luminance & contrast metrics, critique your active visual concept, iteratively adapt layouts (e.g. 'make it more premium', 'adapt for Instagram' or 'adapt for LinkedIn'), and execute brand visual audits.",
+        "Welcome! I am your Inkloom Gemini AI Designer, an enterprise creative partner powered by Google Gemini and grounded in your brand guidelines. " +
+        "You can ask me to inspect reference images with real WCAG 2.1 AA contrast metrics, critique visual concepts, suggest color and font improvements, and adapt layouts in real time.",
       confidence: "high",
     },
   ]);
@@ -215,7 +223,7 @@ function DesignerCopilotContent() {
         {
           id: `err_${Date.now()}`,
           role: "assistant",
-          content: `Designer Copilot encountered an issue: ${err.message || "Failed to reach intelligence orchestration engine."}`,
+          content: `Gemini AI encountered an issue: ${err.message || "Failed to reach intelligence orchestration engine."}`,
           confidence: "low",
         },
       ]);
@@ -425,6 +433,40 @@ function DesignerCopilotContent() {
     }
   };
 
+  // Analyze Reference Image with Gemini AI
+  const handleAnalyzeImageWithGemini = async () => {
+    if (isAnalyzingImage) return;
+    setIsAnalyzingImage(true);
+    setAnalysisError(null);
+
+    try {
+      let b64Data: string | undefined = undefined;
+      if (uploadedFile) {
+        b64Data = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(uploadedFile);
+        });
+      }
+
+      const res = await api.analyzeReferenceImage({
+        submission_id: activeDraft?.id,
+        revision_id: selectedRevisionId || activeDraft?.current_revision_id || undefined,
+        file_path: previewUrl || undefined,
+        image_base64: b64Data,
+        user_query: `Analyze uploaded image against official brand guidelines. Critique visual hierarchy, suggest specific color adjustments with brand hex codes, and suggest typography & font pairings for ${channel}.`,
+      });
+
+      setImageAnalysis(res);
+      setSaveSuccessMessage("Gemini AI design analysis and brand critique completed.");
+    } catch (err: any) {
+      setAnalysisError(err.message || "Failed to analyze image with Gemini AI.");
+    } finally {
+      setIsAnalyzingImage(false);
+    }
+  };
+
   // Run Visual Audit
   const handleRunVisualAudit = async () => {
     setIsAuditing(true);
@@ -434,19 +476,27 @@ function DesignerCopilotContent() {
     const revId = selectedRevisionId || activeDraft?.current_revision_id;
 
     try {
-      const result = await api.auditDesignVersion(briefId, revId || undefined);
-      setAuditResult(result);
-      if (activeDraft) {
-        activeDraft.latest_audit = {
-          audit_id: result.audit_id,
-          revision_id: result.revision_id || undefined,
-          overall_status: result.overall_status,
-          summary: result.summary,
-          findings_count: result.findings.length,
-          created_at: result.created_at,
-        };
+      const [auditResult] = await Promise.all([
+        api.auditDesignVersion(briefId, revId || undefined),
+        handleAnalyzeImageWithGemini().catch((e) => {
+          console.warn("Gemini secondary image analysis warning:", e);
+        }),
+      ]);
+
+      if (auditResult) {
+        setAuditResult(auditResult);
+        if (activeDraft) {
+          activeDraft.latest_audit = {
+            audit_id: auditResult.audit_id,
+            revision_id: auditResult.revision_id || undefined,
+            overall_status: auditResult.overall_status,
+            summary: auditResult.summary,
+            findings_count: auditResult.findings.length,
+            created_at: auditResult.created_at,
+          };
+        }
       }
-      setSaveSuccessMessage("Brand visual audit completed successfully.");
+      setSaveSuccessMessage("Brand visual audit and Gemini design critique completed.");
     } catch (err: any) {
       setAuditError(err.message || "Failed to execute visual brand audit.");
     } finally {
@@ -557,7 +607,7 @@ function DesignerCopilotContent() {
             <div className="p-2 bg-teal/10 rounded-lg text-teal border border-teal/20">
               <Palette className="w-5 h-5" />
             </div>
-            <h1 className="text-2xl font-bold text-ink-primary tracking-tight">Designer Copilot</h1>
+            <h1 className="text-2xl font-bold text-ink-primary tracking-tight">Designer Gemini AI Studio</h1>
             <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal/15 text-teal border border-teal/25">
               Phase 4 Active
             </span>
@@ -575,7 +625,7 @@ function DesignerCopilotContent() {
 
           <div className="flex items-center space-x-1.5 text-xs text-ink-muted bg-surface px-3 py-1.5 rounded-lg border border-border">
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>LLM: <strong>gemini-1.5-pro (Gov)</strong></span>
+            <span>LLM: <strong>gemini-3.5-flash-lite (Active)</strong></span>
           </div>
         </div>
       </div>
@@ -657,9 +707,9 @@ function DesignerCopilotContent() {
           }`}
         >
           <Sparkles className="w-4 h-4 text-indigo-400" />
-          <span>Intelligent Creative Partner</span>
+          <span>Gemini AI Assistant</span>
           <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-bold">
-            Copilot
+            Gemini
           </span>
         </button>
       </div>
@@ -1000,7 +1050,7 @@ function DesignerCopilotContent() {
                 </div>
                 <h3 className="text-sm font-bold text-ink-primary">No Creative Concepts Generated Yet</h3>
                 <p className="text-xs text-ink-secondary max-w-md mt-1 mb-4">
-                  Configure your creative brief on the left and click <strong>Generate Concepts</strong>. The Designer Copilot will ground alternatives in approved brand guidelines, color tokens, and asset restrictions.
+                  Configure your creative brief on the left and click <strong>Generate Concepts</strong>. Gemini AI will ground alternatives in approved brand guidelines, color tokens, and asset restrictions.
                 </p>
                 <div className="grid grid-cols-3 gap-3 text-left w-full max-w-lg mt-2">
                   <div className="p-2.5 rounded-lg bg-workspace border border-border text-[11px]">
@@ -1465,31 +1515,216 @@ function DesignerCopilotContent() {
           {/* Right Column: AI Visual Audit & Findings Panel (5 Cols) */}
           <div className="lg:col-span-5 space-y-4">
             <div className="bg-surface rounded-xl border border-border p-5 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div>
                   <h3 className="text-sm font-bold text-ink-primary uppercase tracking-wide">AI Visual Audit</h3>
                   <p className="text-[11px] text-ink-secondary">Multi-layer brand rule and accessibility verification.</p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleRunVisualAudit}
-                  disabled={isAuditing}
-                  className="flex items-center space-x-1.5 py-1.5 px-3 rounded-lg bg-teal text-white text-xs font-semibold hover:bg-teal/90 transition shadow-sm disabled:opacity-50"
-                >
-                  {isAuditing ? (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Auditing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Run Visual Audit</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={handleAnalyzeImageWithGemini}
+                    disabled={isAnalyzingImage || (!previewUrl && !uploadedFile)}
+                    className="flex items-center space-x-1.5 py-1.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Run real-time Gemini AI analysis for brand guidelines, typography, and color improvements"
+                  >
+                    {isAnalyzingImage ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Gemini Critique</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleRunVisualAudit}
+                    disabled={isAuditing}
+                    className="flex items-center space-x-1.5 py-1.5 px-3 rounded-lg bg-teal text-white text-xs font-semibold hover:bg-teal/90 transition shadow-sm disabled:opacity-50"
+                  >
+                    {isAuditing ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Auditing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Run Visual Audit</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
+
+              {/* Gemini AI Analysis Loading State */}
+              {isAnalyzingImage && (
+                <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/25 text-xs text-indigo-300 flex items-center space-x-3">
+                  <RefreshCw className="w-4 h-4 animate-spin text-indigo-400 shrink-0" />
+                  <div>
+                    <span className="font-bold block text-white text-xs">Gemini AI Image Analysis Running</span>
+                    <span className="text-[11px] text-slate-300">
+                      Evaluating brand guidelines, color harmony, typography pairing, and visual hierarchy...
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Gemini AI Analysis Error State */}
+              {analysisError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{analysisError}</span>
+                </div>
+              )}
+
+              {/* Gemini AI Brand & Visual Design Intelligence Card */}
+              {imageAnalysis && (
+                <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-950/40 via-surface to-teal/5 border border-indigo-500/30 space-y-3.5 shadow-sm">
+                  {/* Header */}
+                  <div className="flex items-center justify-between border-b border-border/70 pb-2.5">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <span>Gemini AI Design Suggestions</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">
+                            gemini-3.1-flash-lite
+                          </span>
+                        </h4>
+                        <span className="text-[10px] text-ink-muted">
+                          Brand Guidelines Alignment & Design Polish
+                        </span>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                        imageAnalysis.brand_palette_concordance === "brand_aligned"
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                          : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                      }`}
+                    >
+                      {imageAnalysis.brand_palette_concordance === "brand_aligned" ? "Brand Aligned" : "Palette Review Needed"}
+                    </span>
+                  </div>
+
+                  {/* Visual Hierarchy Critique */}
+                  {imageAnalysis.visual_hierarchy_critique && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1">
+                        <Layers className="w-3 h-3" />
+                        <span>Visual Hierarchy & Composition Critique</span>
+                      </span>
+                      <p className="text-xs text-ink-secondary leading-relaxed bg-surface/70 p-2.5 rounded-lg border border-border/60">
+                        {imageAnalysis.visual_hierarchy_critique}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Color-wise Improvements */}
+                  {imageAnalysis.color_recommendations && imageAnalysis.color_recommendations.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-teal flex items-center gap-1">
+                        <Palette className="w-3 h-3" />
+                        <span>Color-wise Design Improvements</span>
+                      </span>
+                      <div className="space-y-1">
+                        {imageAnalysis.color_recommendations.map((rec, i) => (
+                          <div
+                            key={i}
+                            className="p-2 rounded-lg bg-teal/5 border border-teal/20 text-[11px] text-ink-primary flex items-start gap-2"
+                          >
+                            <span className="text-teal font-bold shrink-0">•</span>
+                            <span className="leading-snug">{rec}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Typography & Font-wise Improvements */}
+                  {imageAnalysis.typography_recommendations && imageAnalysis.typography_recommendations.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1">
+                        <Type className="w-3 h-3" />
+                        <span>Font & Typography Improvements</span>
+                      </span>
+                      <div className="space-y-1">
+                        {imageAnalysis.typography_recommendations.map((rec, i) => (
+                          <div
+                            key={i}
+                            className="p-2 rounded-lg bg-sky-500/5 border border-sky-500/20 text-[11px] text-ink-primary flex items-start gap-2"
+                          >
+                            <span className="text-sky-400 font-bold shrink-0">•</span>
+                            <span className="leading-snug">{rec}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Key Image Facts & Extracted Palette */}
+                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border/50 text-[10px]">
+                    <div className="p-2 rounded-lg bg-surface/60 border border-border/50 space-y-1">
+                      <span className="text-ink-muted block font-semibold">Contrast & Accessibility</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-white">
+                          {imageAnalysis.contrast_ratio ? `${imageAnalysis.contrast_ratio.toFixed(1)}:1` : "N/A"}
+                        </span>
+                        <span
+                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                            imageAnalysis.wcag_aa_compliant
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "bg-red-500/20 text-red-400"
+                          }`}
+                        >
+                          {imageAnalysis.wcag_aa_compliant ? "WCAG AA PASS" : "FAIL 4.5:1"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-surface/60 border border-border/50 space-y-1">
+                      <span className="text-ink-muted block font-semibold">Extracted Dominant Colors</span>
+                      <div className="flex items-center gap-1">
+                        {imageAnalysis.dominant_colors_hex?.slice(0, 4).map((hex, i) => (
+                          <div
+                            key={i}
+                            className="w-5 h-5 rounded border border-white/20 shadow-sm"
+                            style={{ backgroundColor: hex }}
+                            title={hex}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actionable Recommendations Checklist */}
+                  {imageAnalysis.actionable_recommendations && imageAnalysis.actionable_recommendations.length > 0 && (
+                    <div className="space-y-1 pt-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
+                        Actionable Next Steps
+                      </span>
+                      <ul className="space-y-1 text-[11px] text-ink-secondary">
+                        {imageAnalysis.actionable_recommendations.map((step, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-teal shrink-0 mt-0.5" />
+                            <span>{step}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {auditError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs flex items-center space-x-2">
@@ -1923,7 +2158,7 @@ function DesignerCopilotContent() {
               </div>
               <div>
                 <h3 className="font-bold text-sm text-ink-primary flex items-center space-x-2">
-                  <span>Designer Copilot — Intelligent Creative Partner</span>
+                  <span>Gemini AI Designer — Real-Time Creative Partner</span>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal/15 text-teal border border-teal/25 uppercase">
                     Grounded in Brand Tokens
                   </span>
@@ -2038,7 +2273,7 @@ function DesignerCopilotContent() {
               >
                 <div className="flex items-center space-x-2 text-[10px] text-ink-muted">
                   <span className="font-bold uppercase tracking-wider">
-                    {msg.role === "user" ? "You" : "Designer Copilot"}
+                    {msg.role === "user" ? "You" : "Gemini AI"}
                   </span>
                   {msg.confidence && (
                     <span
@@ -2332,7 +2567,7 @@ function DesignerCopilotContent() {
             {copilotLoading && (
               <div className="flex items-center space-x-2 text-xs text-ink-muted p-2">
                 <RefreshCw className="w-4 h-4 animate-spin text-teal" />
-                <span>Designer Copilot is evaluating brand tokens, image metrics, and visual hierarchy...</span>
+                <span>Gemini AI is evaluating brand tokens, image metrics, and visual hierarchy...</span>
               </div>
             )}
           </div>
@@ -2375,7 +2610,7 @@ export default function DesignerCopilotPage() {
       fallback={
         <div className="flex flex-col items-center justify-center min-h-[40vh] text-ink-muted text-xs space-y-3 p-8">
           <div className="w-8 h-8 rounded-full border-2 border-teal border-t-transparent animate-spin"></div>
-          <p className="font-semibold text-navy">Loading Designer Copilot...</p>
+          <p className="font-semibold text-navy">Loading Designer Gemini AI Studio...</p>
         </div>
       }
     >

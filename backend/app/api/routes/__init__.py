@@ -19,6 +19,7 @@ from app.api.routes.designer_copilot import router as designer_copilot_router
 from app.api.routes.legal_copilot import router as legal_copilot_router
 from app.api.routes.campaigns import router as campaigns_router
 from app.api.routes.notifications import router as notifications_router
+from app.api.routes.ai_status import router as ai_status_router
 
 api_router = APIRouter()
 
@@ -43,5 +44,6 @@ api_router.include_router(designer_copilot_router)
 api_router.include_router(legal_copilot_router)
 api_router.include_router(campaigns_router)
 api_router.include_router(notifications_router)
+api_router.include_router(ai_status_router)
 
 __all__ = ["api_router"]

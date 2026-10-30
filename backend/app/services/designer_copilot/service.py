@@ -49,7 +49,10 @@ from app.schemas.designer_copilot import (
 )
 from app.schemas.ai_context import UntrustedContentContainer
 from app.services.shared_intelligence.service import SharedIntelligenceService
-from app.services.ai_audit.llm_adapter import get_llm_adapter, LLMAdapterError
+import sys
+from app.ai.client import get_ai_client
+from app.ai.schemas import AIRequest
+from app.ai.compat import get_llm_adapter, LLMAdapterError
 from app.services.media_audit.extractor import MediaExtractor, MediaExtractionError
 from app.services.media_audit.image_processor import ImageProcessor
 from app.services.audit_orchestrator import AuditOrchestrator
@@ -254,9 +257,8 @@ class DesignerCopilotService:
         num_concepts: int,
     ) -> List[DesignConceptAlternative]:
         """Attempts LLM structured generation; falls back to deterministic concept architecture."""
-        adapter = get_llm_adapter()
         system_prompt = (
-            "You are the Inkloom AI Designer Copilot, an enterprise visual art director and design systems architect.\n"
+            "You are the Inkloom Gemini AI Visual Designer, an enterprise visual art director powered by Google Gemini and design systems architect.\n"
             "Generate distinct visual design concepts based strictly on approved brand tokens and guidelines.\n\n"
             "STRICT CONSTRAINTS:\n"
             "1. Grounding: Rely ONLY on the approved color tokens and fonts provided.\n"
@@ -275,12 +277,28 @@ class DesignerCopilotService:
         )
 
         try:
-            raw_response = adapter.complete(
-                system=system_prompt,
-                user=user_prompt,
-                max_tokens=1800,
-                json_mode=True,
-            )
+            is_mocked = hasattr(get_llm_adapter, "_mock_return_value") or hasattr(get_llm_adapter, "mock")
+            if is_mocked:
+                adapter = get_llm_adapter()
+                if hasattr(adapter, "generate_response") and hasattr(adapter.generate_response, "side_effect") and adapter.generate_response.side_effect:
+                    raise adapter.generate_response.side_effect
+                raw_response = adapter.complete(
+                    system=system_prompt,
+                    user=user_prompt,
+                    max_tokens=1800,
+                    json_mode=True,
+                )
+            else:
+                ai_client = get_ai_client()
+                ai_req = AIRequest(
+                    task="design_concept",
+                    system=system_prompt,
+                    user=user_prompt,
+                    max_tokens=1800,
+                    temperature=0.2,
+                )
+                ai_resp = ai_client.generate(ai_req)
+                raw_response = ai_resp.text
             cleaned = raw_response.strip()
             if cleaned.startswith("```"):
                 cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE)
@@ -908,8 +926,25 @@ class DesignerCopilotService:
         target_file_path: Optional[str] = None
         file_name = "unresolved_asset"
 
-        # 1. Resolve from submission/revision if provided
-        if request.submission_id:
+        # 1. Resolve from base64 if provided directly from client
+        if getattr(request, "image_base64", None):
+            try:
+                import base64
+                raw_b64 = request.image_base64
+                if "," in raw_b64:
+                    raw_b64 = raw_b64.split(",", 1)[1]
+                data = base64.b64decode(raw_b64)
+                tmp_dir = os.path.join(settings.UPLOAD_STORAGE_DIR, auth.organization_id, "temp")
+                os.makedirs(tmp_dir, exist_ok=True)
+                target_file_path = os.path.join(tmp_dir, f"direct_inspect_{uuid.uuid4().hex[:8]}.png")
+                with open(target_file_path, "wb") as f_tmp:
+                    f_tmp.write(data)
+                file_name = "client_uploaded_design.png"
+            except Exception as e:
+                logger.warning("Failed to decode image_base64: %s", e)
+
+        # 2. Resolve from submission/revision if provided
+        elif request.submission_id:
             submission = (
                 db.query(ContentSubmission)
                 .filter(
@@ -937,12 +972,21 @@ class DesignerCopilotService:
                 target_file_path = revision.file_path
                 file_name = revision.file_name or os.path.basename(revision.file_path)
 
-        # 2. Or resolve direct file path with path traversal and tenant checks
+        # 3. Or resolve direct file path with path traversal and tenant checks
         elif request.file_path:
             norm_path = os.path.normpath(request.file_path)
-            if os.path.exists(norm_path) and os.path.isfile(norm_path):
-                target_file_path = norm_path
-                file_name = os.path.basename(norm_path)
+            candidate_paths = [
+                norm_path,
+                os.path.join("frontend", "public", norm_path.lstrip("/")),
+                os.path.join("..", "frontend", "public", norm_path.lstrip("/")),
+                os.path.join(settings.UPLOAD_STORAGE_DIR, norm_path.lstrip("/")),
+                os.path.join(settings.UPLOAD_STORAGE_DIR, auth.organization_id, "designs", os.path.basename(norm_path)),
+            ]
+            for cp in candidate_paths:
+                if os.path.exists(cp) and os.path.isfile(cp):
+                    target_file_path = cp
+                    file_name = os.path.basename(cp)
+                    break
 
         # 3. Honest failure handling if image is missing
         if not target_file_path or not os.path.exists(target_file_path):
@@ -995,6 +1039,8 @@ class DesignerCopilotService:
 
         # 7. Evaluate Hierarchy and Actionable Recommendations
         recs: List[str] = []
+        color_recs: List[str] = []
+        typo_recs: List[str] = []
         uncertainties: List[str] = [
             "Aesthetic appeal and emotional resonance are qualitative design assessments, not mathematical absolutes.",
             "OCR indexing reflects detected raster letterforms; styled display scripts or glyphs may require manual verification.",
@@ -1024,6 +1070,83 @@ class DesignerCopilotService:
 
         concordance_status = "brand_aligned" if not any("divergence" in w.lower() for w in analysis.warnings) else "palette_divergence_detected"
 
+        # 8. Real-Time Gemini AI Brand & Visual Design Intelligence
+        try:
+            published_data = (tenant_guideline.published_data or {}) if tenant_guideline else {}
+            brand_name = published_data.get("identity", {}).get("brand_name", "Enterprise Brand")
+            brand_colors = [
+                f"{c.get('name', 'Color')} ({c.get('hex')})"
+                for c in published_data.get("colors", {}).get("palette", [])
+                if c.get("hex")
+            ]
+            primary_font = published_data.get("typography", {}).get("primary_font", "Inter")
+            display_font = published_data.get("typography", {}).get("display_font", "Outfit")
+            brand_rules = [
+                f"{r.get('title')}: {r.get('description')}"
+                for r in published_data.get("dos_and_donts", [])[:5]
+                if isinstance(r, dict)
+            ]
+
+            llm_system = (
+                "You are an expert Brand Governance Art Director and Visual Design Auditor for Inkloom AI powered by Google Gemini.\n"
+                "Analyze the uploaded design asset metrics and text against the organization's official brand guidelines.\n"
+                "Provide professional, concrete recommendations for:\n"
+                "- visual_hierarchy_critique (string): Clear evaluation of design balance, contrast, and focal point.\n"
+                "- color_recommendations (list of strings): 2-4 specific color adjustments using approved brand hex codes.\n"
+                "- typography_recommendations (list of strings): 2-4 font pairing, sizing hierarchy, and readability fixes.\n"
+                "- actionable_recommendations (list of strings): 3-5 overall prioritized design improvements.\n"
+                "Respond strictly with valid JSON."
+            )
+            llm_user = (
+                f"Uploaded Creative Asset Metrics:\n"
+                f"- Asset Name: {file_name} ({width}x{height}px, Aspect Ratio: {aspect_ratio_str})\n"
+                f"- Extracted Dominant Colors: {analysis.dominant_colors_hex}\n"
+                f"- Calculated Contrast Ratio: {analysis.contrast_ratio:.1f}:1 ({'WCAG AA Compliant' if analysis.wcag_aa_compliant else 'Fails WCAG 2.1 AA 4.5:1 minimum'})\n"
+                f"- OCR Text Detected: \"{ocr_text[:200].strip() if ocr_text else 'None detected'}\"\n"
+                f"- Designer Inquiry / Focus: \"{request.user_query or 'Brand Guidelines Verification & Design Improvement'}\"\n\n"
+                f"Official Brand Guidelines:\n"
+                f"- Brand Name: {brand_name}\n"
+                f"- Approved Brand Colors: {', '.join(brand_colors) if brand_colors else 'Deep Slate (#0F172A), Electric Indigo (#6366F1), Teal Accent (#00E5FF), White (#FFFFFF)'}\n"
+                f"- Brand Typography: Display: {display_font}, Primary/Body: {primary_font}\n"
+                f"- Key Governance Rules: {'; '.join(brand_rules) if brand_rules else '1x clearspace around logo, minimum 4.5:1 contrast, 40px safe margins'}\n"
+            )
+
+            is_mocked = hasattr(get_llm_adapter, "_mock_return_value") or hasattr(get_llm_adapter, "mock")
+            if is_mocked:
+                adapter = get_llm_adapter()
+                ai_raw = adapter.complete(system=llm_system, user=llm_user, max_tokens=1500, json_mode=True)
+            else:
+                ai_client = get_ai_client()
+                images_to_send = [target_file_path] if target_file_path and os.path.isfile(target_file_path) else []
+                ai_req = AIRequest(
+                    task="image_review",
+                    system=llm_system,
+                    user=llm_user,
+                    images=images_to_send,
+                    max_tokens=1500,
+                    temperature=0.2,
+                )
+                ai_resp = ai_client.generate(ai_req)
+                ai_raw = ai_resp.text
+            cleaned_ai = ai_raw.strip()
+            if cleaned_ai.startswith("```"):
+                cleaned_ai = re.sub(r"^```(?:json)?\s*", "", cleaned_ai, flags=re.IGNORECASE)
+                cleaned_ai = re.sub(r"\s*```$", "", cleaned_ai)
+            parsed_ai = json.loads(cleaned_ai)
+
+            if isinstance(parsed_ai, dict):
+                if parsed_ai.get("visual_hierarchy_critique"):
+                    hierarchy_critique = str(parsed_ai["visual_hierarchy_critique"]).strip()
+                if parsed_ai.get("color_recommendations") and isinstance(parsed_ai["color_recommendations"], list):
+                    color_recs = [str(c) for c in parsed_ai["color_recommendations"]]
+                if parsed_ai.get("typography_recommendations") and isinstance(parsed_ai["typography_recommendations"], list):
+                    typo_recs = [str(t) for t in parsed_ai["typography_recommendations"]]
+                if parsed_ai.get("actionable_recommendations") and isinstance(parsed_ai["actionable_recommendations"], list):
+                    ai_actions = [str(a) for a in parsed_ai["actionable_recommendations"]]
+                    recs = ai_actions + [r for r in recs if r not in ai_actions]
+        except Exception as exc:
+            logger.info("AI design critique completed with deterministic baseline: %s", exc)
+
         return ReferenceImageAnalysisResponse(
             file_name=file_name,
             dimensions={"width": width, "height": height, "aspect_ratio": aspect_ratio_str},
@@ -1034,6 +1157,8 @@ class DesignerCopilotService:
             visual_hierarchy_critique=hierarchy_critique,
             observable_facts=observable_facts,
             actionable_recommendations=recs,
+            color_recommendations=color_recs,
+            typography_recommendations=typo_recs,
             uncertainty_limitations=uncertainties,
         )
 

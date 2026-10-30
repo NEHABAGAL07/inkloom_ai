@@ -42,7 +42,7 @@ from app.schemas.legal_copilot import (
     RegulatedProductCategory,
 )
 from app.services.legal_copilot.service import LegalCopilotService
-from app.services.ai_audit.llm_adapter import LLMAdapterError
+from app.ai.compat import LLMAdapterError
 
 
 @pytest.fixture

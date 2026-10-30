@@ -1182,6 +1182,7 @@ export interface ReferenceImageAnalysisRequest {
   submission_id?: string;
   revision_id?: string;
   user_query?: string;
+  image_base64?: string;
 }
 
 export interface ReferenceImageAnalysisResponse {
@@ -1199,6 +1200,8 @@ export interface ReferenceImageAnalysisResponse {
   visual_hierarchy_critique: string;
   observable_facts: string[];
   actionable_recommendations: string[];
+  color_recommendations?: string[];
+  typography_recommendations?: string[];
   uncertainty_limitations: string[];
   analysis_timestamp: string;
 }

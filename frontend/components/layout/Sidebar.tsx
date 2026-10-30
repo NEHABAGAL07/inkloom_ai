@@ -50,13 +50,13 @@ export const ROLE_NAV_ITEMS: Record<"admin" | "designer" | "marketing" | "legal"
   designer: [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Media Audit & Guidelines", href: "/media-audit", icon: ImageIcon },
-    { name: "Designer Studio & Copilot", href: "/designer", icon: Palette },
+    { name: "Designer Gemini AI", href: "/designer", icon: Palette },
     { name: "Campaigns", href: "/campaigns", icon: Briefcase },
     { name: "Review history", href: "/audits", icon: Folder },
   ],
   marketing: [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Marketing Copilot", href: "/marketing", icon: FileText },
+    { name: "Marketing Gemini AI", href: "/marketing", icon: FileText },
     { name: "Campaigns", href: "/campaigns", icon: Briefcase },
     { name: "Guidelines", href: "/guidelines", icon: Sparkles },
     { name: "Review history", href: "/audits", icon: Folder },

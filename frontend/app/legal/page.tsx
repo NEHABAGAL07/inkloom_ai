@@ -313,7 +313,7 @@ export default function LegalCopilotPage() {
           <Scale className="w-4 h-4 text-teal shrink-0" />
           <span>
             <strong className="text-teal-300 font-semibold">Advisory Decision Support System:</strong> Inkloom AI
-            Legal Copilot evaluates marketing claims and potential regulatory risks. It does not provide formal legal
+            Legal Gemini AI evaluates marketing claims and potential regulatory risks. It does not provide formal legal
             advice, attorney-client privileged counsel, or guarantee compliance.
           </span>
         </div>
@@ -336,7 +336,7 @@ export default function LegalCopilotPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                Legal & Regulatory Copilot
+                Legal & Regulatory Gemini AI
                 <span className="text-xs px-2 py-0.5 rounded-full bg-teal/20 text-teal-300 border border-teal/30 font-medium">
                   Evidence-Grounded
                 </span>
@@ -514,7 +514,7 @@ export default function LegalCopilotPage() {
                           : "bg-slate-800 text-slate-400 hover:text-white"
                       }`}
                     >
-                      Marketing Copilot Draft
+                      Marketing Gemini AI Draft
                     </button>
                     <button
                       onClick={() => setIntakeSourceType("design_brief")}

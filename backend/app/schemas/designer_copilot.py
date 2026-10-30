@@ -202,6 +202,7 @@ class ReferenceImageAnalysisRequest(BaseModel):
     submission_id: Optional[str] = Field(None, description="Active submission ID containing design file")
     revision_id: Optional[str] = Field(None, description="Exact revision version ID to analyze")
     user_query: Optional[str] = Field(None, description="Specific designer inquiry or focus area")
+    image_base64: Optional[str] = Field(None, description="Base64 encoded image data for direct client-side analysis")
 
 
 class ReferenceImageAnalysisResponse(BaseModel):
@@ -215,6 +216,8 @@ class ReferenceImageAnalysisResponse(BaseModel):
     visual_hierarchy_critique: str
     observable_facts: List[str] = Field(default_factory=list)
     actionable_recommendations: List[str] = Field(default_factory=list)
+    color_recommendations: List[str] = Field(default_factory=list)
+    typography_recommendations: List[str] = Field(default_factory=list)
     uncertainty_limitations: List[str] = Field(default_factory=list)
     analysis_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

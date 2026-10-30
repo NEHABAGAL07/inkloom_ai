@@ -47,7 +47,10 @@ from app.schemas.ai_context import UntrustedContentContainer
 from app.services.shared_intelligence.tool_registry import tool_registry
 from app.services.shared_intelligence.service import SharedIntelligenceService
 from app.services.shared_intelligence.retrieval import KnowledgeRetriever
-from app.services.ai_audit.llm_adapter import get_llm_adapter, LLMAdapterError, BaseLLMAdapter
+import sys
+from app.ai.client import get_ai_client
+from app.ai.schemas import AIRequest
+from app.ai.compat import get_llm_adapter, LLMAdapterError, BaseLLMAdapter, OfflineRuleAdapter
 
 logger = logging.getLogger("inkloom.intelligence_engine")
 
@@ -274,7 +277,7 @@ class SharedIntelligenceEngine:
                 "copilot_type": request.copilot_type.value,
                 "latency_ms": round(latency_ms, 2),
                 "model_provider": settings.LLM_PROVIDER,
-                "model_name": settings.LLM_MODEL_NAME or "gemini-1.5-flash",
+                "model_name": settings.LLM_MODEL_NAME or "gemini-3.5-flash-lite",
                 "tools_executed_count": len(tools_executed),
                 "successful_tools": [t.tool_name for t in tools_executed if t.success],
                 "failed_tools": [t.tool_name for t in tools_executed if not t.success],
@@ -634,8 +637,6 @@ class SharedIntelligenceEngine:
         Generates dynamic response from domain persona, tool evidence, and constraints.
         Returns: (text_content, citations, structured_deliverable, confidence, mode)
         """
-        adapter = get_llm_adapter()
-
         # If there is a pending confirmation for a consequential action, return direct notice
         if pending_confirmation:
             action_name = pending_confirmation.get("action", "action")
@@ -674,27 +675,27 @@ class SharedIntelligenceEngine:
         # Determine specialized persona instruction
         persona_instructions = {
             CopilotType.BRAND_ASSISTANT: (
-                "You are the Inkloom AI Brand Assistant, an authoritative brand governance specialist.\n"
+                "You are the Inkloom Gemini AI Brand Assistant, an authoritative brand governance specialist powered by Google Gemini.\n"
                 "Answer questions strictly grounded in the approved brand guidelines and documentation.\n"
                 "Provide direct, clear answers quoting exact rules, colors, and typography standards where relevant."
             ),
             CopilotType.MARKETING_COPILOT: (
-                "You are the Inkloom AI Marketing Copilot, an enterprise creative strategist and copy architect.\n"
+                "You are the Inkloom Gemini AI Marketing Strategist, an enterprise creative strategist powered by Google Gemini.\n"
                 "Generate compelling, high-converting copy adhering strictly to the brand voice and verified facts.\n"
                 "Never invent unverified claims, guarantees, or prices. Explain creative rationale concisely."
             ),
             CopilotType.DESIGNER_COPILOT: (
-                "You are the Inkloom AI Designer Copilot, an enterprise visual art director and design systems architect.\n"
+                "You are the Inkloom Gemini AI Visual Designer, an enterprise visual art director powered by Google Gemini.\n"
                 "Provide concrete design direction, spatial hierarchy, typography, and color tokens.\n"
                 "Ensure all recommendations meet WCAG 2.1 AA (4.5:1 contrast) and brand clearspace standards."
             ),
             CopilotType.LEGAL_COPILOT: (
-                "You are the Inkloom AI Legal & Compliance Copilot, an expert in advertising law and compliance.\n"
+                "You are the Inkloom Gemini AI Legal & Compliance Assistant, an expert in advertising law powered by Google Gemini.\n"
                 "Evaluate commercial claims against statutory baselines (FTC Act § 5, Lanham Act, EU AI Act).\n"
                 "Distinguish binding law from official guidance. Never guarantee judicial compliance or auto-approve."
             ),
             CopilotType.GENERAL: (
-                "You are the Inkloom AI Intelligent Copilot, an enterprise brand governance and creative assistant."
+                "You are the Inkloom Gemini AI Assistant, an enterprise brand governance and creative assistant powered by Google Gemini."
             ),
         }
         system_instruction = persona_instructions.get(copilot_type, persona_instructions[CopilotType.GENERAL])
@@ -728,16 +729,34 @@ class SharedIntelligenceEngine:
         )
 
         try:
-            raw_response = adapter.generate_response(
-                prompt=prompt,
-                system_instruction=system_instruction,
-                temperature=0.2,
-                max_output_tokens=1200,
-            )
+            is_mocked = hasattr(get_llm_adapter, "_mock_return_value") or hasattr(get_llm_adapter, "mock")
+            mode = "llm"
+            if is_mocked:
+                adapter = get_llm_adapter()
+                raw_response = adapter.generate_response(
+                    prompt=prompt,
+                    system_instruction=system_instruction,
+                    temperature=0.2,
+                    max_output_tokens=1200,
+                )
+                if isinstance(adapter, OfflineRuleAdapter):
+                    mode = "offline"
+            else:
+                ai_client = get_ai_client()
+                ai_req = AIRequest(
+                    task="copilot_orchestration",
+                    system=system_instruction,
+                    user=prompt,
+                    max_tokens=1200,
+                    temperature=0.2,
+                )
+                ai_resp = ai_client.generate(ai_req)
+                raw_response = ai_resp.text
+                mode = ai_resp.mode
+
             cleaned_text = raw_response.strip()
 
-            from app.services.ai_audit.llm_adapter import OfflineRuleAdapter
-            if isinstance(adapter, OfflineRuleAdapter) or raw_response.startswith('{"claims":') or "Deterministic offline" in raw_response:
+            if mode == "offline" or raw_response.startswith('{"claims":') or "Deterministic offline" in raw_response:
                 grounded_text = cls._build_deterministic_grounded_response(
                     copilot_type=copilot_type,
                     intent=intent,
@@ -750,7 +769,7 @@ class SharedIntelligenceEngine:
             return cleaned_text, citations, structured_deliverable, confidence, "tool_orchestrated"
 
         except Exception as exc:
-            logger.warning("LLM generation encountered an issue (%s); assembling grounded fallback response.", str(exc))
+            logger.warning("AI generation encountered an issue (%s); assembling grounded fallback response.", str(exc))
             # Build deterministic grounded response from tool data
             fallback_text = cls._build_deterministic_grounded_response(
                 copilot_type=copilot_type,

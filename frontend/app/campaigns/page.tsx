@@ -381,7 +381,7 @@ export default function CampaignsPage() {
             Unified Campaign Workspaces
           </h1>
           <p className="text-xs text-ink-muted mt-0.5">
-            Cross-copilot review governance, multi-track AI orchestration, and separation-of-duties sign-off gates.
+            Cross-team Gemini AI governance, multi-track AI orchestration, and separation-of-duties sign-off gates.
           </p>
         </div>
 
@@ -579,7 +579,7 @@ export default function CampaignsPage() {
 
                 <p className="text-xs text-ink-muted leading-relaxed">
                   {selectedCampaign.description ||
-                    "No formal description provided. Cross-copilot workspace active."}
+                    "No formal description provided. Cross-team Gemini AI workspace active."}
                 </p>
 
                 {/* Workspace Navigation Tabs */}
@@ -874,7 +874,7 @@ export default function CampaignsPage() {
                     <div className="bg-surface dark:bg-[#162235] border border-border rounded-2xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5">
-                          <Scale className="w-3.5 h-3.5 text-amber-500" /> Legal Copilot
+                          <Scale className="w-3.5 h-3.5 text-amber-500" /> Legal Gemini AI
                         </span>
                         <span
                           className={`px-1.5 py-0.5 text-[9.5px] font-bold rounded uppercase border ${
