@@ -406,7 +406,7 @@ export function ManagerDashboard({
           <div>
             <h2 className="text-base font-heading font-bold text-[#18352F] dark:text-[#F7F3ED] flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
-              <span>Organization Content Pipeline</span>
+              <span>Designer Submissions</span>
             </h2>
             <p className="text-xs text-[#58716A] dark:text-[#85817D] mt-0.5">
               Real-time review and audit status across all active content assets
