@@ -1555,7 +1555,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
                       href={`/audits?id=${sub.id}`}
 
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}
 
                       className="text-xs px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-[#2563EB] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#FFAA35] rounded-lg border border-slate-200 dark:border-[#383838] transition flex items-center gap-1 font-semibold"
 
