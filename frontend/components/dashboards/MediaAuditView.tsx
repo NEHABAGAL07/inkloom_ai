@@ -109,55 +109,29 @@ export function MediaAuditView({ submissions, onRefresh }: MediaAuditViewProps) 
     setIsAuditing(true);
     setAuditFeedback(null);
     try {
-      let fileDataUrl: string | undefined = undefined;
-      const isImg =
-        selectedFile.type.startsWith("image/") ||
-        /\.(png|jpe?g|webp|svg|gif|bmp|avif)$/i.test(selectedFile.name);
-      const isVid =
-        selectedFile.type.startsWith("video/") ||
-        /\.(mp4|webm|mov|mkv)$/i.test(selectedFile.name);
-
-      if (isImg) {
-        fileDataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => resolve("");
-          reader.readAsDataURL(selectedFile);
-        });
-      }
-
-      // 1. Create visual media submission
-      const newSub = await api.createSubmission({
+      // 1. Upload file via multipart/form-data to persistent backend storage and database
+      const media = await api.uploadMedia(selectedFile, {
         title: `Design Asset: ${selectedFile.name}`,
         description: `Visual brand asset submission (${selectedFile.type || "image/png"})`,
-        content_type: isVid ? "video" : "image",
-        initial_text:
-          fileDataUrl ||
-          `Visual asset ${selectedFile.name} submitted for brand palette & typography compliance check.`,
-        file_name: selectedFile.name,
-        media_url: fileDataUrl,
-        file_path: fileDataUrl,
       });
 
-      if (fileDataUrl && typeof window !== "undefined") {
-        localStorage.setItem(`inkloom_media_${newSub.id}`, fileDataUrl);
-        localStorage.setItem(`inkloom_media_${selectedFile.name}`, fileDataUrl);
-      }
-      if (fileDataUrl) {
-        newSub.media_url = fileDataUrl;
-        newSub.file_path = fileDataUrl;
+      const submissionId = media.submission_id || media.id;
+
+      // 2. Trigger AI media audit immediately on the real database record
+      try {
+        const auditRes = await api.triggerAudit(submissionId);
+        setActiveAudit(auditRes);
+      } catch (auditErr) {
+        console.warn("Audit triggered with warning:", auditErr);
       }
 
-      // 2. Trigger AI media audit immediately
-      const auditRes = await api.triggerAudit(newSub.id);
-      setActiveAudit(auditRes);
-      setActiveAuditSub(newSub);
-
-      setAuditFeedback(`'${selectedFile.name}' uploaded and analyzed by Media Extractor & AI Visual Brand Engine.`);
+      setAuditFeedback(
+        `✓ '${selectedFile.name}' (${(selectedFile.size / 1024).toFixed(1)} KB) persistently stored in database [ID: ${media.id}]. Visible to Admin dashboard.`
+      );
       setSelectedFile(null);
       onRefresh();
     } catch (err: any) {
-      alert(err.message || "Upload failed");
+      alert(err.message || "Upload failed. Please verify connection to backend.");
     } finally {
       setIsAuditing(false);
     }
@@ -180,41 +154,29 @@ export function MediaAuditView({ submissions, onRefresh }: MediaAuditViewProps) 
     if (!file) return;
     setUpdatingSubId(sub.id);
     try {
-      const dataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => resolve("");
-        reader.readAsDataURL(file);
+      // Persistently upload updated version to backend storage
+      const media = await api.uploadMedia(file, {
+        title: file.name,
+        description: `Revision update for submission ${sub.title}`,
       });
 
-      if (dataUrl) {
-        sub.media_url = dataUrl;
-        sub.file_path = dataUrl;
-        sub.file_name = file.name;
+      await api.createRevision(sub.id, {
+        raw_text: `Updated media: ${file.name}`,
+        file_name: file.name,
+        file_path: media.media_url || media.file_path,
+        file_size_bytes: file.size,
+      });
 
-        if (typeof window !== "undefined") {
-          localStorage.setItem(`inkloom_media_${sub.id}`, dataUrl);
-          localStorage.setItem(`inkloom_media_${file.name}`, dataUrl);
-        }
-
-        await api.createRevision(sub.id, {
-          raw_text: dataUrl,
-          file_name: file.name,
-          file_path: dataUrl,
-          file_size_bytes: file.size,
-        });
-
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(
-            new CustomEvent("inkloom_asset_updated", {
-              detail: { submissionId: sub.id, mediaUrl: dataUrl, fileName: file.name },
-            })
-          );
-        }
-
-        setAuditFeedback(`✓ Updated image '${file.name}' saved and published for review!`);
-        onRefresh();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("inkloom_asset_updated", {
+            detail: { submissionId: sub.id, mediaUrl: media.media_url, fileName: file.name },
+          })
+        );
       }
+
+      setAuditFeedback(`✓ Updated image '${file.name}' persistently saved to database (ID: ${media.id})!`);
+      onRefresh();
     } catch (err: any) {
       alert(err?.message || "Failed to update image");
     } finally {

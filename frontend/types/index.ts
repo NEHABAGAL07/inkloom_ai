@@ -1298,6 +1298,7 @@ export interface CopilotFeedbackRequest {
   comment?: string;
 }
 
+<<<<<<< HEAD
 
 // =========================================================================
 // Centralized Review Cycles, Departmental Reviews, & Feedback Types
@@ -1401,3 +1402,39 @@ export interface SubmitDepartmentReviewInput {
     evidence?: Record<string, any>;
   }>;
 }
+=======
+export interface MediaItem {
+  id: string;
+  organization_id: string;
+  campaign_id?: string | null;
+  submission_id?: string | null;
+  original_filename: string;
+  stored_filename: string;
+  file_path: string;
+  file_type: "image" | "video" | "document" | "other";
+  mime_type: string;
+  file_size: number;
+  uploaded_by?: string | null;
+  description?: string | null;
+  status: string;
+  extra_metadata?: Record<string, any> | null;
+  media_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MediaItemListResponse {
+  items: MediaItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface UploadMediaInput {
+  file: File;
+  description?: string;
+  campaign_id?: string;
+  title?: string;
+}
+
+>>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626

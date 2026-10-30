@@ -99,10 +99,16 @@ import {
   CopilotOrchestrateRequest,
   CopilotOrchestrateResponse,
   CopilotFeedbackRequest,
+<<<<<<< HEAD
   ReviewCycleRecord,
   DepartmentReviewRecord,
   DesignerFeedbackSummaryData,
   SubmitDepartmentReviewInput,
+=======
+  MediaItem,
+  MediaItemListResponse,
+  UploadMediaInput,
+>>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626
 } from "../types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -1413,6 +1419,7 @@ export class ApiService implements IApiService {
     }
   }
 
+<<<<<<< HEAD
   // Phase 4 & 7: Centralized Review Cycles & Department Reviews
   async getReviewCycles(submissionId?: string): Promise<ReviewCycleRecord[]> {
     if (USE_MOCK) return mockApi.getReviewCycles(submissionId);
@@ -1485,6 +1492,101 @@ export class ApiService implements IApiService {
       }
       return mockApi.getDesignerFeedbackSummary();
     }
+=======
+  // =========================================================
+  // Persistent Real-Time Media Storage & Administration
+  // =========================================================
+  async uploadMedia(
+    file: File,
+    options?: { description?: string; campaign_id?: string; title?: string }
+  ): Promise<MediaItem> {
+    if (USE_MOCK) return mockApi.uploadMedia(file, options);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    if (options?.description) formData.append("description", options.description);
+    if (options?.campaign_id) formData.append("campaign_id", options.campaign_id);
+    if (options?.title) formData.append("title", options.title);
+
+    const url = `${API_BASE}/media/upload`;
+    const headers: Record<string, string> = {
+      "X-Tenant-Id": activeTenantId,
+    };
+    if (activeToken) headers["Authorization"] = `Bearer ${activeToken}`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      let errDetail = res.statusText;
+      try {
+        const errBody = await res.json();
+        errDetail = errBody.detail || errBody.message || res.statusText;
+      } catch {}
+      throw new ApiError(errDetail || "Media upload failed", res.status, false, errDetail);
+    }
+
+    const savedMedia: MediaItem = await res.json();
+
+    // Broadcast cross-tab and cross-component dynamic sync event
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("inkloom_media_uploaded", { detail: savedMedia }));
+      window.dispatchEvent(new CustomEvent("inkloom_asset_updated", { detail: savedMedia }));
+      try {
+        localStorage.setItem("inkloom_last_media_upload", JSON.stringify({ id: savedMedia.id, ts: Date.now() }));
+      } catch {}
+    }
+
+    return savedMedia;
+  }
+
+  async getAdminMedia(filters?: {
+    status?: string;
+    uploaded_by?: string;
+    file_type?: string;
+    campaign_id?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<MediaItemListResponse> {
+    if (USE_MOCK) return mockApi.getAdminMedia(filters);
+    const params = new URLSearchParams();
+    if (filters?.status) params.append("status", filters.status);
+    if (filters?.uploaded_by) params.append("uploaded_by", filters.uploaded_by);
+    if (filters?.file_type) params.append("file_type", filters.file_type);
+    if (filters?.campaign_id) params.append("campaign_id", filters.campaign_id);
+    if (filters?.limit) params.append("limit", String(filters.limit));
+    if (filters?.offset) params.append("offset", String(filters.offset));
+
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return await this.fetchJson<MediaItemListResponse>(`/admin/media${qs}`);
+  }
+
+  async getMedia(filters?: {
+    status?: string;
+    file_type?: string;
+    campaign_id?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<MediaItemListResponse> {
+    if (USE_MOCK) return mockApi.getMedia(filters);
+    const params = new URLSearchParams();
+    if (filters?.status) params.append("status", filters.status);
+    if (filters?.file_type) params.append("file_type", filters.file_type);
+    if (filters?.campaign_id) params.append("campaign_id", filters.campaign_id);
+    if (filters?.limit) params.append("limit", String(filters.limit));
+    if (filters?.offset) params.append("offset", String(filters.offset));
+
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return await this.fetchJson<MediaItemListResponse>(`/media${qs}`);
+  }
+
+  async getMediaItem(mediaId: string): Promise<MediaItem> {
+    if (USE_MOCK) return mockApi.getMediaItem(mediaId);
+    return await this.fetchJson<MediaItem>(`/media/${mediaId}`);
+>>>>>>> 83a65e189b2c5eb7f9f2b7c2702f006bbaa49626
   }
 }
 

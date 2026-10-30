@@ -45,8 +45,25 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./inkloom_dev.db"
 
+    @field_validator("DATABASE_URL", mode="after")
+    def resolve_sqlite_path(cls, v: str) -> str:
+        if v.startswith("sqlite:///./") or v == "sqlite:///inkloom_dev.db":
+            backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            rel_file = v.replace("sqlite:///./", "").replace("sqlite:///", "")
+            abs_path = os.path.abspath(os.path.join(backend_dir, rel_file))
+            return f"sqlite:///{abs_path.replace(os.sep, '/')}"
+        return v
+
     # Uploads & Media
     UPLOAD_STORAGE_DIR: str = "./uploads"
+
+    @field_validator("UPLOAD_STORAGE_DIR", mode="after")
+    def resolve_upload_dir(cls, v: str) -> str:
+        if not os.path.isabs(v):
+            backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            return os.path.abspath(os.path.join(backend_dir, v))
+        return v
+
     MAX_UPLOAD_SIZE_MB: int = 25
     ALLOWED_MEDIA_TYPES: List[str] = [
         "text/plain",
@@ -55,7 +72,11 @@ class Settings(BaseSettings):
         "image/png",
         "image/jpeg",
         "image/webp",
+        "image/svg+xml",
+        "image/gif",
         "video/mp4",
+        "video/webm",
+        "video/quicktime",
     ]
 
     # AI Engine & Assistant LLM Settings

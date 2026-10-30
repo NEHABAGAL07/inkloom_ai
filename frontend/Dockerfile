@@ -41,6 +41,7 @@ COPY --from=builder /app/public ./public
 # Automatically leverage output traces to reduce image size
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+RUN if [ -f ./frontend/server.js ]; then cp -r ./frontend/* ./ && rm -rf ./frontend; fi
 
 USER nextjs
 

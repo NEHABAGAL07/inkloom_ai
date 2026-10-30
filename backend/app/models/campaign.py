@@ -74,3 +74,9 @@ class Campaign(TimestampedModel):
         foreign_keys="ContentSubmission.campaign_id",
         order_by="desc(ContentSubmission.created_at)",
     )
+    media_items = relationship(
+        "MediaItem",
+        back_populates="campaign",
+        foreign_keys="MediaItem.campaign_id",
+        order_by="desc(MediaItem.created_at)",
+    )
