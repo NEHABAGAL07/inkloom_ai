@@ -1,7 +1,35 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+if (process.platform === "win32") {
+  try {
+    const fixScript = path.resolve(__dirname, "compat/windows-fs-fix.cjs").replace(/\\/g, "/");
+    if (!process.env.NODE_OPTIONS?.includes("windows-fs-fix.cjs")) {
+      process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS || ""} --require "${fixScript}"`.trim();
+    }
+  } catch {}
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: process.env.BUILD_STANDALONE === "1" ? "standalone" : undefined,
+  experimental: {
+    workerThreads: false,
+    cpus: 1,
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        react: path.resolve(__dirname, "node_modules/react"),
+        "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      };
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       {
