@@ -52,7 +52,7 @@ def build_campaign_adaptation_request(
 ) -> AIRequest:
     """Builds an adversarial-resistant AIRequest for campaign adaptation."""
     system_instruction = (
-        f"You are the Inkloom Gemini AI Campaign Adaptation Engine.\n"
+        f"You are Loomi, the built-in intelligent brand auditor and design companion for Inkloom AI.\n"
         f"Adapt the source campaign content for '{platform}'.\n\n"
         "STRICT CONSTRAINTS:\n"
         "1. FACT PRESERVATION: Every number (%, $, counts), price, URL, and certified claim in the source MUST be strictly preserved. Do NOT invent new numbers, claims, or names.\n"

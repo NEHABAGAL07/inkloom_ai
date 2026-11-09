@@ -74,6 +74,8 @@ import {
   MediaItem,
   MediaItemListResponse,
   UploadMediaInput,
+  ReferenceImageAnalysisRequest,
+  ReferenceImageAnalysisResponse,
 } from "../types";
 
 export interface CreateSubmissionInput {
@@ -4626,6 +4628,52 @@ export class MockApiService implements IApiService {
     const found = list.items.find((m) => m.id === mediaId);
     if (!found) throw new Error(`Media '${mediaId}' not found`);
     return found;
+  }
+
+  async analyzeReferenceImage(req: ReferenceImageAnalysisRequest): Promise<ReferenceImageAnalysisResponse> {
+    await new Promise((res) => setTimeout(res, 600));
+    return {
+      file_name: req.file_path ? req.file_path.split("/").pop() || "design-asset.png" : "artwork-mockup.png",
+      dimensions: {
+        width: 1080,
+        height: 1350,
+        aspect_ratio: "4:5",
+        total_pixels: 1458000,
+      },
+      dominant_colors_hex: ["#0F172A", "#6366F1", "#0284C7", "#94A3B8", "#10B981"],
+      contrast_ratio: 5.4,
+      wcag_aa_compliant: true,
+      brand_palette_concordance: "brand_aligned",
+      visual_hierarchy_critique:
+        "The asset demonstrates strong focal structure and modern digital composition. The primary focal anchor leads cleanly into the headline copy with solid foreground-to-background contrast. Adherence to Acme Cloud Systems core branding is well maintained with minimal secondary palette variance.",
+      observable_facts: [
+        "Canvas Dimensions: 1080 x 1350 px (Computed Aspect Ratio: 4:5).",
+        "Extracted Dominant Color Palette: #0F172A, #6366F1, #0284C7, #94A3B8, #10B981.",
+        "Calculated Maximum Contrast Ratio: 5.4:1 (Compliant with WCAG 2.1 AA 4.5:1 minimum).",
+      ],
+      actionable_recommendations: [
+        "Position official vector brand emblem within the top 40px safe zone with 1x clearspace.",
+        "Ensure CTA button fill utilizes Electric Indigo (#6366F1) with crisp white (#FFFFFF) bold typography.",
+        "Export final asset at 2x retina scale (1080x1350px) for high-density social rendering.",
+      ],
+      color_recommendations: [
+        "Replace the current dark background and unapproved dark tones with Acme Midnight Slate (#0F172A) to anchor the canvas professionally.",
+        "Transition the pale yellow heading and body accents to Sovereign Sky (#0284C7) and Neutral Steel (#94A3B8) for clean enterprise readability.",
+        "Incorporate Electric Indigo (#6366F1) or Verified Emerald (#10B981) for primary CTA buttons and icon highlights to drive focal interaction.",
+        "Remove all unapproved pastel yellow hues (#FCF4A1, #FEFDEC) and replace them with standard official palette equivalents.",
+      ],
+      typography_recommendations: [
+        "Standardize headline typography to Outfit Bold (display font) with -0.02em letter spacing for a modern enterprise aesthetic.",
+        "Set subheadings and metadata in Inter Regular/Medium to ensure high-density readability across mobile resolutions.",
+        "Increase hierarchy contrast: ensure H1 headline is at least 2.5x larger in visual weight than supporting subtitle copy.",
+      ],
+      uncertainty_limitations: [
+        "Aesthetic appeal and emotional resonance are qualitative design assessments.",
+        "OCR indexing reflects detected raster letterforms.",
+      ],
+      analysis_timestamp: new Date().toISOString(),
+      estimated_done_score: 92,
+    };
   }
 }
 

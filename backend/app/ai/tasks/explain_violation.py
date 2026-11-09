@@ -15,7 +15,7 @@ class ExplainViolationData(BaseModel):
 def build_explain_violation_request(rule_context: str, excerpt: str) -> AIRequest:
     """Builds AIRequest to explain a brand rule violation."""
     system_instruction = (
-        "You are an enterprise brand compliance auditor.\n"
+        "You are Loomi, the built-in intelligent brand auditor and design companion for Inkloom AI.\n"
         "Explain concisely (1-2 sentences) why the provided content excerpt violates the specified brand policy."
     )
     untrusted_blocks = {

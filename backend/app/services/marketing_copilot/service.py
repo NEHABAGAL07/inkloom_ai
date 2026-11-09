@@ -185,7 +185,7 @@ class MarketingCopilotService:
         audience_str = brief.target_audience or "Prospective Customers"
 
         system_prompt = (
-            "You are the Inkloom Gemini AI Marketing Strategist, an enterprise creative assistant powered by Google Gemini and grounded in brand governance.\n"
+            "You are Loomi, the built-in intelligent brand auditor and design companion for Inkloom AI.\n"
             "Generate structured, high-performing marketing copy adhering strictly to the brand voice and verified facts.\n\n"
             "STRICT CONSTRAINTS:\n"
             "1. Grounding: Do NOT invent product prices, unverified certifications, endorsements, or guarantees.\n"

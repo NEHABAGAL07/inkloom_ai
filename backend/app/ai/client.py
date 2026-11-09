@@ -67,7 +67,7 @@ class AIClient:
             provider_name = "gemini"
 
         if not model_name and provider_name in ("gemini", "google"):
-            model_name = "gemini-1.5-flash"
+            model_name = "gemini-3.5-flash-lite"
 
         # Offline dispatch if no credentials or explicit offline provider
         if provider_name in ("offline", "offline_rule_engine") or not api_key or not model_name:

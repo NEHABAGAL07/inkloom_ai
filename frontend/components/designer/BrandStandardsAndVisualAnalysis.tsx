@@ -100,7 +100,7 @@ export function BrandStandardsAndVisualAnalysis({
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-teal uppercase tracking-wider font-mono">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Designer Copilot Intelligence Suite</span>
+            <span>Designer Loomi Intelligence Suite</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold font-heading text-ink-primary tracking-tight mt-0.5">
             Brand Design Standards &amp; AI Analysis

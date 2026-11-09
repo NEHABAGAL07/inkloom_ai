@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     AI_ENGINE_MODE: str = "online"
     LLM_PROVIDER: str = "gemini"
     LLM_API_KEY: str = ""
-    LLM_MODEL_NAME: str = "gemini-1.5-flash"
+    LLM_MODEL_NAME: str = "gemini-3.5-flash-lite"
     LLM_TIMEOUT_SECONDS: float = 30.0
     LLM_MAX_OUTPUT_TOKENS: int = 1500
     CHAT_RATE_LIMIT_PER_MINUTE: int = 60

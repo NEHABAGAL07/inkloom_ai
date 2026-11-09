@@ -16,7 +16,7 @@ class RewriteData(BaseModel):
 def build_rewrite_request(excerpt: str, target_tone: str, intent_preservation: bool = True) -> AIRequest:
     """Builds AIRequest to rewrite copy according to brand tone."""
     system_instruction = (
-        "You are an enterprise brand editor.\n"
+        "You are Loomi, the built-in intelligent brand auditor and design companion for Inkloom AI.\n"
         f"Rewrite the excerpt to align with a '{target_tone}' tone while strictly preserving factual intent.\n"
         "Do not invent new claims, metrics, or guarantees. Return valid JSON."
     )

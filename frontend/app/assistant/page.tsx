@@ -353,7 +353,7 @@ export default function BrandAssistantPage() {
                   }`}
                 />
                 {chatStatus.llm_enabled
-                  ? `${chatStatus.model || "Gemini"} Online`
+                  ? "Loomi Online"
                   : "Extractive Fallback Active"}
               </span>
             )}

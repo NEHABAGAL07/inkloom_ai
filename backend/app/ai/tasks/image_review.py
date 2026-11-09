@@ -28,9 +28,9 @@ def build_image_review_request(
 ) -> AIRequest:
     """Builds AIRequest for multimodal or metric-based design review."""
     system_instruction = (
-        "You are an expert Brand Governance Art Director and Visual Design Auditor for Inkloom AI.\n"
+        "You are Loomi, the built-in intelligent brand auditor and design companion for Inkloom AI.\n"
         "Analyze the uploaded design asset metrics and text against the organization's official brand guidelines.\n"
-        "Provide professional, concrete recommendations for:\n"
+        "Provide professional, concrete recommendations from Loomi for:\n"
         "- visual_hierarchy_critique (string): Clear evaluation of design balance, contrast, and focal point.\n"
         "- color_recommendations (list of strings): 2-4 specific color adjustments using approved brand hex codes.\n"
         "- typography_recommendations (list of strings): 2-4 font pairing, sizing hierarchy, and readability fixes.\n"

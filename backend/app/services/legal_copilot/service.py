@@ -712,7 +712,7 @@ class LegalCopilotService:
             )
 
             system_instruction = (
-                "You are an expert enterprise advertising compliance counsel and AI legal architect. "
+                "You are Loomi, the built-in intelligent brand auditor and legal compliance companion for Inkloom AI. "
                 "Evaluate commercial content strictly under authoritative trade statutes (FTC Act Section 5, "
                 "EU AI Act Art 50, Lanham Act § 43(a), UK CPRs). "
                 "CRITICAL PRINCIPLES:\n"
