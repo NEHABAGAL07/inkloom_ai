@@ -81,7 +81,7 @@ def get_chat_status(
     return ChatStatusResponse(
         llm_enabled=llm_enabled,
         provider=settings.LLM_PROVIDER,
-        model=settings.LLM_MODEL_NAME or "gemini-3.5-flash-lite",
+        model=settings.LLM_MODEL_NAME or "gemini-1.5-flash",
     )
 
 

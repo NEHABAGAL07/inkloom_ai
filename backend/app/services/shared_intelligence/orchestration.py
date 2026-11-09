@@ -277,7 +277,7 @@ class SharedIntelligenceEngine:
                 "copilot_type": request.copilot_type.value,
                 "latency_ms": round(latency_ms, 2),
                 "model_provider": settings.LLM_PROVIDER,
-                "model_name": settings.LLM_MODEL_NAME or "gemini-3.5-flash-lite",
+                "model_name": settings.LLM_MODEL_NAME or "gemini-1.5-flash",
                 "tools_executed_count": len(tools_executed),
                 "successful_tools": [t.tool_name for t in tools_executed if t.success],
                 "failed_tools": [t.tool_name for t in tools_executed if not t.success],

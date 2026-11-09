@@ -183,7 +183,7 @@ Inkloom AI features a unified, provider-agnostic AI layer (`backend/app/ai/`) th
    ```env
    LLM_PROVIDER=gemini
    LLM_API_KEY=your_gemini_api_key_here
-   LLM_MODEL_NAME=gemini-3.5-flash-lite
+   LLM_MODEL_NAME=gemini-1.5-flash
    LLM_TIMEOUT_SECONDS=30.0
    LLM_MAX_RETRIES=2
    LLM_MAX_OUTPUT_TOKENS=1000

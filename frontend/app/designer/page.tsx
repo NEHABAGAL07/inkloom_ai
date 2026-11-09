@@ -785,7 +785,7 @@ function DesignerCopilotContent() {
 
           <div className="flex items-center space-x-1.5 text-xs text-ink-muted bg-surface px-3 py-1.5 rounded-lg border border-border">
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>LLM: <strong>gemini-3.5-flash-lite (Active)</strong></span>
+            <span>LLM: <strong>gemini-1.5-flash (Active)</strong></span>
           </div>
 
           <button
