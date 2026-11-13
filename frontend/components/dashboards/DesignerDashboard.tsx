@@ -241,7 +241,7 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
             className="watermelon-btn-primary apple-press px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-600 text-white dark:btn-gradient-warm text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer"
           >
             <Palette className="w-4 h-4" />
-            <span>Open Studio &amp; Copilot ↗</span>
+            <span>Open Studio &amp; Loomi ↗</span>
           </Link>
           <Link
             href="/media-audit"

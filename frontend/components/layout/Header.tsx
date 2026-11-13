@@ -191,7 +191,7 @@ export function Header() {
 
         {/* Mobile Navigation Drawer Trigger (< lg screens) */}
         <button
-          ref={menuTriggerRef}
+          ref={menuTriggerRef as any}
           type="button"
           onClick={toggleMobileDrawer}
           aria-label="Open navigation menu"

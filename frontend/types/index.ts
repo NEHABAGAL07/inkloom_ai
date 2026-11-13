@@ -1284,6 +1284,8 @@ export interface ReferenceImageAnalysisRequest {
   revision_id?: string;
   user_query?: string;
   image_base64?: string;
+  target_placement?: string;
+  creative_format?: string;
 }
 
 export interface ReferenceImageAnalysisResponse {
@@ -1304,7 +1306,8 @@ export interface ReferenceImageAnalysisResponse {
   color_recommendations?: string[];
   typography_recommendations?: string[];
   uncertainty_limitations: string[];
-  analysis_timestamp: string;
+  analysis_timestamp?: string;
+  estimated_done_score?: number;
 }
 
 export interface DesignCritiqueIssue {
@@ -1543,3 +1546,50 @@ export interface UploadMediaInput {
   campaign_id?: string;
   title?: string;
 }
+
+// =========================================================================
+// Loomi AI Dynamic Chatbot Types
+// =========================================================================
+
+export interface LoomiBrandTokens {
+  primaryWordmark?: string;
+  colors?: string[];
+  typography?: string[];
+}
+
+export interface LoomiContext {
+  workspace?: string;
+  activeAsset?: string;
+  concept?: string;
+  channel?: string;
+  brandTokens?: LoomiBrandTokens;
+}
+
+export interface LoomiChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  model?: string;
+  mode?: string;
+}
+
+export interface LoomiChatRequest {
+  messages: Array<{
+    id?: string;
+    role: "user" | "assistant";
+    content: string;
+    timestamp?: string | Date;
+  }>;
+  context?: LoomiContext;
+}
+
+export interface LoomiChatResponse {
+  id: string;
+  role: "assistant";
+  content: string;
+  timestamp: string;
+  model?: string;
+  mode?: string;
+}
+

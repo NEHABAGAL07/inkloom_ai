@@ -139,7 +139,7 @@ class GeminiAdapter(BaseLLMAdapter):
     def __init__(
         self,
         api_key: str,
-        model_name: str = "gemini-3.1-flash-lite",
+        model_name: str = "gemini-1.5-flash",
         timeout: float = 30.0,
         client: Optional[httpx.Client] = None,
     ) -> None:
@@ -328,7 +328,7 @@ def get_llm_adapter(
     if selected_key and selected_provider in ("gemini", "google"):
         gemini = GeminiAdapter(
             api_key=selected_key,
-            model_name=selected_model or "gemini-3.1-flash-lite",
+            model_name=selected_model or "gemini-1.5-flash",
             timeout=float(getattr(settings, "LLM_TIMEOUT_SECONDS", 30.0)),
         )
         if enable_fallback:

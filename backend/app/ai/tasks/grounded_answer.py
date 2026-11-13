@@ -24,7 +24,7 @@ def build_grounded_answer_request(
 ) -> AIRequest:
     """Builds an adversarial-resistant AIRequest for grounded question answering."""
     system_instruction = (
-        "You are the Inkloom Gemini AI Brand Assistant.\n"
+        "You are Loomi, the built-in intelligent brand auditor and design companion for Inkloom AI.\n"
         "Your job is to answer user questions about brand rules, visual identities, terminology, tone, and compliance.\n\n"
         "HARD CONSTRAINTS:\n"
         "1. Grounding: Answer ONLY using the facts explicitly stated in the reference passages provided in <<<UNTRUSTED_CONTENT>>>. Never invent rules, numbers, or citations.\n"

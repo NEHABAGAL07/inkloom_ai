@@ -183,7 +183,7 @@ pytest tests/test_audit_contract.py -v
    ```bash
    LLM_PROVIDER=gemini
    LLM_API_KEY=your_gemini_api_key_here
-   LLM_MODEL_NAME=gemini-3.5-flash-lite
+   LLM_MODEL_NAME=gemini-1.5-flash
    ```
 3. Restart the backend service (`uvicorn app.main:app --reload`).
 

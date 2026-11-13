@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/services/api";
@@ -209,7 +211,7 @@ function DesignerCopilotContent() {
   const [findingCategoryFilter, setFindingCategoryFilter] = useState<string>("all");
 
   // ==========================================
-  // Gemini AI Visual Analysis State
+  // Loomi AI Visual Analysis State
   // ==========================================
   const [imageAnalysis, setImageAnalysis] = useState<ReferenceImageAnalysisResponse | null>(null);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
@@ -235,6 +237,7 @@ function DesignerCopilotContent() {
     id: string;
     role: "user" | "assistant";
     content: string;
+    timestamp: Date;
     deliverable?: any;
     citations?: any[];
     toolsExecuted?: any[];
@@ -245,8 +248,9 @@ function DesignerCopilotContent() {
       id: "welcome_init",
       role: "assistant",
       content:
-        "Welcome! I am your Inkloom Gemini AI Designer, an enterprise creative partner powered by Google Gemini and grounded in your brand guidelines. " +
-        "You can ask me to inspect reference images with real WCAG 2.1 AA contrast metrics, critique visual concepts, suggest color and font improvements, and adapt layouts in real time.",
+        "Welcome! I am **Loomi**, the built-in intelligent brand auditor and design companion for Inkloom AI.\n\n" +
+        "You can ask me to evaluate layout balance, contrast ratios (WCAG 2.1 AA), suggest typography pairings, critique visual concepts, or adapt layouts across channels.",
+      timestamp: new Date(),
       confidence: "high",
     },
   ]);
@@ -258,6 +262,14 @@ function DesignerCopilotContent() {
   const [feedbackComment, setFeedbackComment] = useState("");
   const [feedbackSuccessMsg, setFeedbackSuccessMsg] = useState<string | null>(null);
   const [activeFeedbackMsgId, setActiveFeedbackMsgId] = useState<string | null>(null);
+  const chatBottomRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll to bottom of chat when new messages or loading state changes
+  useEffect(() => {
+    if (activeTab === "copilot_chat") {
+      chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [copilotMessages, copilotLoading, activeTab]);
 
   const handleSendCopilotMessage = async (overridePrompt?: string) => {
     const promptToSend = (overridePrompt || copilotInput).trim();
@@ -268,34 +280,75 @@ function DesignerCopilotContent() {
       id: userMsgId,
       role: "user" as const,
       content: promptToSend,
+      timestamp: new Date(),
     };
-    setCopilotMessages((prev) => [...prev, userMsg]);
+
+    // 1. Append user's message immediately to the chat window
+    const newMessages = [...copilotMessages, userMsg];
+    setCopilotMessages(newMessages);
+
+    // 2. Clear the input field and show typing/thinking indicator
     setCopilotInput("");
     setCopilotLoading(true);
 
+    // 3. Build context-aware brand and canvas payload
+    const activeAssetVal =
+      referenceImagePathInput.trim() ||
+      activeDraft?.current_file_name ||
+      activeDraft?.title ||
+      activeCanvasPreset?.format ||
+      projectName ||
+      "summer-campaign-banner.png";
+
+    const conceptVal =
+      selectedConcept?.concept_name ||
+      designObjective ||
+      "Enterprise High-Contrast Modern";
+
+    const channelVal = `${channel} (${aspectRatio})`;
+
+    const pubData = (guidelineProfile as any)?.published_data;
+    const brandColors =
+      pubData?.brand_colors && Array.isArray(pubData.brand_colors) && pubData.brand_colors.length > 0
+        ? pubData.brand_colors
+        : ["#0F172A", "#6366F1", "#10B981", "#FFFFFF"];
+
+    const brandTypography =
+      pubData?.typography_rules && Array.isArray(pubData.typography_rules) && pubData.typography_rules.length > 0
+        ? pubData.typography_rules.map((r: any) => r.font_family || r.rule_name).filter(Boolean)
+        : ["Outfit", "Inter"];
+
+    const contextPayload = {
+      workspace: activeOrgName || guidelineProfile?.name || "Acme Cloud Systems",
+      activeAsset: activeAssetVal,
+      concept: conceptVal,
+      channel: channelVal,
+      brandTokens: {
+        primaryWordmark: activeOrgName || guidelineProfile?.name || "Acme Cloud",
+        colors: brandColors,
+        typography: brandTypography,
+      },
+    };
+
+    const historyPayload = newMessages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : String(m.timestamp),
+    }));
+
     try {
-      const res = await api.orchestrateCopilot({
-        copilot_type: "designer_copilot",
-        message: promptToSend,
-        session_id: copilotSessionId || undefined,
-        submission_id: activeDraft?.id,
-        revision_id: selectedRevisionId || activeDraft?.current_revision_id || undefined,
-        channel: channel,
-        user_preferences: referenceImagePathInput ? { file_path: referenceImagePathInput } : undefined,
+      const res = await api.loomiChat({
+        messages: historyPayload,
+        context: contextPayload,
       });
 
-      if (res.session_id) {
-        setCopilotSessionId(res.session_id);
-      }
-
       const asstMsg = {
-        id: res.message_id || `asst_${Date.now()}`,
+        id: res.id || `asst_${Date.now()}`,
         role: "assistant" as const,
         content: res.content,
-        deliverable: res.structured_deliverable,
-        citations: res.citations,
-        toolsExecuted: res.tools_executed,
-        confidence: res.confidence,
+        timestamp: res.timestamp ? new Date(res.timestamp) : new Date(),
+        confidence: "high",
       };
 
       setCopilotMessages((prev) => [...prev, asstMsg]);
@@ -304,8 +357,9 @@ function DesignerCopilotContent() {
         ...prev,
         {
           id: `err_${Date.now()}`,
-          role: "assistant",
-          content: `Gemini AI encountered an issue: ${err.message || "Failed to reach intelligence orchestration engine."}`,
+          role: "assistant" as const,
+          content: `### ✦ Loomi Assistance\n\nI encountered an issue connecting to Loomi AI: ${err.message || "Unable to reach assistant backend."}\n\nPlease verify that your Gemini API key and backend are running, or try asking another design question.`,
+          timestamp: new Date(),
           confidence: "low",
         },
       ]);
@@ -567,11 +621,19 @@ function DesignerCopilotContent() {
     }
   };
 
-  // Analyze Reference Image with Gemini AI
-  const handleAnalyzeImageWithGemini = async () => {
+  // Analyze Reference Image with Loomi
+  const handleAnalyzeImageWithLoomi = async () => {
     if (isAnalyzingImage) return;
     setIsAnalyzingImage(true);
     setAnalysisError(null);
+
+    // Verify an artwork is present (uploaded file, preview URL, active draft media, or sample)
+    const effectivePath = previewUrl || activeDraft?.current_file_path || activeDraft?.revisions?.[0]?.file_path || undefined;
+    if (!uploadedFile && !effectivePath) {
+      setAnalysisError("Please upload or select a design artwork first to run Loomi critique.");
+      setIsAnalyzingImage(false);
+      return;
+    }
 
     try {
       let b64Data: string | undefined = undefined;
@@ -587,15 +649,17 @@ function DesignerCopilotContent() {
       const res = await api.analyzeReferenceImage({
         submission_id: activeDraft?.id,
         revision_id: selectedRevisionId || activeDraft?.current_revision_id || undefined,
-        file_path: previewUrl || undefined,
+        file_path: effectivePath || undefined,
         image_base64: b64Data,
-        user_query: `Analyze uploaded image against official brand guidelines. Critique visual hierarchy, suggest specific color adjustments with brand hex codes, and suggest typography & font pairings for ${channel}.`,
+        target_placement: channel,
+        creative_format: creativeFormat,
+        user_query: `Act as a senior enterprise brand auditor and accessibility specialist. Analyze the uploaded creative artwork for ${channel} (${creativeFormat}) against official brand guidelines. Critique visual hierarchy, evaluate background contrast & color harmony against WCAG standards, recommend specific font & typography improvements, provide actionable next steps, and compute an estimated done/readiness score percentage.`,
       });
 
       setImageAnalysis(res);
-      setSaveSuccessMessage("Gemini AI design analysis and brand critique completed.");
+      setSaveSuccessMessage("Loomi design analysis and brand critique completed.");
     } catch (err: any) {
-      setAnalysisError(err.message || "Failed to analyze image with Gemini AI.");
+      setAnalysisError(err.message || "Failed to analyze image with Loomi.");
     } finally {
       setIsAnalyzingImage(false);
     }
@@ -612,8 +676,8 @@ function DesignerCopilotContent() {
     try {
       const [auditResult] = await Promise.all([
         api.auditDesignVersion(briefId, revId || undefined),
-        handleAnalyzeImageWithGemini().catch((e) => {
-          console.warn("Gemini secondary image analysis warning:", e);
+        handleAnalyzeImageWithLoomi().catch((e) => {
+          console.warn("Loomi secondary image analysis warning:", e);
         }),
       ]);
 
@@ -630,7 +694,7 @@ function DesignerCopilotContent() {
           };
         }
       }
-      setSaveSuccessMessage("Brand visual audit and Gemini design critique completed.");
+      setSaveSuccessMessage("Brand visual audit and Loomi design critique completed.");
     } catch (err: any) {
       setAuditError(err.message || "Failed to execute visual brand audit.");
     } finally {
@@ -767,7 +831,7 @@ function DesignerCopilotContent() {
             <div className="p-2 bg-teal/10 rounded-lg text-teal border border-teal/20">
               <Palette className="w-5 h-5" />
             </div>
-            <h1 className="text-2xl font-bold text-ink-primary tracking-tight">Designer Gemini AI Studio</h1>
+            <h1 className="text-2xl font-bold text-ink-primary tracking-tight">Designer Loomi Studio</h1>
             <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal/15 text-teal border border-teal/25">
               Phase 4 Active
             </span>
@@ -785,7 +849,7 @@ function DesignerCopilotContent() {
 
           <div className="flex items-center space-x-1.5 text-xs text-ink-muted bg-surface px-3 py-1.5 rounded-lg border border-border">
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>LLM: <strong>gemini-3.5-flash-lite (Active)</strong></span>
+            <span>AI: <strong>Loomi (Active)</strong></span>
           </div>
 
           <button
@@ -876,9 +940,9 @@ function DesignerCopilotContent() {
             }`}
         >
           <Sparkles className="w-4 h-4 text-indigo-400" />
-          <span>Gemini AI Assistant</span>
+          <span>Loomi Assistant</span>
           <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-bold">
-            Gemini
+            Loomi
           </span>
         </button>
       </div>
@@ -1218,7 +1282,7 @@ function DesignerCopilotContent() {
                 </div>
                 <h3 className="text-sm font-bold text-ink-primary">No Creative Concepts Generated Yet</h3>
                 <p className="text-xs text-ink-secondary max-w-md mt-1 mb-4">
-                  Configure your creative brief on the left and click <strong>Generate Concepts</strong>. Gemini AI will ground alternatives in approved brand guidelines, color tokens, and asset restrictions.
+                  Configure your creative brief on the left and click <strong>Generate Concepts</strong>. Loomi will ground alternatives in approved brand guidelines, color tokens, and asset restrictions.
                 </p>
                 <div className="grid grid-cols-3 gap-3 text-left w-full max-w-lg mt-2">
                   <div className="p-2.5 rounded-lg bg-workspace border border-border text-[11px]">
@@ -1776,31 +1840,231 @@ function DesignerCopilotContent() {
             {/* Right Column: AI Visual Audit & Findings Panel (5 Cols) */}
             <div className="lg:col-span-5 space-y-4">
               <div className="bg-surface rounded-xl border border-border p-5 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-bold text-ink-primary uppercase tracking-wide">AI Visual Audit</h3>
-                    <p className="text-[11px] text-ink-secondary">Multi-layer brand rule and accessibility verification.</p>
+                    <h3 className="text-sm font-bold text-ink-primary uppercase tracking-wide">AI VISUAL AUDIT</h3>
+                    <p className="text-[11px] text-ink-secondary">Multi-aspect brand rule and accessibility verification.</p>
                   </div>
 
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Loomi Critique button */}
+                    <button
+                      type="button"
+                      onClick={handleAnalyzeImageWithLoomi}
+                      disabled={isAnalyzingImage}
+                      className="flex items-center space-x-1.5 py-1.5 px-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold transition shadow-sm disabled:opacity-60"
+                      title="Run Multimodal Loomi Visual Design Critique"
+                    >
+                      {isAnalyzingImage ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Loomi is analyzing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
+                          <span>Loomi Critique</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Run Visual Audit button */}
+                    <button
+                      type="button"
+                      onClick={handleRunVisualAudit}
+                      disabled={isAuditing}
+                      className="flex items-center space-x-1.5 py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-sm disabled:opacity-50"
+                      title="Run Deterministic Brand Rules & WCAG Audit"
+                    >
+                      {isAuditing ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Auditing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Run Visual Audit</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Submit for Human Review Action Row */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-border/60 pt-3">
+                  <span className="text-[11px] text-ink-muted">
+                    {activeDraft?.status === "submitted"
+                      ? "Submitted to Review Queue"
+                      : "Ready for human brand & compliance sign-off?"}
+                  </span>
                   <button
                     type="button"
-                    onClick={handleRunVisualAudit}
-                    disabled={isAuditing}
-                    className="flex items-center space-x-1.5 py-1.5 px-3 rounded-lg bg-teal text-white text-xs font-semibold hover:bg-teal/90 transition shadow-sm disabled:opacity-50"
+                    onClick={handleSubmitForReview}
+                    disabled={isSubmittingReview || activeDraft?.status === "submitted" || (!activeDraft && !uploadedFile && !previewUrl)}
+                    className="flex items-center space-x-1.5 py-1.5 px-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-sm disabled:opacity-50 shrink-0"
                   >
-                    {isAuditing ? (
+                    {isSubmittingReview ? (
                       <>
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Auditing...</span>
+                        <span>Submitting...</span>
                       </>
                     ) : (
                       <>
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Run Visual Audit</span>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>
+                          {activeDraft?.status === "submitted" ? "Submitted for Review" : "Submit for Human Review"}
+                        </span>
                       </>
                     )}
                   </button>
                 </div>
+
+                {/* Loomi Critique Loading State Card */}
+                {isAnalyzingImage && (
+                  <div className="p-4 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/25 border border-indigo-200/60 dark:border-indigo-800/40 space-y-2 animate-pulse">
+                    <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400">
+                      <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                      <span className="text-xs font-bold uppercase tracking-wider">Loomi is analyzing your design...</span>
+                    </div>
+                    <p className="text-xs text-indigo-700/80 dark:text-indigo-300/80 leading-relaxed pl-6">
+                      Evaluating brand guidelines, color harmony, typography pairing, and visual hierarchy...
+                    </p>
+                  </div>
+                )}
+
+                {/* Analysis Error Notification */}
+                {analysisError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs flex items-center justify-between space-x-2">
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{analysisError}</span>
+                    </div>
+                    <button onClick={() => setAnalysisError(null)} className="text-ink-muted hover:text-ink-primary">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Output Panel: Loomi Design Recommendations */}
+                {imageAnalysis && (
+                  <div className="rounded-xl border border-indigo-500/30 dark:border-indigo-500/20 bg-workspace/50 p-4 space-y-4 shadow-sm">
+                    {/* Card Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-border/60 pb-3">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-ink-primary">
+                            Loomi Design Recommendations
+                          </h4>
+                          <p className="text-[11px] text-ink-secondary">
+                            Brand Guidelines Alignment &amp; Design Polish
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                          LOOMI AUDIT
+                        </span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          Brand Guidelines &amp; Design Rule Audit
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Executive Summary: Loomi's Visual Hierarchy & Composition Critique */}
+                    <div className="space-y-1.5">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+                        LOOMI&apos;S EXECUTIVE SUMMARY: VISUAL HIERARCHY &amp; COMPOSITION
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-surface border border-border/80 text-xs text-ink-secondary leading-relaxed">
+                        {imageAnalysis.visual_hierarchy_critique}
+                      </div>
+                    </div>
+
+                    {/* Categorized Feedback: COLOR MODE/DESIGN IMPROVEMENTS */}
+                    {((imageAnalysis.color_recommendations && imageAnalysis.color_recommendations.length > 0) || (imageAnalysis.dominant_colors_hex && imageAnalysis.dominant_colors_hex.length > 0)) && (
+                      <div className="space-y-1.5">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-teal flex items-center gap-1.5">
+                          <Palette className="w-3.5 h-3.5" />
+                          <span>COLOR MODE/DESIGN IMPROVEMENTS</span>
+                        </div>
+                        <div className="space-y-2">
+                          {imageAnalysis.color_recommendations && imageAnalysis.color_recommendations.length > 0 ? (
+                            imageAnalysis.color_recommendations.map((rec, idx) => (
+                              <div key={idx} className="p-2.5 rounded-lg bg-surface border border-border/60 text-xs text-ink-secondary leading-relaxed flex items-start gap-2">
+                                <span className="text-teal font-bold shrink-0 mt-0.5">•</span>
+                                <span>{rec}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="p-2.5 rounded-lg bg-surface border border-border/60 text-xs text-ink-secondary leading-relaxed flex items-start gap-2">
+                              <span className="text-teal font-bold shrink-0 mt-0.5">•</span>
+                              <span>
+                                Ensure background contrast exceeds WCAG 2.1 AA 4.5:1 using Acme Midnight Slate (#0F172A) and Electric Indigo (#6366F1).
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Categorized Feedback: FONT & TYPOGRAPHY IMPROVEMENTS */}
+                    {imageAnalysis.typography_recommendations && imageAnalysis.typography_recommendations.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+                          <Type className="w-3.5 h-3.5" />
+                          <span>FONT &amp; TYPOGRAPHY IMPROVEMENTS</span>
+                        </div>
+                        <div className="space-y-2">
+                          {imageAnalysis.typography_recommendations.map((rec, idx) => (
+                            <div key={idx} className="p-2.5 rounded-lg bg-surface border border-border/60 text-xs text-ink-secondary leading-relaxed flex items-start gap-2">
+                              <span className="text-indigo-400 font-bold shrink-0 mt-0.5">•</span>
+                              <span>{rec}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Footer & Metrics: ACTIONABLE NEXT STEPS */}
+                    {imageAnalysis.actionable_recommendations && imageAnalysis.actionable_recommendations.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>KEY RECOMMENDATIONS FROM LOOMI</span>
+                        </div>
+                        <div className="space-y-2">
+                          {imageAnalysis.actionable_recommendations.map((step, idx) => (
+                            <div key={idx} className="p-2.5 rounded-lg bg-surface border border-border/60 text-xs text-ink-secondary leading-relaxed flex items-start gap-2">
+                              <span className="text-emerald-400 font-bold shrink-0 mt-0.5">✓</span>
+                              <span>{step}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Score / Metrics Footer */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/60">
+                      <div className="flex items-center space-x-2">
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Estimated Done Score: {imageAnalysis.estimated_done_score ?? (imageAnalysis.wcag_aa_compliant ? 92 : 78)}%</span>
+                        </span>
+                      </div>
+
+                      {imageAnalysis.contrast_ratio != null && (
+                        <span className="text-[11px] text-ink-muted">
+                          Contrast: <strong className="text-ink-primary">{imageAnalysis.contrast_ratio.toFixed(1)}:1</strong> ({imageAnalysis.wcag_aa_compliant ? "WCAG AA Pass" : "WCAG Review Needed"})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {auditError && (
                   <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs flex items-center space-x-2">
@@ -2225,7 +2489,7 @@ function DesignerCopilotContent() {
               </div>
               <div>
                 <h3 className="font-bold text-sm text-ink-primary flex items-center space-x-2">
-                  <span>Gemini AI Designer — Real-Time Creative Partner</span>
+                  <span>Loomi AI Designer — Real-Time Creative Partner</span>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal/15 text-teal border border-teal/25 uppercase">
                     Grounded in Brand Tokens
                   </span>
@@ -2339,8 +2603,13 @@ function DesignerCopilotContent() {
               >
                 <div className="flex items-center space-x-2 text-[10px] text-ink-muted">
                   <span className="font-bold uppercase tracking-wider">
-                    {msg.role === "user" ? "You" : "Gemini AI"}
+                    {msg.role === "user" ? "You" : "Loomi"}
                   </span>
+                  {msg.timestamp && (
+                    <span>
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
                   {msg.confidence && (
                     <span
                       className={`px-1.5 py-0.2 rounded font-semibold text-[9px] uppercase ${msg.confidence === "high"
@@ -2361,8 +2630,43 @@ function DesignerCopilotContent() {
                       : "bg-workspace border border-border text-ink-primary"
                     }`}
                 >
-                  {/* Message Prose */}
-                  <div className="whitespace-pre-line font-normal">{msg.content}</div>
+                  {/* Message Prose with Markdown and Table Support */}
+                  <div className="text-xs leading-relaxed font-normal overflow-x-auto space-y-2">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h1: ({ node, ...props }) => <h1 className="text-sm font-bold text-ink-primary mt-3 mb-1" {...props} />,
+                        h2: ({ node, ...props }) => <h2 className="text-xs font-bold text-ink-primary mt-2.5 mb-1" {...props} />,
+                        h3: ({ node, ...props }) => <h3 className="text-xs font-bold text-teal mt-2 mb-1 flex items-center space-x-1" {...props} />,
+                        h4: ({ node, ...props }) => <h4 className="text-[11px] font-semibold text-indigo-300 mt-2 mb-0.5 uppercase tracking-wider" {...props} />,
+                        p: ({ node, ...props }) => <p className="text-ink-primary leading-relaxed my-1" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc list-inside space-y-1 my-1.5 text-ink-secondary" {...props} />,
+                        ol: ({ node, ...props }) => <ol className="list-decimal list-inside space-y-1 my-1.5 text-ink-secondary" {...props} />,
+                        li: ({ node, ...props }) => <li className="text-ink-secondary leading-relaxed" {...props} />,
+                        strong: ({ node, ...props }) => <strong className="font-semibold text-ink-primary" {...props} />,
+                        code: ({ node, className, children, ...props }) => (
+                          <code className="px-1.5 py-0.5 rounded bg-workspace/80 border border-border/80 font-mono text-[11px] text-teal" {...props}>
+                            {children}
+                          </code>
+                        ),
+                        table: ({ node, ...props }) => (
+                          <div className="overflow-x-auto my-2.5 rounded-lg border border-border bg-workspace/50">
+                            <table className="min-w-full divide-y divide-border text-left text-[11px]" {...props} />
+                          </div>
+                        ),
+                        thead: ({ node, ...props }) => <thead className="bg-surface/80 text-ink-primary font-semibold" {...props} />,
+                        tbody: ({ node, ...props }) => <tbody className="divide-y divide-border/60 text-ink-secondary" {...props} />,
+                        tr: ({ node, ...props }) => <tr className="hover:bg-workspace/30 transition-colors" {...props} />,
+                        th: ({ node, ...props }) => <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-ink-muted" {...props} />,
+                        td: ({ node, ...props }) => <td className="px-3 py-2 whitespace-normal leading-normal" {...props} />,
+                        blockquote: ({ node, ...props }) => (
+                          <blockquote className="border-l-2 border-teal pl-3 py-1 my-2 bg-teal/5 text-ink-secondary italic" {...props} />
+                        ),
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
 
                   {/* Tool Badges */}
                   {msg.toolsExecuted && msg.toolsExecuted.length > 0 && (
@@ -2627,11 +2931,12 @@ function DesignerCopilotContent() {
             ))}
 
             {copilotLoading && (
-              <div className="flex items-center space-x-2 text-xs text-ink-muted p-2">
+              <div className="flex items-center space-x-2.5 text-xs text-ink-muted p-3 bg-surface/50 border border-teal/20 rounded-xl animate-pulse">
                 <RefreshCw className="w-4 h-4 animate-spin text-teal" />
-                <span>Gemini AI is evaluating brand tokens, image metrics, and visual hierarchy...</span>
+                <span className="font-medium text-teal">Loomi is reviewing guidelines &amp; generating recommendations...</span>
               </div>
             )}
+            <div ref={chatBottomRef} />
           </div>
 
           {/* Chat Input Box */}
@@ -2665,7 +2970,7 @@ function DesignerCopilotContent() {
 
       {/* =========================================================================
           PERMANENT BRAND DESIGN STANDARDS & AI VISUAL ANALYSIS
-          Always mounted in Designer Studio & Copilot below active workspace tools
+          Always mounted in Designer Studio & Loomi below active workspace tools
           ========================================================================= */}
       <BrandStandardsAndVisualAnalysis
         guidelineProfile={guidelineProfile}
@@ -2695,7 +3000,7 @@ export default function DesignerCopilotPage() {
       fallback={
         <div className="flex flex-col items-center justify-center min-h-[40vh] text-ink-muted text-xs space-y-3 p-8">
           <div className="w-8 h-8 rounded-full border-2 border-teal border-t-transparent animate-spin"></div>
-          <p className="font-semibold text-navy">Loading Designer Gemini AI Studio...</p>
+          <p className="font-semibold text-navy">Loading Designer Loomi Studio...</p>
         </div>
       }
     >

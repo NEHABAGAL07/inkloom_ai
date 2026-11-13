@@ -62,7 +62,7 @@ export default function LegalCopilotPage() {
 
   const [title, setTitle] = useState("Q4 Enterprise AI Cloud Launch Campaign");
   const [contentText, setContentText] = useState(
-    `Inkloom AI Enterprise delivers guaranteed 100% zero downtime and error-free legal automation. In head-to-head testing against traditional manual workflows, our generative copilot proved 300% faster at detecting statutory violations than all competing tools. With automated regulatory filing, compliance teams can completely eliminate compliance liability across North American and European operations.`
+    `Inkloom AI Enterprise delivers guaranteed 100% zero downtime and error-free legal automation. In head-to-head testing against traditional manual workflows, our generative Loomi engine proved 300% faster at detecting statutory violations than all competing tools. With automated regulatory filing, compliance teams can completely eliminate compliance liability across North American and European operations.`
   );
   const [productName, setProductName] = useState("Inkloom AI Enterprise Governance");
   const [intendedAudience, setIntendedAudience] = useState("Enterprise In-House Legal, General Counsel, & Compliance Leads");
@@ -313,7 +313,7 @@ export default function LegalCopilotPage() {
           <Scale className="w-4 h-4 text-teal shrink-0" />
           <span>
             <strong className="text-teal-300 font-semibold">Advisory Decision Support System:</strong> Inkloom AI
-            Legal Gemini AI evaluates marketing claims and potential regulatory risks. It does not provide formal legal
+            Legal Loomi AI evaluates marketing claims and potential regulatory risks. It does not provide formal legal
             advice, attorney-client privileged counsel, or guarantee compliance.
           </span>
         </div>
@@ -336,7 +336,7 @@ export default function LegalCopilotPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                Legal & Regulatory Gemini AI
+                Legal & Regulatory Loomi AI
                 <span className="text-xs px-2 py-0.5 rounded-full bg-teal/20 text-teal-300 border border-teal/30 font-medium">
                   Evidence-Grounded
                 </span>
@@ -514,7 +514,7 @@ export default function LegalCopilotPage() {
                           : "bg-slate-800 text-slate-400 hover:text-white"
                       }`}
                     >
-                      Marketing Gemini AI Draft
+                      Marketing Loomi Draft
                     </button>
                     <button
                       onClick={() => setIntakeSourceType("design_brief")}

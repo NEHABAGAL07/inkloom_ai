@@ -78,6 +78,8 @@ import {
   CreativeBriefRequest,
   DesignConceptGenerationResponse,
   SaveCreativeBriefDraftRequest,
+  LoomiChatRequest,
+  LoomiChatResponse,
   DesignDraftDetailResponse,
   AuthoritativeLegalSource,
   LegalReviewRequest,
@@ -887,7 +889,7 @@ export class ApiService implements IApiService {
     return await this.fetchJson<MarketingGenerationResponse>("/marketing-copilot/generate", {
       method: "POST",
       body: JSON.stringify(brief),
-    }, 45000); // 45s timeout for online Gemini LLM generation
+    }, 45000); // 45s timeout for online Loomi generation
   }
 
   async saveMarketingDraft(payload: SaveDraftRequest): Promise<DraftDetailResponse> {
@@ -1001,7 +1003,7 @@ export class ApiService implements IApiService {
     return await this.fetchJson<DesignConceptGenerationResponse>("/designer-copilot/concepts/generate", {
       method: "POST",
       body: JSON.stringify(brief),
-    }, 45000); // 45s timeout for online Gemini AI concept generation
+    }, 45000); // 45s timeout for online Loomi concept generation
   }
 
   async saveDesignBriefDraft(payload: SaveCreativeBriefDraftRequest): Promise<DesignDraftDetailResponse> {
@@ -1107,10 +1109,17 @@ export class ApiService implements IApiService {
   }
 
   async analyzeReferenceImage(req: ReferenceImageAnalysisRequest): Promise<ReferenceImageAnalysisResponse> {
-    return await this.fetchJson<ReferenceImageAnalysisResponse>("/designer-copilot/analyze-image", {
-      method: "POST",
-      body: JSON.stringify(req),
-    }, 25000);
+    try {
+      return await this.fetchJson<ReferenceImageAnalysisResponse>("/designer-copilot/analyze-image", {
+        method: "POST",
+        body: JSON.stringify(req),
+      }, 25000);
+    } catch (err) {
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+        throw err;
+      }
+      return mockApi.analyzeReferenceImage(req);
+    }
   }
 
   async critiqueDesign(req: DesignCritiqueRequest): Promise<DesignCritiqueResponse> {
@@ -1639,6 +1648,27 @@ export class ApiService implements IApiService {
   async getMediaItem(mediaId: string): Promise<MediaItem> {
     if (USE_MOCK) return mockApi.getMediaItem(mediaId);
     return await this.fetchJson<MediaItem>(`/media/${mediaId}`);
+  }
+
+  async loomiChat(payload: LoomiChatRequest): Promise<LoomiChatResponse> {
+    try {
+      return await this.fetchJson<LoomiChatResponse>("/loomi/chat", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (err: any) {
+      try {
+        const res = await fetch("/api/loomi/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch {}
+      throw err;
+    }
   }
 }
 

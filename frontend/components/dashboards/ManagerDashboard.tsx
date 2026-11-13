@@ -167,13 +167,13 @@ export function ManagerDashboard({
 
   const isAuthorOfSub = Boolean(
     selectedSubForAudit &&
-      user &&
-      ((selectedSubForAudit.creator_id && selectedSubForAudit.creator_id === user.id) ||
-        (selectedSubForAudit.author_id && selectedSubForAudit.author_id === user.id) ||
-        (selectedSubForAudit.author_email &&
-          user.email &&
-          selectedSubForAudit.author_email.toLowerCase() === user.email.toLowerCase()) ||
-        (selectedSubForAudit.created_by && selectedSubForAudit.created_by === user.id))
+    user &&
+    ((selectedSubForAudit.creator_id && selectedSubForAudit.creator_id === user.id) ||
+      (selectedSubForAudit.author_id && selectedSubForAudit.author_id === user.id) ||
+      (selectedSubForAudit.author_email &&
+        user.email &&
+        selectedSubForAudit.author_email.toLowerCase() === user.email.toLowerCase()) ||
+      (selectedSubForAudit.created_by && selectedSubForAudit.created_by === user.id))
   );
 
   const handleManagerDecision = async (action: "approve" | "request_changes") => {
@@ -478,9 +478,8 @@ export function ManagerDashboard({
         <div className="apple-segmented-track">
           <button
             onClick={() => setPipelineFilter("all")}
-            className={`apple-segmented-pill apple-press ${
-              pipelineFilter === "all" ? "apple-segmented-pill-active" : ""
-            }`}
+            className={`apple-segmented-pill apple-press ${pipelineFilter === "all" ? "apple-segmented-pill-active" : ""
+              }`}
           >
             <span>All</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold tabular-nums bg-slate-200/80 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300">
@@ -489,9 +488,8 @@ export function ManagerDashboard({
           </button>
           <button
             onClick={() => setPipelineFilter("pending")}
-            className={`apple-segmented-pill apple-press ${
-              pipelineFilter === "pending" ? "apple-segmented-pill-active" : ""
-            }`}
+            className={`apple-segmented-pill apple-press ${pipelineFilter === "pending" ? "apple-segmented-pill-active" : ""
+              }`}
           >
             <span>Pending Review</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold tabular-nums bg-amber-500/15 text-amber-600 dark:text-amber-400">
@@ -500,9 +498,8 @@ export function ManagerDashboard({
           </button>
           <button
             onClick={() => setPipelineFilter("visual")}
-            className={`apple-segmented-pill apple-press ${
-              pipelineFilter === "visual" ? "apple-segmented-pill-active" : ""
-            }`}
+            className={`apple-segmented-pill apple-press ${pipelineFilter === "visual" ? "apple-segmented-pill-active" : ""
+              }`}
           >
             <span>Media &amp; Visuals</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold tabular-nums bg-slate-200/80 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300">
@@ -511,9 +508,8 @@ export function ManagerDashboard({
           </button>
           <button
             onClick={() => setPipelineFilter("approved")}
-            className={`apple-segmented-pill apple-press ${
-              pipelineFilter === "approved" ? "apple-segmented-pill-active" : ""
-            }`}
+            className={`apple-segmented-pill apple-press ${pipelineFilter === "approved" ? "apple-segmented-pill-active" : ""
+              }`}
           >
             <span>Approved</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold tabular-nums bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
@@ -533,11 +529,10 @@ export function ManagerDashboard({
                 <div
                   key={sub.id}
                   onClick={() => setSelectedPipelineSub(sub)}
-                  className={`py-3.5 flex items-center justify-between px-3.5 rounded-xl transition-all duration-150 gap-3 cursor-pointer ${
-                    isSelected
+                  className={`py-3.5 flex items-center justify-between px-3.5 rounded-xl transition-all duration-150 gap-3 cursor-pointer ${isSelected
                       ? "watermelon-glass border border-emerald-500/40 shadow-xs dark:bg-[#272727] dark:border-[#FFAA35]/40"
                       : "hover:bg-slate-50/90 dark:hover:bg-white/[0.04] border border-transparent"
-                  }`}
+                    }`}
                 >
                   <div className="space-y-1 max-w-[55%] min-w-0">
                     <div className="text-xs font-bold text-[#18352F] dark:text-[#F7F3ED] flex items-center gap-2 truncate">
@@ -586,8 +581,8 @@ export function ManagerDashboard({
 
                     <Link
                       href={`/audits?id=${sub.id}`}
-                      onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}
-                      className="text-xs font-medium px-2 py-1 rounded-lg bg-[#EFF8F4] hover:bg-[#DDF3EB] text-[#58716A] hover:text-[#18352F] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#85817D] dark:hover:text-[#F7F3ED] dark:border-[#383838] apple-press transition"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs font-medium px-2 py-1 rounded-lg bg-[#EFF8F4] hover:bg-[#DDF3EB] text-[#58716A] hover:text-[#18352F] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#85817D] dark:hover:text-[#F7F3ED] dark:border-[#383838] transition"
                     >
                       Details
                     </Link>
@@ -602,7 +597,7 @@ export function ManagerDashboard({
           )}
         </div>
       </div>
-{/* Manager Audit Summary Modal */}
+      {/* Manager Audit Summary Modal */}
       {isAuditModalOpen && selectedSubForAudit && (
         <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto text-[#18352F] dark:text-[#F7F3ED]">
