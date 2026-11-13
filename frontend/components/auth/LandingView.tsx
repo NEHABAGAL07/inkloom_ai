@@ -297,9 +297,9 @@ export function LandingView() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.65, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
               >
-                <h1 className="text-2xl xs:text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[76px] font-heading font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] sm:leading-[1.1] max-w-5xl mx-auto">
+                <h1 className="text-2xl xs:text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[76px] font-heading font-extrabold tracking-[-0.035em] text-slate-900 dark:text-[#F8FAFC] leading-[1.15] sm:leading-[1.1] max-w-5xl mx-auto">
                   <span>Great content. </span>
-                  <span className="relative inline-block text-[#059669] dark:text-[#FFAA35]">
+                  <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#059669] to-[#0284C7] dark:from-[#FFAA35] dark:via-[#FF7A36] dark:to-[#FF665C]">
                     <span>On brand.</span>
                     {/* Animated SVG Wavy Path */}
                     <svg
@@ -328,7 +328,7 @@ export function LandingView() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.55, delay: 0.3, ease: "easeOut" }}
               >
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-600 dark:text-[#B8B2AC] leading-relaxed max-w-md sm:max-w-2xl lg:max-w-3xl mx-auto">
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-600 dark:text-[#B8B2AC] leading-relaxed text-prose mx-auto">
                   Inkloom AI helps teams create, review, and improve content with brand-aware AI and human approval.
                 </p>
               </motion.div>
@@ -344,7 +344,7 @@ export function LandingView() {
                   <motion.div
                     whileHover={{ y: -2, scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 350, damping: 20 }}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 sm:p-4.5 rounded-xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#282828] shadow-2xs hover:border-[#10B981]/50 dark:hover:border-[#72D6A1]/40 transition cursor-default"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 sm:p-4.5 rounded-2xl bg-white/80 dark:bg-[#161B24]/80 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-[#10B981]/50 dark:hover:border-[#72D6A1]/40 transition cursor-default"
                   >
                     <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -357,7 +357,7 @@ export function LandingView() {
                   <motion.div
                     whileHover={{ y: -2, scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 350, damping: 20 }}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 sm:p-4.5 rounded-xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#282828] shadow-2xs hover:border-blue-500/50 dark:hover:border-blue-400/40 transition cursor-default"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 sm:p-4.5 rounded-2xl bg-white/80 dark:bg-[#161B24]/80 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-blue-500/50 dark:hover:border-blue-400/40 transition cursor-default"
                   >
                     <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                       <UserCheck className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -370,7 +370,7 @@ export function LandingView() {
                   <motion.div
                     whileHover={{ y: -2, scale: 1.01 }}
                     transition={{ type: "spring", stiffness: 350, damping: 20 }}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 sm:p-4.5 rounded-xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#282828] shadow-2xs hover:border-[#FFAA35]/50 dark:hover:border-[#FFAA35]/40 transition cursor-default"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 sm:p-4.5 rounded-2xl bg-white/80 dark:bg-[#161B24]/80 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.7)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-[#FFAA35]/50 dark:hover:border-[#FFAA35]/40 transition cursor-default"
                   >
                     <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-[#FFAA35] flex items-center justify-center shrink-0">
                       <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -413,7 +413,7 @@ export function LandingView() {
                 <motion.div
                   whileHover={{ y: -4 }}
                   transition={{ type: "spring", stiffness: 320, damping: 20 }}
-                  className="h-full p-5 sm:p-7 lg:p-8 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2E2E2E] shadow-sm hover:border-[#10B981]/50 dark:hover:border-[#FFAA35]/40 transition space-y-4 sm:space-y-5 flex flex-col justify-between"
+                  className="h-full p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06),inset_0_1px_0_0_rgba(255,255,255,0.7)] dark:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.06)] hover:border-[#10B981]/50 dark:hover:border-[#72D6A1]/50 hover:shadow-[0_12px_40px_-8px_rgba(16,185,129,0.18)] dark:hover:shadow-[0_12px_40px_-8px_rgba(114,214,161,0.16)] transition-all duration-300 space-y-4 sm:space-y-5 flex flex-col justify-between group"
                 >
                   <div className="space-y-3 sm:space-y-4">
                     <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-[#72D6A1] border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center">
@@ -454,7 +454,7 @@ export function LandingView() {
                 <motion.div
                   whileHover={{ y: -4 }}
                   transition={{ type: "spring", stiffness: 320, damping: 20 }}
-                  className="h-full p-5 sm:p-7 lg:p-8 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2E2E2E] shadow-sm hover:border-[#0284C7]/50 dark:hover:border-blue-400/40 transition space-y-4 sm:space-y-5 flex flex-col justify-between"
+                  className="h-full p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06),inset_0_1px_0_0_rgba(255,255,255,0.7)] dark:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.06)] hover:border-[#0284C7]/50 dark:hover:border-blue-400/50 hover:shadow-[0_12px_40px_-8px_rgba(2,132,199,0.18)] dark:hover:shadow-[0_12px_40px_-8px_rgba(96,165,250,0.16)] transition-all duration-300 space-y-4 sm:space-y-5 flex flex-col justify-between group"
                 >
                   <div className="space-y-3 sm:space-y-4">
                     <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center">
@@ -495,7 +495,7 @@ export function LandingView() {
                 <motion.div
                   whileHover={{ y: -4 }}
                   transition={{ type: "spring", stiffness: 320, damping: 20 }}
-                  className="h-full p-5 sm:p-7 lg:p-8 rounded-2xl bg-white dark:bg-[#171717] border border-slate-200 dark:border-[#2E2E2E] shadow-sm hover:border-[#FFAA35]/50 dark:hover:border-[#FFAA35]/40 transition space-y-4 sm:space-y-5 flex flex-col justify-between"
+                  className="h-full p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06),inset_0_1px_0_0_rgba(255,255,255,0.7)] dark:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.06)] hover:border-[#FFAA35]/50 dark:hover:border-[#FFAA35]/50 hover:shadow-[0_12px_40px_-8px_rgba(255,170,53,0.18)] dark:hover:shadow-[0_12px_40px_-8px_rgba(255,170,53,0.18)] transition-all duration-300 space-y-4 sm:space-y-5 flex flex-col justify-between group"
                 >
                   <div className="space-y-3 sm:space-y-4">
                     <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-[#FFAA35] border border-amber-200 dark:border-amber-800/40 flex items-center justify-center">

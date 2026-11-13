@@ -1,9 +1,18 @@
 """
 Inkloom AI Brand Governance Backend Application Entrypoint
 """
+import sys
+from pathlib import Path
+
+# Ensure backend directory is in sys.path even when launched from repo root or external dirs
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(_BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(_BACKEND_DIR))
+
 import time
 import uuid
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -18,73 +27,8 @@ import app.models
 
 logger = logging.getLogger("inkloom.api")
 
-app = FastAPI(
-    title=settings.APP_NAME,
-    version="0.1.0",
-    description="Enterprise brand governance API powered by AI: guideline retrieval, tone analysis, claim verification, and human review workflows.",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
-)
 
-# CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS if settings.CORS_ORIGINS else ["*"],
-    allow_origin_regex=r"^https://.*\.vercel\.app$",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["X-Request-ID", "X-Process-Time-Ms"],
-)
-
-
-@app.middleware("http")
-async def security_and_tracing_middleware(request: Request, call_next):
-    """
-    Production-grade middleware:
-    1. Propagates or generates correlation X-Request-ID
-    2. Measures request execution duration
-    3. Attaches strict security headers (HSTS, CSP, nosniff, frame-ancestors)
-    4. Provides structured access logging without exposing secrets or token bodies
-    """
-    request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
-    start_time = time.perf_counter()
-
-    response = await call_next(request)
-
-    process_time_ms = (time.perf_counter() - start_time) * 1000.0
-
-    # Tracing headers
-    response.headers["X-Request-ID"] = request_id
-    response.headers["X-Process-Time-Ms"] = f"{process_time_ms:.2f}"
-
-    # Strict Security Headers
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "0"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-
-    # Relaxed CSP for interactive Swagger/ReDoc docs, strict CSP for API
-    path = request.url.path
-    if not (path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi.json")):
-        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
-
-    # Access logging (sanitized, no credentials or confidential prompt bodies)
-    client_host = request.client.host if request.client else "unknown"
-    logger.info(
-        f"{request.method} {request.url.path} - status={response.status_code} "
-        f"duration={process_time_ms:.2f}ms ip={client_host} req_id={request_id}"
-    )
-
-    return response
-
-
-
-@app.on_event("startup")
-def on_startup():
+def initialize_database():
     """Create database tables on startup if using SQLite for zero-friction local development."""
     if settings.DATABASE_URL.startswith("sqlite"):
         Base.metadata.create_all(bind=engine)
@@ -220,11 +164,80 @@ def on_startup():
         seed_initial_data()
 
 
-# Initialize SQLite tables and migrations on load
-try:
-    on_startup()
-except Exception as e:
-    pass
+# Alias for backward-compatibility with tests or scripts
+on_startup = initialize_database
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """FastAPI standard lifespan context manager for startup and shutdown."""
+    initialize_database()
+    yield
+
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    version="0.1.0",
+    description="Enterprise brand governance API powered by AI: guideline retrieval, tone analysis, claim verification, and human review workflows.",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    lifespan=lifespan,
+)
+
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS if settings.CORS_ORIGINS else ["*"],
+    allow_origin_regex=r"^https://.*\.vercel\.app$",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-ID", "X-Process-Time-Ms"],
+)
+
+
+@app.middleware("http")
+async def security_and_tracing_middleware(request: Request, call_next):
+    """
+    Production-grade middleware:
+    1. Propagates or generates correlation X-Request-ID
+    2. Measures request execution duration
+    3. Attaches strict security headers (HSTS, CSP, nosniff, frame-ancestors)
+    4. Provides structured access logging without exposing secrets or token bodies
+    """
+    request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+    start_time = time.perf_counter()
+
+    response = await call_next(request)
+
+    process_time_ms = (time.perf_counter() - start_time) * 1000.0
+
+    # Tracing headers
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Process-Time-Ms"] = f"{process_time_ms:.2f}"
+
+    # Strict Security Headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "0"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+
+    # Relaxed CSP for interactive Swagger/ReDoc docs, strict CSP for API
+    path = request.url.path
+    if not (path.startswith("/docs") or path.startswith("/redoc") or path.startswith("/openapi.json")):
+        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
+
+    # Access logging (sanitized, no credentials or confidential prompt bodies)
+    client_host = request.client.host if request.client else "unknown"
+    logger.info(
+        f"{request.method} {request.url.path} - status={response.status_code} "
+        f"duration={process_time_ms:.2f}ms ip={client_host} req_id={request_id}"
+    )
+
+    return response
 
 
 # Exception handler for generic internal errors to avoid leaking trace details

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { cn, formatTimeAgo } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
@@ -92,17 +93,7 @@ export function NotificationBell() {
     }
   };
 
-  const formatTimeAgo = (dateStr: string) => {
-    try {
-      const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-      if (diff < 60) return "Just now";
-      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-      if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-      return `${Math.floor(diff / 86400)}d ago`;
-    } catch {
-      return "";
-    }
-  };
+
 
   return (
     <div className="relative" ref={dropdownRef}>

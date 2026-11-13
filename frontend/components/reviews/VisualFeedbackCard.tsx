@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { cn, formatTimeAgo } from "@/lib/utils";
 import { ContentComment, ContentSubmission } from "@/types";
 import {
   Maximize2,
@@ -87,35 +88,7 @@ export function VisualFeedbackCard({
   // Clean author name display (fallback to Role if author name missing)
   const reviewerDisplayName = comment.author_name || roleMeta.roleLabel;
 
-  // Format date or relative time
-  const formatTime = (isoString?: string) => {
-    if (!isoString) return "";
-    try {
-      const date = new Date(isoString);
-      if (isNaN(date.getTime())) return "";
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffDays = Math.floor(diffHours / 24);
-
-      if (diffHours < 1) {
-        const diffMins = Math.max(1, Math.floor(diffMs / (1000 * 60)));
-        return `${diffMins}m ago`;
-      }
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays < 7) return `${diffDays}d ago`;
-
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch {
-      return "";
-    }
-  };
-
-  const formattedDate = formatTime(comment.created_at);
+  const formattedDate = formatTimeAgo(comment.created_at);
 
   // Category badge mapping
   const renderCategoryBadge = (cat: string) => {
@@ -406,7 +379,7 @@ export function VisualFeedbackCard({
                   <span>Resolved {comment.resolved_by ? `by ${comment.resolved_by}` : ""}</span>
                   {comment.resolved_at && (
                     <span className="text-[11px] font-normal text-emerald-600 dark:text-emerald-400">
-                      &bull; {formatTime(comment.resolved_at)}
+                      &bull; {formatTimeAgo(comment.resolved_at)}
                     </span>
                   )}
                 </div>

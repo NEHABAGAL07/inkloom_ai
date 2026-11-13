@@ -221,9 +221,9 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
       {/* =========================================================================
           1. Workspace Header
           ========================================================================= */}
-      <div className="bg-surface rounded-2xl p-6 sm:p-8 border border-border shadow-subtle relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="watermelon-glass rounded-2xl p-6 sm:p-8 border border-slate-200/80 dark:border-white/[0.08] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-teal/10 border border-teal/20 text-teal text-xs font-bold font-mono">
+          <div className="watermelon-badge px-3.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:bg-[#FFAA35]/15 dark:text-[#FFAA35] border border-emerald-500/20 dark:border-[#FFAA35]/30 text-xs font-bold font-mono">
             <Palette className="w-3.5 h-3.5 text-teal" />
             <span>Designer Workspace • {activeOrgName || "Acme Cloud Systems"}</span>
           </div>
@@ -238,21 +238,21 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <Link
             href="/designer"
-            className="px-5 py-2.5 rounded-xl bg-teal hover:bg-teal/90 text-white text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer"
+            className="watermelon-btn-primary apple-press px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-600 text-white dark:btn-gradient-warm text-xs font-bold transition flex items-center gap-2 shadow-sm cursor-pointer"
           >
             <Palette className="w-4 h-4" />
             <span>Open Studio &amp; Copilot ↗</span>
           </Link>
           <Link
             href="/media-audit"
-            className="px-4 py-2.5 rounded-xl bg-workspace hover:bg-surface border border-border text-ink-primary text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer"
+            className="watermelon-btn-secondary apple-press px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer"
           >
             <ShieldCheck className="w-4 h-4 text-teal" />
             <span>Media Audit</span>
           </Link>
           <button
             onClick={onRefresh}
-            className="p-2.5 rounded-xl bg-workspace hover:bg-surface border border-border text-ink-secondary hover:text-ink-primary transition shadow-xs cursor-pointer"
+            className="p-2.5 rounded-xl bg-workspace hover:bg-surface border border-border text-ink-secondary hover:text-ink-primary apple-press transition shadow-xs cursor-pointer"
             title="Refresh designs"
           >
             <RefreshCw className="w-4 h-4" />
@@ -263,7 +263,7 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
       {/* =========================================================================
           2. Hero Creative Prompt: What would you like to design today?
           ========================================================================= */}
-      <div className="bg-surface rounded-2xl p-6 sm:p-7 border border-border shadow-subtle space-y-4">
+      <div className="watermelon-glass rounded-2xl p-6 sm:p-7 border border-slate-200/80 dark:border-white/[0.08] shadow-xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-teal">
@@ -285,7 +285,7 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter format or size (e.g. 1080, story)..."
-              className="w-full pl-9 pr-4 py-2 rounded-xl bg-workspace border border-border text-xs text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-teal transition"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white/90 dark:bg-white/[0.05] border border-slate-200/90 dark:border-white/[0.1] text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-emerald-500 dark:focus:border-[#FFAA35] transition shadow-2xs"
             />
           </div>
         </div>
@@ -306,10 +306,10 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
                   key={platform.id}
                   type="button"
                   onClick={() => setSelectedPlatformId(platform.id)}
-                  className={`p-3.5 rounded-xl border text-left transition-all duration-150 flex flex-col justify-between h-28 relative group cursor-pointer ${
+                  className={`p-3.5 rounded-xl border text-left apple-press flex flex-col justify-between h-28 relative group cursor-pointer ${
                     isSelected
-                      ? "bg-teal/5 dark:bg-teal/10 border-teal shadow-xs ring-1 ring-teal"
-                      : "bg-workspace hover:bg-surface border-border hover:border-border-hover hover:shadow-2xs"
+                      ? "watermelon-glass border-emerald-500 dark:border-[#FFAA35] shadow-xs ring-1 ring-emerald-500 dark:ring-[#FFAA35]"
+                      : "watermelon-card hover:border-slate-300 dark:hover:border-white/[0.16]"
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -320,7 +320,7 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
                       {renderPlatformIcon(platform.iconType, "w-4 h-4")}
                     </div>
                     {isSelected && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal text-white">
+                      <span className="watermelon-badge text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white dark:bg-[#FFAA35] dark:text-[#111111]">
                         Active
                       </span>
                     )}
@@ -364,7 +364,7 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
           {filteredFormats.map((format) => (
             <div
               key={format.id}
-              className="bg-surface rounded-2xl p-5 border border-border hover:border-teal/50 hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-4 group"
+              className="apple-card rounded-2xl p-5 border border-slate-200/80 dark:border-white/[0.08] hover:border-emerald-500/50 dark:hover:border-[#FFAA35]/50 flex flex-col justify-between space-y-4 group"
             >
               <div className="space-y-3">
                 {/* Header: Name and Badge */}
@@ -386,10 +386,10 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
                     style={{ aspectRatio: format.previewRatio }}
                     className="max-h-28 max-w-[85%] rounded border-2 border-dashed border-teal/40 bg-teal/5 flex flex-col items-center justify-center p-2 text-center transition-transform duration-200 group-hover:scale-105 relative"
                   >
-                    <span className="text-[10px] font-mono font-bold text-teal">
+                    <span className="text-[10px] font-mono font-bold text-teal tabular-nums">
                       {format.aspectRatio}
                     </span>
-                    <span className="text-[9px] font-mono text-ink-muted mt-0.5">
+                    <span className="text-[9px] font-mono text-ink-muted mt-0.5 tabular-nums">
                       {format.width}×{format.height}
                     </span>
                     {/* Safe Area Watermark */}
@@ -399,10 +399,10 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
 
                 {/* Dimension Chips */}
                 <div className="flex items-center gap-2 pt-1">
-                  <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-workspace border border-border text-ink-primary">
+                  <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-workspace border border-border text-ink-primary tabular-nums">
                     {format.width} × {format.height} px
                   </span>
-                  <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-workspace border border-border text-ink-secondary">
+                  <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-workspace border border-border text-ink-secondary tabular-nums">
                     {format.aspectRatio}
                   </span>
                   {format.recommendedFormat && (
@@ -428,7 +428,7 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
               <button
                 type="button"
                 onClick={() => handleSelectFormat(format)}
-                className="w-full py-2.5 px-3 rounded-xl bg-teal hover:bg-teal/90 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                className="w-full py-2.5 px-3 rounded-xl watermelon-btn-primary apple-press bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-600 text-white dark:btn-gradient-warm text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
               >
                 <span>Select Format &amp; Start Design</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -530,7 +530,7 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
               key={tpl.id}
               type="button"
               onClick={() => handleSelectTemplate(tpl)}
-              className="p-4 rounded-2xl bg-surface border border-border hover:border-teal hover:shadow-md transition-all duration-200 text-left flex flex-col justify-between h-40 group shadow-xs cursor-pointer"
+              className="p-4 rounded-2xl apple-card apple-press hover:border-emerald-500/50 dark:hover:border-[#FFAA35]/50 text-left flex flex-col justify-between h-40 group shadow-xs cursor-pointer"
             >
               <div>
                 <div
@@ -587,7 +587,7 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
               return (
                 <div
                   key={sub.id}
-                  className="bg-surface rounded-2xl border border-border p-4 hover:border-teal/40 hover:shadow-md transition-all duration-200 space-y-3 flex flex-col justify-between group"
+                  className="apple-card rounded-2xl border border-slate-200/80 dark:border-white/[0.08] p-4 hover:border-emerald-500/50 dark:hover:border-[#FFAA35]/50 space-y-3 flex flex-col justify-between group"
                 >
                   <div className="space-y-2.5">
                     {/* Thumbnail box */}
@@ -636,7 +636,7 @@ export function DesignerDashboard({ submissions, onRefresh }: DesignerDashboardP
 
                   <Link
                     href={`/designer?submission_id=${sub.id}&action=edit&tab=canvas_audit`}
-                    className="w-full py-2 px-3 rounded-xl bg-workspace hover:bg-surface border border-border hover:border-teal text-ink-primary text-xs font-bold transition flex items-center justify-center gap-1.5"
+                    className="w-full py-2 px-3 rounded-xl watermelon-btn-secondary apple-press text-xs font-bold transition flex items-center justify-center gap-1.5"
                   >
                     <span>Open in Studio</span>
                     <ExternalLink className="w-3.5 h-3.5 text-teal" />

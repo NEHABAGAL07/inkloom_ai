@@ -197,7 +197,7 @@ function FeedbackDashboardContent() {
             <span>Total Feedback</span>
             <MessageSquare className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
           </div>
-          <div className="text-2xl sm:text-3xl font-heading font-extrabold text-[#18352F] dark:text-[#F7F3ED]">
+          <div className="text-2xl sm:text-3xl font-heading font-extrabold text-[#18352F] dark:text-[#F7F3ED] tabular-nums">
             {loading ? "..." : summaryData?.total_feedback_items || 0}
           </div>
           <p className="text-[11px] text-[#82948E] dark:text-[#85817D]">Across all review tracks</p>
@@ -209,7 +209,7 @@ function FeedbackDashboardContent() {
             <span>Changes Requested</span>
             <AlertTriangle className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="text-2xl sm:text-3xl font-heading font-extrabold text-amber-600 dark:text-amber-400">
+          <div className="text-2xl sm:text-3xl font-heading font-extrabold text-amber-600 dark:text-amber-400 tabular-nums">
             {loading ? "..." : summaryData?.changes_requested_count || 0}
           </div>
           <p className="text-[11px] text-[#82948E] dark:text-[#85817D]">Action required from designer</p>
@@ -221,7 +221,7 @@ function FeedbackDashboardContent() {
             <span>Reviews Completed</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-2xl sm:text-3xl font-heading font-extrabold text-emerald-600 dark:text-emerald-400">
+          <div className="text-2xl sm:text-3xl font-heading font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
             {loading ? "..." : summaryData?.reviews_completed_count || 0}
           </div>
           <p className="text-[11px] text-[#82948E] dark:text-[#85817D]">Department sign-offs logged</p>
@@ -233,7 +233,7 @@ function FeedbackDashboardContent() {
             <span>Awaiting Review</span>
             <Clock className="w-4 h-4 text-sky-500" />
           </div>
-          <div className="text-2xl sm:text-3xl font-heading font-extrabold text-sky-600 dark:text-sky-400">
+          <div className="text-2xl sm:text-3xl font-heading font-extrabold text-sky-600 dark:text-sky-400 tabular-nums">
             {loading ? "..." : summaryData?.designs_awaiting_review_count || 0}
           </div>
           <p className="text-[11px] text-[#82948E] dark:text-[#85817D]">Department reviews pending</p>

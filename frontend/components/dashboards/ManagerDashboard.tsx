@@ -261,7 +261,7 @@ export function ManagerDashboard({
       {/* ========================================================
           1. Hero Section with Warm Gradient Ribbon
           ======================================================== */}
-      <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl p-7 sm:p-10 border border-border dark:border-[#383838] shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-2xl relative overflow-hidden">
+      <div className="watermelon-glass rounded-2xl p-7 sm:p-10 border border-slate-200/80 dark:border-white/[0.08] shadow-[0_8px_30px_rgba(22,91,72,0.06)] dark:shadow-2xl relative overflow-hidden">
         <BackgroundAtmosphere variant="hero" />
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#58D9D0] dark:from-[#FFD84D] dark:via-[#FF7A36] dark:to-[#F45B91]" />
 
@@ -322,7 +322,7 @@ export function ManagerDashboard({
             <Link
               key={tpl.id}
               href={`/content?template=${tpl.id}`}
-              className="p-3.5 rounded-xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] hover:border-[#10A995] hover:bg-[#E8F7F1]/60 dark:hover:border-[#FFAA35]/60 dark:hover:bg-[#242424] text-left transition-all duration-150 group flex flex-col justify-between h-32 shadow-[0_4px_20px_rgba(22,91,72,0.05)] dark:shadow-none card-dark-hover"
+              className="p-3.5 rounded-xl apple-card apple-press hover:border-emerald-500/50 dark:hover:border-[#FFAA35]/50 text-left group flex flex-col justify-between h-32 shadow-xs"
             >
               <div>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-[#272727] dark:text-[#FFAA35] dark:border-[#383838]">
@@ -349,54 +349,112 @@ export function ManagerDashboard({
       </div>
 
       {/* ========================================================
-          3. Executive KPI Cards with Warm Subtle Lighting
+          3. Executive KPI Cards with Watermelon UI Metric Styling
           ======================================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Approved Content */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-card space-y-1 relative overflow-hidden">
-          <div className="flex items-center justify-between text-xs font-medium text-[#58716A] dark:text-[#85817D]">
-            <span>Approved Assets</span>
-            <CheckCircle className="w-4 h-4 text-[#087F70] dark:text-[#72D6A1]" />
+        <div className="watermelon-stat-card apple-card apple-press group">
+          <div className="watermelon-stat-glow" />
+          <div className="flex items-start justify-between relative z-10">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-xs">
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <span className="watermelon-badge bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-apple-pulse" />
+              Verified
+            </span>
           </div>
-          <div className="text-3xl font-heading font-extrabold text-[#18352F] dark:text-[#F7F3ED] mt-1">{approvedCount}</div>
-          <div className="text-[11px] text-[#82948E] dark:text-[#85817D]">Authorized for release</div>
+          <div className="mt-4 relative z-10">
+            <div className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-[#F7F3ED] tabular-nums">
+              {approvedCount}
+            </div>
+            <div className="text-xs font-semibold text-slate-500 dark:text-[#85817D] mt-1">
+              Approved Assets
+            </div>
+            <div className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">
+              Authorized for publication
+            </div>
+          </div>
         </div>
 
         {/* Pending Review */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-card space-y-1 relative overflow-hidden">
-          <div className="flex items-center justify-between text-xs font-medium text-[#58716A] dark:text-[#85817D]">
-            <span>Pending Review</span>
-            <Clock className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
+        <div className="watermelon-stat-card apple-card apple-press group">
+          <div className="watermelon-stat-glow" />
+          <div className="flex items-start justify-between relative z-10">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-[#FFAA35] shadow-xs">
+              <Clock className="w-5 h-5" />
+            </div>
+            <span className="watermelon-badge bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-apple-pulse" />
+              In Review
+            </span>
           </div>
-          <div className="text-3xl font-heading font-extrabold text-[#087F70] dark:text-[#FFAA35] mt-1">{pendingCount}</div>
-          <div className="text-[11px] text-[#82948E] dark:text-[#85817D]">Awaiting sign-off</div>
+          <div className="mt-4 relative z-10">
+            <div className="text-3xl font-heading font-extrabold tracking-tight text-amber-600 dark:text-[#FFAA35] tabular-nums">
+              {pendingCount}
+            </div>
+            <div className="text-xs font-semibold text-slate-500 dark:text-[#85817D] mt-1">
+              Pending Review
+            </div>
+            <div className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">
+              Awaiting sign-off decision
+            </div>
+          </div>
         </div>
 
         {/* Total Submissions */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-card space-y-1 relative overflow-hidden">
-          <div className="flex items-center justify-between text-xs font-medium text-[#58716A] dark:text-[#85817D]">
-            <span>Total Submissions</span>
-            <FileText className="w-4 h-4 text-[#10A995] dark:text-[#F45B91]" />
+        <div className="watermelon-stat-card apple-card apple-press group">
+          <div className="watermelon-stat-glow" />
+          <div className="flex items-start justify-between relative z-10">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/10 to-blue-500/10 border border-sky-500/20 flex items-center justify-center text-sky-600 dark:text-[#83B9FF] shadow-xs">
+              <FileText className="w-5 h-5" />
+            </div>
+            <span className="watermelon-badge bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20">
+              Active Pipeline
+            </span>
           </div>
-          <div className="text-3xl font-heading font-extrabold text-[#18352F] dark:text-[#F7F3ED] mt-1">{submissions.length}</div>
-          <div className="text-[11px] text-[#82948E] dark:text-[#85817D]">Campaigns, copy &amp; media</div>
+          <div className="mt-4 relative z-10">
+            <div className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-[#F7F3ED] tabular-nums">
+              {submissions.length}
+            </div>
+            <div className="text-xs font-semibold text-slate-500 dark:text-[#85817D] mt-1">
+              Total Submissions
+            </div>
+            <div className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">
+              Campaigns, copy &amp; visual media
+            </div>
+          </div>
         </div>
 
         {/* Active Team Members */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-card space-y-1 relative overflow-hidden">
-          <div className="flex items-center justify-between text-xs font-medium text-[#58716A] dark:text-[#85817D]">
-            <span>Workspace Team</span>
-            <Users className="w-4 h-4 text-[#087F70] dark:text-[#83B9FF]" />
+        <div className="watermelon-stat-card apple-card apple-press group">
+          <div className="watermelon-stat-glow" />
+          <div className="flex items-start justify-between relative z-10">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-xs">
+              <Users className="w-5 h-5" />
+            </div>
+            <span className="watermelon-badge bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+              Team Space
+            </span>
           </div>
-          <div className="text-3xl font-heading font-extrabold text-[#18352F] dark:text-[#F7F3ED] mt-1">{members.length || 4}</div>
-          <div className="text-[11px] text-[#82948E] dark:text-[#85817D]">Legal, designers, marketing</div>
+          <div className="mt-4 relative z-10">
+            <div className="text-3xl font-heading font-extrabold tracking-tight text-slate-900 dark:text-[#F7F3ED] tabular-nums">
+              {members.length || 4}
+            </div>
+            <div className="text-xs font-semibold text-slate-500 dark:text-[#85817D] mt-1">
+              Workspace Team
+            </div>
+            <div className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">
+              Legal, designers &amp; marketing
+            </div>
+          </div>
         </div>
       </div>
 
       {/* ========================================================
           4. Organization Content Pipeline
           ======================================================== */}
-      <div className="bg-white dark:bg-[#1C1C1C] border border-border dark:border-[#383838] rounded-2xl p-6 shadow-[0_8px_30px_rgba(22,91,72,0.07)] dark:shadow-card space-y-5">
+      <div className="watermelon-glass rounded-2xl p-6 border border-slate-200/80 dark:border-white/[0.08] shadow-[0_8px_30px_rgba(22,91,72,0.05)] dark:shadow-card space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border dark:border-[#383838]">
           <div>
             <h2 className="text-base font-heading font-bold text-[#18352F] dark:text-[#F7F3ED] flex items-center gap-2">
@@ -416,49 +474,51 @@ export function ManagerDashboard({
           </button>
         </div>
 
-        {/* Pipeline Filter Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+        {/* Pipeline Filter Tabs: Watermelon Segmented Control */}
+        <div className="apple-segmented-track">
           <button
             onClick={() => setPipelineFilter("all")}
-            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
-              pipelineFilter === "all"
-                ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
-                : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
+            className={`apple-segmented-pill apple-press ${
+              pipelineFilter === "all" ? "apple-segmented-pill-active" : ""
             }`}
           >
-            All ({submissions.length})
+            <span>All</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold tabular-nums bg-slate-200/80 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300">
+              {submissions.length}
+            </span>
           </button>
           <button
             onClick={() => setPipelineFilter("pending")}
-            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
-              pipelineFilter === "pending"
-                ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
-                : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
+            className={`apple-segmented-pill apple-press ${
+              pipelineFilter === "pending" ? "apple-segmented-pill-active" : ""
             }`}
           >
-            Pending Review ({pendingCount})
+            <span>Pending Review</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold tabular-nums bg-amber-500/15 text-amber-600 dark:text-amber-400">
+              {pendingCount}
+            </span>
           </button>
           <button
             onClick={() => setPipelineFilter("visual")}
-            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
-              pipelineFilter === "visual"
-                ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
-                : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
+            className={`apple-segmented-pill apple-press ${
+              pipelineFilter === "visual" ? "apple-segmented-pill-active" : ""
             }`}
           >
-            Media &amp; Visuals (
-            {submissions.filter((s) => s.content_type === "image" || s.content_type === "video").length}
-            )
+            <span>Media &amp; Visuals</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold tabular-nums bg-slate-200/80 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300">
+              {submissions.filter((s) => s.content_type === "image" || s.content_type === "video").length}
+            </span>
           </button>
           <button
             onClick={() => setPipelineFilter("approved")}
-            className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition ${
-              pipelineFilter === "approved"
-                ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] font-bold shadow-sm dark:bg-[#272727] dark:text-[#F7F3ED] dark:border-[#FFAA35]/50"
-                : "text-[#58716A] hover:bg-[#DDF3EB] bg-[#F7FBF9] border border-border dark:text-[#B8B2AC] dark:hover:bg-[#242424] dark:bg-[#202020] dark:border-[#383838]"
+            className={`apple-segmented-pill apple-press ${
+              pipelineFilter === "approved" ? "apple-segmented-pill-active" : ""
             }`}
           >
-            Approved ({approvedCount})
+            <span>Approved</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold tabular-nums bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              {approvedCount}
+            </span>
           </button>
         </div>
 
@@ -473,10 +533,10 @@ export function ManagerDashboard({
                 <div
                   key={sub.id}
                   onClick={() => setSelectedPipelineSub(sub)}
-                  className={`py-3.5 flex items-center justify-between px-3 rounded-xl transition-all gap-3 cursor-pointer ${
+                  className={`py-3.5 flex items-center justify-between px-3.5 rounded-xl transition-all duration-150 gap-3 cursor-pointer ${
                     isSelected
-                      ? "bg-[#E8F7F1] border border-[#C8E2D8] shadow-sm dark:bg-[#272727] dark:border-[#FFAA35]/40"
-                      : "hover:bg-[#EFF8F4] border border-transparent dark:hover:bg-[#202020]"
+                      ? "watermelon-glass border border-emerald-500/40 shadow-xs dark:bg-[#272727] dark:border-[#FFAA35]/40"
+                      : "hover:bg-slate-50/90 dark:hover:bg-white/[0.04] border border-transparent"
                   }`}
                 >
                   <div className="space-y-1 max-w-[55%] min-w-0">
@@ -505,7 +565,7 @@ export function ManagerDashboard({
                         setViewingSub(sub);
                         setIsViewerOpen(true);
                       }}
-                      className="text-xs font-semibold px-2.5 py-1 rounded-lg btn-dark-secondary transition flex items-center gap-1"
+                      className="text-xs font-semibold px-2.5 py-1 rounded-lg btn-dark-secondary apple-press transition flex items-center gap-1"
                       title="Open and view design asset or document"
                     >
                       <Eye className="w-3 h-3" />
@@ -517,7 +577,7 @@ export function ManagerDashboard({
                         e.stopPropagation();
                         handleInspectAudit(sub);
                       }}
-                      className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#E8F7F1] hover:bg-[#DDF3EB] text-[#087F70] border border-[#C8E2D8] dark:bg-[#272727] dark:hover:bg-[#2F2F2F] dark:text-[#FFAA35] dark:border-[#383838] transition flex items-center gap-1"
+                      className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#E8F7F1] hover:bg-[#DDF3EB] text-[#087F70] border border-[#C8E2D8] dark:bg-[#272727] dark:hover:bg-[#2F2F2F] dark:text-[#FFAA35] dark:border-[#383838] apple-press transition flex items-center gap-1"
                       title="Inspect AI rule checks and audit summary"
                     >
                       <ShieldCheck className="w-3 h-3 text-[#087F70] dark:text-[#FFAA35]" />
@@ -527,7 +587,7 @@ export function ManagerDashboard({
                     <Link
                       href={`/audits?id=${sub.id}`}
                       onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}
-                      className="text-xs font-medium px-2 py-1 rounded-lg bg-[#EFF8F4] hover:bg-[#DDF3EB] text-[#58716A] hover:text-[#18352F] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#85817D] dark:hover:text-[#F7F3ED] dark:border-[#383838] transition"
+                      className="text-xs font-medium px-2 py-1 rounded-lg bg-[#EFF8F4] hover:bg-[#DDF3EB] text-[#58716A] hover:text-[#18352F] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#85817D] dark:hover:text-[#F7F3ED] dark:border-[#383838] apple-press transition"
                     >
                       Details
                     </Link>

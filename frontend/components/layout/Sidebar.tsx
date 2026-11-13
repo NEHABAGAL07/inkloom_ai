@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/services/auth-context";
 import { useSidebar } from "./SidebarContext";
+import { cn, getUserInitials } from "@/lib/utils";
 import { InkloomLogo } from "./InkloomLogo";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -172,23 +173,9 @@ export function Sidebar() {
     }
   };
 
-  const getUserInitials = () => {
-    if (user?.full_name) {
-      const parts = user.full_name.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-      }
-      return parts[0].substring(0, 2).toUpperCase();
-    }
-    if (user?.email) {
-      return user.email.substring(0, 2).toUpperCase();
-    }
-    return "JD";
-  };
-
   const roleKey = getRoleKey(activeRole);
   const navItems = ROLE_NAV_ITEMS[roleKey] || ROLE_NAV_ITEMS.admin;
-  const userInitials = getUserInitials();
+  const userInitials = getUserInitials(user?.full_name, user?.email);
 
   const isDesigner = roleKey === "designer";
   const primaryActionLabel = isDesigner ? "New Design" : "New Review";
@@ -203,19 +190,14 @@ export function Sidebar() {
 
   // Consistent high-contrast styling for navigation items
   const getItemClasses = useCallback(
-    (isActive: boolean, isCollapsed: boolean) => {
-      const base =
-        "flex items-center rounded-xl text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal select-none group";
-      const layout = isCollapsed
-        ? "justify-center w-11 h-11 mx-auto"
-        : "justify-between px-3.5 py-2.5";
-
-      if (isActive) {
-        return `${base} ${layout} bg-[#CEF0E5] text-[#065F54] font-bold border border-[#B2E4D4] shadow-2xs dark:bg-[#282828] dark:text-[#F7F3ED] dark:border-[#3E3E3E] dark:shadow-xs`;
-      }
-
-      return `${base} ${layout} text-[#334155] hover:text-[#065F54] hover:bg-[#D6F2E8] active:bg-[#C2EADF] dark:text-[#B8B2AC] dark:hover:text-[#F7F3ED] dark:hover:bg-[#252525] dark:active:bg-[#2A2A2A]`;
-    },
+    (isActive: boolean, isCollapsed: boolean) =>
+      cn(
+        "flex items-center rounded-xl text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal select-none group apple-press",
+        isCollapsed ? "justify-center w-11 h-11 mx-auto" : "justify-between px-3.5 py-2.5",
+        isActive
+          ? "bg-white text-emerald-800 font-bold border border-slate-200/90 shadow-xs dark:bg-[#262626] dark:text-[#F7F3ED] dark:border-white/[0.1] dark:shadow-xs"
+          : "text-slate-600 hover:text-emerald-800 hover:bg-white/60 active:bg-white/80 dark:text-[#B8B2AC] dark:hover:text-[#F7F3ED] dark:hover:bg-[#252525] dark:active:bg-[#2A2A2A]"
+      ),
     []
   );
 
@@ -228,9 +210,9 @@ export function Sidebar() {
 
   const getBadgeClasses = useCallback((isActive: boolean) => {
     if (isActive) {
-      return "text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-[#087F70] text-white dark:bg-[#FFAA35] dark:text-[#111111]";
+      return "text-[10px] px-1.5 py-0.5 rounded-full font-bold tabular-nums bg-[#087F70] text-white dark:bg-[#FFAA35] dark:text-[#111111]";
     }
-    return "text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-[#D6F2E8] text-[#087F70] border border-[#B2E4D4] dark:bg-[#252525] dark:text-[#B8B2AC] dark:border-[#383838]";
+    return "text-[10px] px-1.5 py-0.5 rounded-full font-bold tabular-nums bg-[#D6F2E8] text-[#087F70] border border-[#B2E4D4] dark:bg-[#252525] dark:text-[#B8B2AC] dark:border-[#383838]";
   }, []);
 
   return (
@@ -239,7 +221,7 @@ export function Sidebar() {
           1. Desktop / Tablet Responsive Sidebar (Sticky in layout)
           ======================================================== */}
       <aside
-        className={`hidden lg:flex flex-col h-screen sticky top-0 shrink-0 bg-[#E6F7F2] dark:bg-[#1C1C1C] border-r border-[#D3EEE5] dark:border-[#383838] text-ink-primary select-none z-30 transition-all duration-200 ease-in-out ${
+        className={`hidden lg:flex flex-col h-screen sticky top-0 shrink-0 bg-[#E6F7F2]/80 dark:bg-[#181818]/95 backdrop-blur-xl border-r border-[#D3EEE5] dark:border-white/[0.08] text-ink-primary select-none z-30 transition-all duration-200 ease-in-out ${
           isDesktopCollapsed ? "w-20" : "w-64"
         }`}
         aria-label="Workspace navigation"
@@ -281,7 +263,7 @@ export function Sidebar() {
             href={primaryActionHref}
             title={primaryActionTitle}
             aria-label={primaryActionLabel}
-            className={`flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white dark:btn-gradient-warm text-xs font-bold shadow-md hover:opacity-95 tracking-tight group transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
+            className={`flex items-center justify-center gap-2 rounded-xl watermelon-btn-primary apple-press bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-600 text-white dark:btn-gradient-warm text-xs font-bold shadow-md hover:opacity-95 tracking-tight group transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
               isDesktopCollapsed ? "w-11 h-11 p-0" : "w-full px-4 py-2.5"
             }`}
           >
@@ -494,8 +476,8 @@ export function Sidebar() {
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-[#E6F7F2] dark:bg-[#1C1C1C] border-r border-[#D3EEE5] dark:border-[#383838] flex flex-col z-50 shadow-2xl lg:hidden select-none"
+              transition={{ type: "spring", damping: 28, stiffness: 320, mass: 0.8 }}
+              className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-[#E6F7F2]/80 dark:bg-[#181818]/95 backdrop-blur-xl border-r border-[#D3EEE5] dark:border-white/[0.08] flex flex-col z-50 shadow-2xl lg:hidden select-none"
             >
               {/* Drawer Header with Logo & Close Button */}
               <div className="h-16 px-4 border-b border-[#D3EEE5] dark:border-border flex items-center justify-between shrink-0">
@@ -524,7 +506,7 @@ export function Sidebar() {
                   onClick={closeMobileDrawer}
                   title={primaryActionTitle}
                   aria-label={primaryActionLabel}
-                  className="w-full min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white dark:btn-gradient-warm text-xs font-bold shadow-md hover:opacity-95 tracking-tight group transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
+                  className="w-full min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl watermelon-btn-primary bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-600 text-white dark:btn-gradient-warm text-xs font-bold shadow-md hover:opacity-95 tracking-tight group transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
                 >
                   <Plus className="w-4 h-4 text-white dark:text-[#111111] stroke-[2.5]" />
                   <span>+ {primaryActionLabel}</span>

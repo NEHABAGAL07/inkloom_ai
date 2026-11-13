@@ -256,7 +256,7 @@ export function MediaAuditView({ submissions, onRefresh }: MediaAuditViewProps) 
           <button
             type="button"
             onClick={() => setActiveMainTab("audit")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold apple-press transition flex items-center gap-2 cursor-pointer ${
               activeMainTab === "audit"
                 ? "bg-teal text-white shadow-subtle"
                 : "bg-workspace text-ink-secondary hover:text-ink-primary hover:bg-surface border border-border"
@@ -268,7 +268,7 @@ export function MediaAuditView({ submissions, onRefresh }: MediaAuditViewProps) 
           <button
             type="button"
             onClick={() => setActiveMainTab("guidelines")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold apple-press transition flex items-center gap-2 cursor-pointer ${
               activeMainTab === "guidelines"
                 ? "bg-teal text-white shadow-subtle"
                 : "bg-workspace text-ink-secondary hover:text-ink-primary hover:bg-surface border border-border"
@@ -277,7 +277,7 @@ export function MediaAuditView({ submissions, onRefresh }: MediaAuditViewProps) 
             <BookOpen className="w-4 h-4" />
             <span>Official Brand Guidelines</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold tabular-nums ${
                 activeMainTab === "guidelines"
                   ? "bg-white/20 text-white"
                   : "bg-teal/15 text-teal"

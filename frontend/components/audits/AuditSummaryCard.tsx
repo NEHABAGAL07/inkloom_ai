@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { cn } from "@/lib/utils";
 import { AuditSummary, OverallAuditStatus } from "@/types";
 import { ShieldCheck, AlertTriangle, XCircle, CheckCircle, Scale } from "lucide-react";
 
@@ -64,9 +65,7 @@ export function AuditSummaryCard({ summary, overallStatus, auditId }: AuditSumma
             <h2 className="text-xl font-heading font-bold text-[#0F172A] dark:text-[#F7F3ED] tracking-tight">
               Audit Governance Synthesis
             </h2>
-            <div
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusConfig.bg}`}
-            >
+            <div className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border", statusConfig.bg)}>
               <StatusIcon className="w-3.5 h-3.5 shrink-0" />
               <span>{statusConfig.text}</span>
             </div>

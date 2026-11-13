@@ -146,22 +146,37 @@ The repository is cleanly partitioned for four developers working in parallel on
 - Node.js 18+ & npm 9+
 
 ### 5.1 Run Backend
+
+You can run the backend service using any of the following methods:
+
+**Option A — Quickest (from project root via npm):**
+```bash
+npm run dev:backend
+```
+
+**Option B — Root Python Launcher:**
+```bash
+python run_backend.py
+# Or with specific venv:
+.\backend\.venv\Scripts\python.exe run_backend.py
+```
+
+**Option C — Standard Backend Directory Mode:**
 ```bash
 cd backend
-python -m venv venv
 
-# Windows
-.\venv\Scripts\Activate.ps1
-# macOS/Linux
-source venv/bin/activate
+# On Windows PowerShell:
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
 
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn app.main:app --reload --port 8000
+# On macOS/Linux:
+source .venv/bin/activate
+python -m uvicorn app.main:app --reload --port 8000
 ```
+> **Note for Windows users:** Avoid invoking `.venv\Scripts\uvicorn.exe` directly because Windows Application Control / software execution policies often block unsigned script wrappers. Always run through Python via `python -m uvicorn app.main:app --reload --port 8000` or use `npm run dev:backend`.
+
 - API is running at: [http://localhost:8000](http://localhost:8000)
 - Interactive API Docs (Swagger): [http://localhost:8000/docs](http://localhost:8000/docs)
-- Health Check: [http://localhost:8000/health](http://localhost:8000/health)
+- Health Check: [http://localhost:8000/health](http://localhost:8000/health) or [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
 
 ### 5.2 Run Frontend
 ```bash

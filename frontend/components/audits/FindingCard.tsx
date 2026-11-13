@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Finding, FindingSeverity } from "@/types";
+import { cn, formatCategory } from "@/lib/utils";
 import { DiffViewer } from "./DiffViewer";
 import { AlertTriangle, CheckCircle, XCircle, ExternalLink, Check, X, Sparkles } from "lucide-react";
 
@@ -28,12 +29,7 @@ export function FindingCard({ finding, onStatusChange }: FindingCardProps) {
     }
   };
 
-  const getCategoryLabel = (category: string) => {
-    return category
-      .split("_")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
-  };
+
 
   const handleAction = (status: string) => {
     setCurrentStatus(status as any);
@@ -45,13 +41,12 @@ export function FindingCard({ finding, onStatusChange }: FindingCardProps) {
 
   return (
     <div
-      className={`rounded-2xl p-5 border transition-all ${
-        isAccepted
-          ? "border-emerald-300 bg-emerald-50/50 dark:border-[#72D6A1]/40 dark:bg-[#72D6A1]/5 shadow-xs"
-          : isDismissed
-          ? "opacity-50 border-[#DDEBE5] dark:border-[#383838] bg-[#F7FBF9] dark:bg-[#141414]"
-          : "border-[#DDEBE5] dark:border-[#383838] bg-white dark:bg-[#1C1C1C] shadow-sm dark:shadow-card hover:border-[#C8E2D8] dark:hover:border-[#4A4A4A]"
-      }`}
+      className={cn(
+        "rounded-2xl p-5 border transition-all",
+        isAccepted && "border-emerald-300 bg-emerald-50/50 dark:border-[#72D6A1]/40 dark:bg-[#72D6A1]/5 shadow-xs",
+        isDismissed && "opacity-50 border-[#DDEBE5] dark:border-[#383838] bg-[#F7FBF9] dark:bg-[#141414]",
+        !isAccepted && !isDismissed && "border-[#DDEBE5] dark:border-[#383838] bg-white dark:bg-[#1C1C1C] shadow-sm dark:shadow-card hover:border-[#C8E2D8] dark:hover:border-[#4A4A4A]"
+      )}
     >
       {/* Top Meta Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -67,7 +62,7 @@ export function FindingCard({ finding, onStatusChange }: FindingCardProps) {
 
           {/* Category Tag */}
           <span className="text-xs text-[#087F70] dark:text-[#FFAA35] font-semibold bg-[#E8F7F1] dark:bg-[#FFAA35]/10 border border-[#C8E2D8] dark:border-[#FFAA35]/20 px-2 py-0.5 rounded-md">
-            {getCategoryLabel(finding.category)}
+            {formatCategory(finding.category)}
           </span>
 
           {/* Human Review Marker */}
@@ -88,7 +83,7 @@ export function FindingCard({ finding, onStatusChange }: FindingCardProps) {
               style={{ width: `${Math.round(finding.confidence * 100)}%` }}
             />
           </div>
-          <span className="font-mono text-[#18352F] dark:text-[#F7F3ED] font-semibold">
+          <span className="font-mono text-[#18352F] dark:text-[#F7F3ED] font-semibold tabular-nums">
             {Math.round(finding.confidence * 100)}%
           </span>
         </div>
@@ -162,13 +157,13 @@ export function FindingCard({ finding, onStatusChange }: FindingCardProps) {
             <>
               <button
                 onClick={() => handleAction("dismissed")}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#58716A] hover:text-[#18352F] hover:bg-[#EFF8F4] dark:text-[#85817D] dark:hover:text-[#F7F3ED] dark:hover:bg-[#222222] transition"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#58716A] hover:text-[#18352F] hover:bg-[#EFF8F4] dark:text-[#85817D] dark:hover:text-[#F7F3ED] dark:hover:bg-[#222222] apple-press transition"
               >
                 Dismiss
               </button>
               <button
                 onClick={() => handleAction("accepted")}
-                className="px-4 py-1.5 rounded-xl text-xs font-bold btn-gradient-warm text-white dark:text-ink-950 shadow-warmGlow transition flex items-center gap-1"
+                className="px-4 py-1.5 rounded-xl text-xs font-bold btn-gradient-warm text-white dark:text-ink-950 shadow-warmGlow apple-press transition flex items-center gap-1"
               >
                 <Check className="w-3.5 h-3.5 text-white dark:text-[#111111]" />
                 <span>Accept Correction</span>

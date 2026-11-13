@@ -80,8 +80,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-        heading: ["Space Grotesk", "Sora", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        sans: ["'Plus Jakarta Sans'", "Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        heading: ["'Space Grotesk'", "'Plus Jakarta Sans'", "Sora", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
       },
       boxShadow: {
         subtle: "var(--shadow-subtle)",

@@ -601,7 +601,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
           ======================================================== */}
 
-      <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl p-7 sm:p-9 border border-slate-200 dark:border-[#383838] shadow-sm relative overflow-hidden">
+      <div className="watermelon-glass rounded-2xl p-7 sm:p-9 border border-slate-200/80 dark:border-white/[0.08] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-2xl relative overflow-hidden">
 
         {/* Subtle top turquoise accent line in light mode */}
 
@@ -739,7 +739,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
               href="/content"
 
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] text-white dark:btn-gradient-warm text-xs font-bold transition flex items-center gap-2 shadow-md hover:opacity-95"
+              className="watermelon-btn-primary apple-press px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-600 text-white dark:btn-gradient-warm text-xs font-bold transition flex items-center gap-2 shadow-md hover:opacity-95"
 
             >
 
@@ -755,7 +755,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
               href="/reviews"
 
-              className="px-4 py-2.5 rounded-xl bg-white dark:bg-[#202020] text-[#0F172A] dark:text-[#F7F3ED] border border-slate-300 dark:border-[#383838] hover:bg-slate-50 dark:hover:bg-[#272727] text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs"
+              className="watermelon-btn-secondary apple-press px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5"
 
             >
 
@@ -821,7 +821,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
               onClick={() => handleApplyTemplate(tpl)}
 
-              className="p-4 rounded-2xl bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] hover:border-[#10B981] dark:hover:border-[#FFAA35]/60 hover:shadow-md transition-all duration-200 text-left flex flex-col justify-between h-36 group shadow-2xs"
+              className="apple-card apple-press p-4 hover:border-emerald-500/50 dark:hover:border-[#FFAA35]/50 text-left flex flex-col justify-between h-36 group shadow-2xs"
 
             >
 
@@ -875,7 +875,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
         {/* Left: Review Workspace Box */}
 
-        <div className="lg:col-span-8 bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-6 shadow-sm dark:shadow-card space-y-5">
+        <div className="lg:col-span-8 watermelon-glass border border-slate-200/80 dark:border-white/[0.08] rounded-2xl p-6 shadow-sm dark:shadow-card space-y-5">
 
           <div className="pb-3 border-b border-slate-100 dark:border-[#383838]">
 
@@ -1155,7 +1155,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
                 disabled={isAuditing || (!quickText && !selectedFile)}
 
-                className="flex-1 py-2.5 bg-gradient-to-r from-[#10B981] via-[#0284C7] to-[#2563EB] dark:btn-gradient-warm disabled:opacity-50 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-md hover:opacity-95"
+                className="watermelon-btn-primary apple-press flex-1 py-2.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-600 dark:btn-gradient-warm disabled:opacity-50 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-md hover:opacity-95"
 
               >
 
@@ -1269,7 +1269,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
           {/* Your Review Stats Card */}
 
-          <div className="bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="apple-card rounded-2xl p-5 shadow-sm space-y-4">
 
             <div className="flex items-center justify-between">
 
@@ -1331,7 +1331,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
           {/* Keep your review moving Card */}
 
-          <div className="bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-5 shadow-sm space-y-3 relative overflow-hidden">
+          <div className="apple-card rounded-2xl p-5 shadow-sm space-y-3 relative overflow-hidden">
 
             <div className="flex items-start justify-between gap-3">
 
@@ -1389,7 +1389,7 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
       {/* Right: Active Campaign Submissions Tracker */}
 
-      <div className="bg-white dark:bg-[#1C1C1C] border border-slate-200 dark:border-[#383838] rounded-2xl p-6 shadow-sm dark:shadow-card space-y-4">
+      <div className="watermelon-glass border border-slate-200/80 dark:border-white/[0.08] rounded-2xl p-6 shadow-sm dark:shadow-card space-y-4">
 
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#383838]">
 
@@ -1437,13 +1437,13 @@ export function MarketingDashboard({ submissions, onRefresh }: MarketingDashboar
 
                   onClick={() => setSelectedMarketingSub(sub)}
 
-                  className={`py-3.5 flex items-center justify-between px-3 rounded-xl transition-all gap-3 cursor-pointer ${
+                  className={`py-3.5 flex items-center justify-between px-3.5 rounded-xl apple-press transition-all duration-150 gap-3 cursor-pointer ${
 
                     isSelected
 
-                      ? "bg-slate-50 dark:bg-[#272727] border border-[#10B981]/40 dark:border-[#FFAA35]/40 shadow-xs"
+                      ? "watermelon-glass border border-emerald-500/40 shadow-xs dark:bg-[#272727] dark:border-[#FFAA35]/40"
 
-                      : "hover:bg-slate-50/70 dark:hover:bg-[#202020] border border-transparent"
+                      : "hover:bg-slate-50/90 dark:hover:bg-white/[0.04] border border-transparent"
 
                   }`}
 

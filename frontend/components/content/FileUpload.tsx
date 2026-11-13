@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { cn } from "@/lib/utils";
 import { UploadCloud, File, X, CheckCircle } from "lucide-react";
 
 interface FileUploadProps {
@@ -39,13 +40,12 @@ export function FileUpload({ onFileSelect, selectedFile }: FileUploadProps) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${
-        isDragging
-          ? "border-[#10B981] bg-[#10B981]/5 dark:border-[#FFAA35] dark:bg-[#FFAA35]/5"
-          : selectedFile
-          ? "border-[#10B981] bg-[#10B981]/10 dark:border-[#72D6A1] dark:bg-[#72D6A1]/10"
-          : "border-slate-200 bg-slate-50/60 hover:border-[#10B981] dark:border-[#383838] dark:hover:border-[#FFAA35]/60 dark:bg-[#141414]"
-      }`}
+      className={cn(
+        "border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer",
+        isDragging && "border-[#10B981] bg-[#10B981]/5 dark:border-[#FFAA35] dark:bg-[#FFAA35]/5",
+        selectedFile && !isDragging && "border-[#10B981] bg-[#10B981]/10 dark:border-[#72D6A1] dark:bg-[#72D6A1]/10",
+        !selectedFile && !isDragging && "border-slate-200 bg-slate-50/60 hover:border-[#10B981] dark:border-[#383838] dark:hover:border-[#FFAA35]/60 dark:bg-[#141414]"
+      )}
       onClick={() => document.getElementById("file-upload-input")?.click()}
     >
       <input

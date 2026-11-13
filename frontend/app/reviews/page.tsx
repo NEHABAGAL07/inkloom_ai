@@ -330,7 +330,7 @@ function ReviewsContent() {
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-[#18352F] dark:text-[#F7F3ED] flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
-              <span>Designs Awaiting Review ({submissions.length})</span>
+              <span>Designs Awaiting Review <span className="tabular-nums">({submissions.length})</span></span>
             </h2>
             <span className="text-xs text-[#82948E] dark:text-[#85817D]">Multi-Track Cycles</span>
           </div>

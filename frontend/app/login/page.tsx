@@ -286,7 +286,7 @@ function LoginContent() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@company.com"
-                    className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-slate-400 dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] transition shadow-2xs"
+                    className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl pl-10 pr-4 py-2.5 text-base sm:text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-slate-400 dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] transition shadow-2xs"
                   />
                 </div>
               </div>
@@ -303,7 +303,7 @@ function LoginContent() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl pl-10 pr-10 py-2.5 text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-slate-400 dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] transition shadow-2xs"
+                    className="w-full bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#383838] rounded-xl pl-10 pr-10 py-2.5 text-base sm:text-xs text-[#0F172A] dark:text-[#F7F3ED] placeholder:text-slate-400 dark:placeholder:text-[#85817D] focus:outline-none focus:border-[#10B981] dark:focus:border-[#FFAA35] transition shadow-2xs"
                   />
                   <button
                     type="button"

@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/services/theme-context";
 import { GlobalSearchBar } from "./GlobalSearchBar";
 import { NotificationBell } from "./NotificationBell";
 import { useSidebar } from "./SidebarContext";
+import { cn, getUserInitials } from "@/lib/utils";
 import {
   Building2,
   ChevronDown,
@@ -167,17 +168,10 @@ export function Header() {
   };
 
   const roleInfo = getRoleBadge(activeRole);
-  const initials = user?.full_name
-    ? user.full_name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .substring(0, 2)
-        .toUpperCase()
-    : user?.email?.substring(0, 2).toUpperCase() || "JD";
+  const initials = getUserInitials(user?.full_name, user?.email);
 
   return (
-    <header className="h-16 border-b border-border bg-surface px-3 sm:px-4 lg:px-6 flex items-center justify-between sticky top-0 z-30 select-none shadow-subtle gap-2 sm:gap-3 transition-colors duration-150">
+    <header className="h-16 apple-material-glass px-3 sm:px-4 lg:px-6 flex items-center justify-between sticky top-0 z-30 select-none gap-2 sm:gap-3 transition-colors duration-150">
       {/* ----------------------------------------------------
           Left Section: Mobile Menu Trigger, Back Button & Workspace Switcher
           ---------------------------------------------------- */}
@@ -189,7 +183,7 @@ export function Header() {
             onClick={toggleDesktopCollapsed}
             aria-label="Expand sidebar"
             title="Expand sidebar ( [ )"
-            className="hidden lg:flex w-8 h-8 rounded-xl border border-slate-200 dark:border-[#383838] bg-white dark:bg-[#1C1C1C] items-center justify-center text-slate-700 dark:text-[#85817D] hover:text-[#087F70] dark:hover:text-[#FFAA35] hover:bg-slate-100 dark:hover:bg-[#252525] shadow-xs transition shrink-0 focus:outline-none focus:ring-2 focus:ring-teal select-none"
+            className="hidden lg:flex w-8 h-8 rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-[#1C1C1C]/90 items-center justify-center text-slate-700 dark:text-[#85817D] hover:text-[#087F70] dark:hover:text-[#FFAA35] hover:bg-slate-100/80 dark:hover:bg-[#252525] shadow-xs apple-press transition-all duration-150 shrink-0 focus:outline-none focus:ring-2 focus:ring-teal select-none"
           >
             <ChevronRight className="w-4 h-4 text-ink-primary" />
           </button>
@@ -202,7 +196,7 @@ export function Header() {
           onClick={toggleMobileDrawer}
           aria-label="Open navigation menu"
           aria-expanded={isMobileDrawerOpen}
-          className="w-8 h-8 rounded-xl border border-slate-200 dark:border-[#383838] bg-white dark:bg-[#1C1C1C] flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#252525] shadow-xs transition lg:hidden shrink-0 focus:outline-none focus:ring-2 focus:ring-teal"
+          className="w-8 h-8 rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-[#1C1C1C]/90 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-[#252525] shadow-xs apple-press transition-all duration-150 lg:hidden shrink-0 focus:outline-none focus:ring-2 focus:ring-teal"
         >
           <Menu className="w-4 h-4 text-ink-primary" />
         </button>
@@ -215,7 +209,7 @@ export function Header() {
             }
           }}
           aria-label="Go back"
-          className="w-8 h-8 rounded-full border border-slate-200 dark:border-[#383838] bg-white dark:bg-[#1C1C1C] hidden xs:flex items-center justify-center text-slate-600 dark:text-[#85817D] hover:bg-slate-50 dark:hover:bg-[#252525] shadow-xs transition"
+          className="w-8 h-8 rounded-full border border-slate-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-[#1C1C1C]/90 hidden xs:flex items-center justify-center text-slate-600 dark:text-[#85817D] hover:bg-slate-100/80 dark:hover:bg-[#252525] shadow-xs apple-press transition-all duration-150"
           title="Back"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -224,8 +218,8 @@ export function Header() {
         {/* Company Identity: Logo Emblem and Company Name */}
         <div className="flex items-center gap-2.5 select-none py-1">
           {/* Branded Company Logo Emblem */}
-          <div className="w-8 h-8 rounded-xl bg-teal-500/10 dark:bg-[#FFAA35]/15 border border-teal-500/20 dark:border-[#FFAA35]/30 flex items-center justify-center shrink-0 shadow-xs">
-            <Building2 className="w-4 h-4 text-teal-600 dark:text-[#FFAA35]" />
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-[#FFAA35]/15 dark:to-[#FF7A36]/15 border border-emerald-500/20 dark:border-[#FFAA35]/30 flex items-center justify-center shrink-0 shadow-xs">
+            <Building2 className="w-4 h-4 text-emerald-600 dark:text-[#FFAA35]" />
           </div>
 
           {/* Company Name */}
@@ -262,10 +256,10 @@ export function Header() {
             aria-controls="user-profile-menu"
             id="user-profile-trigger"
             title={`Account: ${user?.full_name || user?.email || "User"} (${roleInfo.label})`}
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal select-none ${
+            className={`w-9 h-9 rounded-full flex items-center justify-center apple-press transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal select-none ${
               isProfileOpen
                 ? "ring-2 ring-teal dark:ring-[#FFAA35] shadow-xs"
-                : "hover:opacity-90 hover:scale-105 active:scale-95"
+                : "hover:opacity-90 active:scale-95"
             }`}
           >
             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#087F70] via-[#10A995] to-[#43D6B3] text-white dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-[#111111] flex items-center justify-center font-bold text-xs shadow-xs select-none">
@@ -280,7 +274,7 @@ export function Header() {
               role="menu"
               aria-labelledby="user-profile-trigger"
               onKeyDown={handleMenuKeyDown}
-              className="absolute right-0 mt-2 w-72 sm:w-84 max-w-[calc(100vw-2rem)] bg-surface border border-border rounded-2xl shadow-dropdown p-3 z-50 animate-in fade-in zoom-in-95 duration-100 focus:outline-none"
+              className="absolute right-0 mt-2 w-72 sm:w-84 max-w-[calc(100vw-2rem)] apple-material-glass rounded-2xl shadow-dropdown p-3 z-50 animate-in fade-in zoom-in-95 origin-top-right duration-100 focus:outline-none"
             >
               {/* Header Identity Card */}
               <div className="p-3 bg-workspace rounded-xl border border-border mb-2.5">

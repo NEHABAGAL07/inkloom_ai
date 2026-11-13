@@ -141,7 +141,7 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Enterprise Page Header */}
-      <div className="bg-white dark:bg-[#1C1C1C] rounded-2xl p-6 sm:p-8 border border-[#DDEBE5] dark:border-[#383838] shadow-subtle dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="apple-card rounded-2xl p-6 sm:p-8 border border-slate-200/80 dark:border-white/[0.08] shadow-subtle dark:shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#087F70] via-[#10A995] to-[#43D6B3] dark:from-[#FFD84D] dark:via-[#FF7A36] dark:to-[#F45B91]" />
         <div className="absolute top-0 right-0 w-80 h-32 bg-gradient-to-l from-[#10A995]/10 dark:from-[#FF7A36]/10 to-transparent pointer-events-none blur-2xl" />
         <div className="space-y-2 max-w-3xl">
@@ -183,7 +183,7 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
       {/* Main Review Section: Queue on Left, Findings Inspection on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Pending Review Queue */}
-        <div className="lg:col-span-5 bg-white dark:bg-[#1C1C1C] border border-[#DDEBE5] dark:border-[#383838] rounded-2xl p-5 shadow-subtle dark:shadow-xl space-y-4">
+        <div className="lg:col-span-5 apple-card rounded-2xl p-5 shadow-subtle dark:shadow-xl space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-[#DDEBE5] dark:border-[#383838]">
             <h2 className="text-sm font-bold text-[#18352F] dark:text-[#F7F3ED] font-heading flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#087F70] dark:text-[#FFAA35]" />
@@ -195,43 +195,35 @@ export function LegalDashboard({ submissions, onRefresh }: LegalDashboardProps) 
           </div>
 
           {/* Queue Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 pb-2">
+          <div className="apple-segmented-track mb-2">
             <button
               onClick={() => setQueueFilter("pending")}
-              className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
-                queueFilter === "pending"
-                  ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-ink-950 shadow-sm"
-                  : "bg-[#F7FBF9] hover:bg-[#EFF8F4] text-[#58716A] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]"
+              className={`apple-segmented-pill apple-press ${
+                queueFilter === "pending" ? "apple-segmented-pill-active" : ""
               }`}
             >
               Awaiting ({pendingCount})
             </button>
             <button
               onClick={() => setQueueFilter("visual")}
-              className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
-                queueFilter === "visual"
-                  ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-ink-950 shadow-sm"
-                  : "bg-[#F7FBF9] hover:bg-[#EFF8F4] text-[#58716A] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]"
+              className={`apple-segmented-pill apple-press ${
+                queueFilter === "visual" ? "apple-segmented-pill-active" : ""
               }`}
             >
               Visual Media ({visualCount})
             </button>
             <button
               onClick={() => setQueueFilter("all")}
-              className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
-                queueFilter === "all"
-                  ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-ink-950 shadow-sm"
-                  : "bg-[#F7FBF9] hover:bg-[#EFF8F4] text-[#58716A] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]"
+              className={`apple-segmented-pill apple-press ${
+                queueFilter === "all" ? "apple-segmented-pill-active" : ""
               }`}
             >
               All ({submissions.length})
             </button>
             <button
               onClick={() => setQueueFilter("approved")}
-              className={`text-xs px-2.5 py-1 rounded-lg font-bold transition ${
-                queueFilter === "approved"
-                  ? "bg-[#E8F7F1] text-[#087F70] border border-[#C8E2D8] dark:bg-gradient-to-r dark:from-[#FFAA35] dark:to-[#FF7A36] dark:text-ink-950 shadow-sm"
-                  : "bg-[#F7FBF9] hover:bg-[#EFF8F4] text-[#58716A] border border-[#DDEBE5] dark:bg-[#202020] dark:hover:bg-[#272727] dark:text-[#B8B2AC] dark:border-[#383838]"
+              className={`apple-segmented-pill apple-press ${
+                queueFilter === "approved" ? "apple-segmented-pill-active" : ""
               }`}
             >
               Approved ({approvedCount})

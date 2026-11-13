@@ -281,7 +281,7 @@ export function DesignAssetViewerModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-surface border border-border rounded-2xl w-full max-w-6xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden">
+      <div className="bg-surface border border-border rounded-2xl w-full max-w-6xl max-h-[95vh] flex flex-col shadow-2xl overflow-hidden origin-center animate-in zoom-in-95 duration-200">
         {/* Top Header Bar */}
         <div className="p-4 sm:px-6 border-b border-border bg-workspace flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">

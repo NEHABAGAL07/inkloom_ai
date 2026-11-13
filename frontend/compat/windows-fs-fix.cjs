@@ -44,4 +44,24 @@ if (process.platform === "win32") {
       }
     }
   };
+
+  const origMkdir = fs.mkdir;
+  fs.mkdir = function (...args) {
+    const callback = typeof args[args.length - 1] === "function" ? args[args.length - 1] : null;
+    if (!callback) return origMkdir.apply(this, args);
+    const otherArgs = args.slice(0, args.length - 1);
+    const retry = (attempt) => {
+      origMkdir.apply(fs, [
+        ...otherArgs,
+        (err, res) => {
+          if (err && (err.code === "EPERM" || err.code === "EBUSY") && attempt < 19) {
+            setTimeout(() => retry(attempt + 1), 50 * (attempt + 1));
+            return;
+          }
+          callback(err, res);
+        },
+      ]);
+    };
+    retry(0);
+  };
 }

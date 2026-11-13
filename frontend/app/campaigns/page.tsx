@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import { useAuth } from "@/services/auth-context";
+import { cn, formatCategory } from "@/lib/utils";
 import {
   Campaign,
   CampaignCreate,
@@ -510,20 +511,15 @@ export default function CampaignsPage() {
     }
   };
 
-  const getPriorityBadge = (priority: CampaignPriority | string) => {
-    switch (priority) {
-      case "critical":
-      case "urgent":
-        return "bg-rose-500/20 text-rose-400 border-rose-500/30";
-      case "high":
-        return "bg-amber-500/20 text-amber-400 border-amber-500/30";
-      case "medium":
-        return "bg-teal/20 text-teal border-teal/30";
-      case "low":
-      default:
-        return "bg-slate-500/20 text-slate-400 border-slate-500/30";
-    }
+  const PRIORITY_BADGES: Record<string, string> = {
+    critical: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+    urgent: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+    high: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    medium: "bg-teal/20 text-teal border-teal/30",
+    low: "bg-slate-500/20 text-slate-400 border-slate-500/30",
   };
+  const getPriorityBadge = (priority: CampaignPriority | string) =>
+    PRIORITY_BADGES[priority] || PRIORITY_BADGES.low;
 
   const isAuthorizedReviewer =
     activeRole === "admin" ||
@@ -647,7 +643,7 @@ export default function CampaignsPage() {
             <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider font-mono">
               Total Campaigns
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-ink-primary mt-1 font-heading">
+            <div className="text-2xl sm:text-3xl font-black text-ink-primary mt-1 font-heading tabular-nums">
               {summary.total_campaigns}
             </div>
             <div className="text-[11px] text-ink-muted mt-0.5">Marketing initiatives</div>
@@ -663,7 +659,7 @@ export default function CampaignsPage() {
             <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider font-mono">
               Draft Campaigns
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-slate-300 mt-1 font-heading">
+            <div className="text-2xl sm:text-3xl font-black text-slate-300 mt-1 font-heading tabular-nums">
               {summary.draft_campaigns}
             </div>
             <div className="text-[11px] text-ink-muted mt-0.5">Planning &amp; scoping</div>
@@ -679,7 +675,7 @@ export default function CampaignsPage() {
             <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider font-mono">
               In Progress
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-blue-400 mt-1 font-heading">
+            <div className="text-2xl sm:text-3xl font-black text-blue-400 mt-1 font-heading tabular-nums">
               {summary.in_progress_campaigns}
             </div>
             <div className="text-[11px] text-ink-muted mt-0.5">Creation &amp; review gates</div>
@@ -695,7 +691,7 @@ export default function CampaignsPage() {
             <div className="text-[11px] font-bold text-ink-muted uppercase tracking-wider font-mono">
               Published Campaigns
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1 font-heading">
+            <div className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1 font-heading tabular-nums">
               {summary.published_campaigns}
             </div>
             <div className="text-[11px] text-ink-muted mt-0.5">Live in market</div>
